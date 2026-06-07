@@ -2,15 +2,17 @@
 <html lang="id">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
-  <title>Training Calon Kurir Sahabatku</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Aplikasi Kurir Sahabatku</title>
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root {
-  --sky-light: #1581BF;
-  --sky: #1581BF;
-  --sky-strong: #1581BF;
+  --sky-light: #0080f7;
+  --sky: #0080f7;
+  --sky-strong: #0080f7;
   --accent: #0077c8;
   --muted: #4a6fa5;
   --card-bg: #ffffff;
@@ -19,6 +21,7 @@
   --shadow-light: rgba(74, 144, 226, 0.15);
   --shadow-strong: rgba(74, 144, 226, 0.3);
   --text-primary: #0b3b5a;
+  --text-main: #0080f7;     /* Font yang Anda minta */
   --text-secondary: #506273;
 }
 
@@ -42,19 +45,25 @@ html, body {
   margin: 24px auto;
   padding: 16px 20px;
 }
-
 .card {
   background: var(--card-bg);
-  border-radius: 20px;
-  padding: 24px 28px;
-  box-shadow: 0 12px 30px var(--shadow-light);
-  margin-bottom: 20px;
+  border-radius: 24px;
+  padding: 20px;
   border: 1px solid var(--border);
-  transition: box-shadow 0.3s ease;
+  
+  /* TAMBAHKAN INI */
+  margin-bottom: 20px; /* Jarak antar card sebesar 20px */
+  display: block;      /* Memastikan card mengambil ruang baris baru */
+}
+
+/* Opsional: Menghilangkan jarak pada card terakhir agar tidak ada ruang kosong berlebih di bawah */
+.card:last-child {
+  margin-bottom: 0;
 }
 
 .card:hover {
   box-shadow: 0 16px 40px var(--shadow-strong);
+  transform: translateY(-2px); /* Tambahan sedikit efek angkat saat hover agar lebih premium */
 }
 
 h2, h3 {
@@ -89,7 +98,6 @@ select {
   outline: none;
   font-size: 1rem;
   color: var(--text-primary);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
@@ -104,24 +112,29 @@ select:focus {
   box-shadow: 0 0 8px var(--sky-strong);
   background: #f0f8ff;
 }
-/* Posisi pojok kanan atas */
 #btnLogout {
-  position: fixed;       /* selalu di atas */
-  top: 20px;
-  right: 20px;
-  padding: 8px 14px;
-  font-size: 0.85rem;
-  border-radius: 20px;
+  position: fixed;   /* Mengunci posisi terhadap layar (bukan terhadap card) */
+  top: 15px;         /* Jarak dari atas layar */
+  right: 15px;       /* Jarak dari kanan layar */
+  z-index: 9999;     /* Lapisan paling tinggi, tidak akan tertutup apa pun */
+  
+  /* Desain agar tetap keren */
+  padding: 8px 15px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  border-radius: 50px;
   border: none;
-  cursor: pointer;
   background: linear-gradient(45deg, #ff4b2b, #ff416c);
   color: white;
-  font-weight: bold;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-  transition: all 0.3s ease;
-  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(255, 65, 108, 0.4);
+  cursor: pointer;
+  transition: opacity 0.3s; /* Hanya animasi transparan saat hilang/muncul */
 }
 
+/* Hilangkan animasi scale/rotate agar tidak terasa 'geser' saat ditekan */
+#btnLogout:active {
+  opacity: 0.8;
+}
 /* Hover efek animasi keren */
 #btnLogout:hover {
   transform: scale(1.1) rotate(-3deg);
@@ -129,13 +142,232 @@ select:focus {
   background: linear-gradient(45deg, #ff416c, #ff4b2b);
   text-shadow: 0 0 5px #fff;
 }
-
-/* Saat ditekan */
-#btnLogout:active {
-  transform: scale(0.95) rotate(0deg);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+/* --- Premium Header Element --- */
+.header-element-premium {
+  position: relative;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 40px; /* Sangat bulat agar tidak kaku */
+  padding: 30px;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 
+    0 10px 30px rgba(0, 128, 247, 0.08),
+    0 20px 60px rgba(0, 0, 0, 0.03);
+  animation: slideDownIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  overflow: hidden;
 }
 
+/* Dekorasi background elemen */
+.header-element-premium::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, rgba(0, 128, 247, 0.1) 0%, transparent 70%);
+  z-index: 0;
+}
+
+/* User Info Styling */
+.user-visual-group {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  z-index: 1;
+}
+
+.avatar-soft-glow {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #0080f7, #00c6ff);
+  border-radius: 20px; /* Squircle */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 10px 20px rgba(0, 128, 247, 0.3);
+}
+
+.text-upper-tiny {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #94a3b8;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.user-name-stylish {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #0b4870;
+  letter-spacing: -0.5px;
+}
+
+.feature-pills {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pill {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.pill-dot { color: #0080f7; font-weight: 900; }
+
+/* Nota Status Column (Right Top) */
+.nota-status-column {
+  background: #f8fafc;
+  padding: 10px 18px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  text-align: right;
+  min-width: 120px;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.nota-status-column:hover {
+  transform: translateY(-3px);
+  border-color: #0080f7;
+  box-shadow: 0 10px 20px rgba(0, 128, 247, 0.05);
+}
+
+.nota-mini-label {
+  font-size: 9px;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+.nota-value-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.nota-number-small {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #0080f7;
+}
+
+.pulse-indicator {
+  width: 8px;
+  height: 8px;
+  background: #2ecc71;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #2ecc71;
+}
+
+/* Animations */
+@keyframes slideDownIn {
+  from { opacity: 0; transform: translateY(-30px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes pulse-green {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.wave-hand {
+  display: inline-block;
+  transform-origin: 70% 70%;
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(14deg); }
+  40% { transform: rotate(-8deg); }
+  60% { transform: rotate(10deg); }
+}
+
+/* Responsive Mobile */
+@media (max-width: 600px) {
+  .header-element-premium {
+    padding: 20px;
+    flex-direction: column;
+    gap: 20px;
+    border-radius: 30px;
+  }
+  .nota-status-column {
+    width: 100%;
+    text-align: left;
+  }
+  .nota-value-wrapper { justify-content: flex-start; }
+}
+/* Container Navigasi: Glassmorphism Effect */
+.floating-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: rgba(255, 255, 255, 0.85);
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  overflow-x: auto;
+  padding: 5px 10px;
+  z-index: 9999;
+  scrollbar-width: none;
+  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.05);
+}
+
+.floating-bottom-nav::-webkit-scrollbar { display: none; }
+
+/* Tombol dengan Animasi Spring */
+.floating-bottom-nav button {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 0 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: 12px;
+}
+
+/* Efek Active: Tombol sedikit naik dan berubah warna */
+.floating-bottom-nav button.active {
+  color: #0080f7;
+  transform: translateY(-8px);
+  background: rgba(0, 128, 247, 0.08);
+}
+
+/* Ikon dengan transisi halus */
+.floating-bottom-nav button i {
+  width: 22px;
+  height: 22px;
+  transition: transform 0.3s ease;
+}
+
+.floating-bottom-nav button.active i {
+  transform: scale(1.1);
+}
+
+/* Biar konten tidak tertutup */
+body { padding-bottom: 90px; }
 /* --- Notifikasi Style --- */
 #notificationBtn {
   position: fixed;
@@ -246,35 +478,80 @@ select:focus {
   flex-wrap: wrap;
   gap: 12px;
 }
-
+/* Navigasi Tab Modern */
 nav.tab {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  display: flex;
+  overflow-x: auto;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 25px;
+  padding: 5px 5px 15px 5px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
+nav.tab::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
 
+/* Tombol Tab dengan Icon Berwarna & Animasi */
 nav.tab button {
-  padding: 14px 0;
-  border-radius: 16px;
-  border: 1.5px solid var(--border);
-  background: var(--card-bg);
-  color: var(--text-primary);
-  font-weight: 700;
-  font-size: 1rem;
-  letter-spacing: 0.02em;
-  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  min-width: 85px;
+  border-radius: 20px;
+  border: 1px solid #f1f5f9;
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.75rem;
   cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+/* Icon Modern */
+nav.tab button i {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2.2px;
+  transition: transform 0.3s ease;
+}
+
+/* Warna Khusus Icon Saat Aktif (Modern Look) */
 nav.tab button.active {
-  background: linear-gradient(90deg, var(--sky-strong), #6fc2ff);
-  color: white;
-  border-color: transparent;
-  box-shadow: 0 8px 24px var(--shadow-light);
+  background: white;
+  color: #0080f7;
+  border-color: #0080f7;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px var(--shadow-strong);
 }
 
+nav.tab button.active i {
+  transform: scale(1.2) rotate(-5deg);
+  color: #0080f7; /* Icon jadi berwarna biru terang */
+}
+
+/* Efek Klik Animasi */
+nav.tab button:active {
+  transform: scale(0.95);
+}
+@keyframes smoothAppear {
+  from { 
+    opacity: 0; 
+    transform: translateY(30px) scale(0.98); 
+    filter: blur(10px);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
 .row {
   display: flex;
   gap: 16px;
@@ -328,7 +605,7 @@ nav.tab button.active {
   font-size: 1.1rem;
 }
 .section-title .small {
-  color: #00CAFF !important;
+  color: #0080f7;!important;
   font-size: 1.1rem;     /* ukuran sedikit lebih besar dari default */
   font-weight: 700;
   letter-spacing: 0.3px; /* biar lebih rapi */
@@ -340,22 +617,204 @@ nav.tab button.active {
   flex-direction: column;
   gap: 12px;
 }
-/* === Kartu Item Dua Baris === */
-.line-card {
-  background: #00CAFF;
-  border: 1.5px solid var(--border);
+/* Container Total */
+.total-action-card {
+  background: white;
+  padding: 24px;
+  border-radius: 28px;
+  box-shadow: 0 15px 35px rgba(0, 128, 247, 0.15);
+  margin-top: 25px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Animasi Total Berdenyut (Pulse) */
+@keyframes pulse-total {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.total-value {
+  font-size: 40px;
+  font-weight: 900;
+  color: #0080f7;
+  margin: 5px 0;
+}
+
+.total-label { font-size: 11px; font-weight: 800; color: #94a3b8; letter-spacing: 1.5px; }
+
+/* Grid Tombol 2x2 */
+.btnbar-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.btn {
+  padding: 14px 10px;
   border-radius: 16px;
-  padding: 16px 20px;
-  margin-top: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  font-weight: 700;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+/* Container Kotak Total */
+.total-highlight-box {
+  background: linear-gradient(135deg, #0080f7 0%, #00d2ff 100%);
+  padding: 25px;
+  border-radius: 28px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 15px 30px rgba(0, 128, 247, 0.4);
+  margin-top: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.4s ease;
+}
+
+/* Animasi Fokus / Pulse */
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(0, 128, 247, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(0, 128, 247, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 128, 247, 0); }
+}
+
+.total-highlight-box {
+}
+
+/* Angka Total */
+.total-pesanan-text {
+  font-size: 42px;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 10px 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.label-total {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.btn-logout-tiny {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 10px; /* Sangat kecil */
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  z-index: 1000;
+}
+
+.btn-logout-tiny:hover {
+  background: #ef4444;
+  color: white;
+  transform: scale(1.05);
+}
+/* Warna Tombol Modern */
+.btn-save { background: #0080f7; color: white; }
+.btn-photo { background: #6366f1; color: white; }
+.btn-wa { background: #25d366; color: white; }
+.btn-clear { background: #fee2e2; color: #ef4444; }
+
+.btn:active { transform: translateY(2px); opacity: 0.9; }
+.btn-absen-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* Menggunakan gradasi warna agar lebih jelas */
+  background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); 
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 8px 16px; /* Ukuran sedikit diperbesar */
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 800; /* Teks lebih tebal */
+  cursor: pointer;
+  margin-top: 10px;
   transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  box-shadow: 0 4px 15px rgba(0, 114, 255, 0.3); /* Efek bayangan biru */
 }
 
-.line-card:hover {
-  box-shadow: 0 8px 20px rgba(0, 128, 255, 0.1);
+.btn-absen-mini:hover {
+  background: white;
+  color: #0072ff;
   transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
+/* Pastikan icon lucide ter-render dengan benar */
+.btn-absen-mini i {
+  stroke-width: 2.5;
+}
+/* === Kartu Item === */
+.line-card {
+  background: #0080f7;
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 20px;
+  position: relative;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* === Nama Item (Full Lebar) === */
+.col-name input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  background: #ffffff;
+  color: #333;
+}
+
+/* === Subtotal: Highlight Paling Menonjol === */
+.isub {
+  /* Efek menonjol dengan background kontras & border */
+  background: rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+  padding: 16px 20px;
+  border-radius: 14px;
+  text-align: right;
+  font-weight: 900;
+  font-size: 1.4rem;
+  letter-spacing: 0.5px;
+  margin-top: 5px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Label total agar lebih estetik */
+.isub::before {
+  content: "TOTAL";
+  font-size: 0.7rem;
+  opacity: 0.7;
+  letter-spacing: 1px;
+}
 /* === Baris Atas === */
 .top-row {
   display: grid;
@@ -379,7 +838,6 @@ nav.tab button.active {
   border: 1.5px solid var(--border);
   text-align: center;
   font-size: 0.9rem;
-  transition: border-color 0.2s ease;
 }
 
 .top-row input:focus {
@@ -410,7 +868,42 @@ nav.tab button.active {
   cursor: pointer;
   transition: background 0.3s ease, transform 0.2s ease;
 }
+/* Tombol Absen Modern Floating */
+#btnAbsenFloating {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #0080f7 0%, #0077c8 100%);
+  color: white;
+  border-radius: 18px; /* Sudut agak kotak melengkung modern (Squircle) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255,255,255,0.3);
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(0, 119, 200, 0.4);
+  z-index: 9999;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
 
+/* Animasi Berdenyut Soft */
+@keyframes pulse-animation {
+  0% { box-shadow: 0 0 0 0px rgba(0, 202, 255, 0.6); }
+  70% { box-shadow: 0 0 0 15px rgba(0, 202, 255, 0); }
+  100% { box-shadow: 0 0 0 0px rgba(0, 202, 255, 0); }
+}
+
+#btnAbsenFloating:hover {
+  transform: translateY(-5px) scale(1.05);
+  background: linear-gradient(135deg, #0077c8 0%, #0080f7 100%);
+}
+
+#btnAbsenFloating i {
+  width: 28px;
+  height: 28px;
+}
 .bottom-row .mini-btn:hover {
   background: #e04e4e;
   transform: translateY(-1px);
@@ -471,17 +964,56 @@ nav.tab button.active {
 }
 
 /* Nota Preview */
+/* Container Nota Preview */
 .nota-box {
-  white-space: pre-wrap;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  background: #f5faff;
-  padding: 20px 24px;
-  border-radius: 16px;
-  border: 1.5px solid #c9dbf8;
-  min-height: 160px;
-  color: var(--text-primary);
-  font-size: 0.95rem;
-  box-shadow: inset 0 0 10px #dbeeff;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  font-family: 'Courier New', Courier, monospace; /* Kesan struk klasik */
+  color: #1e293b;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efek Kertas (Dashed Line) */
+.nota-box::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 20px; right: 20px;
+  height: 1px;
+  border-top: 2px dashed #cbd5e1;
+}
+
+/* Styling Tabel Nota */
+.nota-box table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.nota-box th {
+  text-align: left;
+  border-bottom: 2px solid #0080f7;
+  padding-bottom: 8px;
+  color: #0080f7;
+  font-size: 14px;
+}
+
+.nota-box td {
+  padding: 8px 0;
+  font-size: 13px;
+}
+
+/* Total di Nota */
+.nota-total {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 2px solid #1e293b;
+  text-align: right;
+  font-weight: 900;
+  font-size: 18px;
 }
 
 /* Table */
@@ -559,9 +1091,6 @@ select, input {
 
 /* Mobile tweaks */
 @media (max-width: 900px) {
-  nav.tab {
-    grid-template-columns: repeat(2, 1fr);
-  }
   .grid-3 {
     grid-template-columns: 1fr;
   }
@@ -650,19 +1179,6 @@ select, input {
   th, td {
     padding: 10px 8px;
   }
-
-  /* Nav tab jadi 2 kolom */
-  nav.tab {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-
-  nav.tab button {
-    padding: 10px 0;
-    font-size: 0.9rem;
-    border-radius: 14px;
-  }
-
   /* Tombol utama dan sekunder melebar penuh */
   .btn.full {
     width: 100%;
@@ -876,7 +1392,7 @@ select, input {
 
     /* Nota Card Style */
     .nota-card {
-      background: linear-gradient(180deg, #00CAFF 50%, #00CAFF 100%);
+      background: linear-gradient(180deg, #0080f7  50%, #0080f7 100%);
       border: 1.5px solid var(--border);
       border-radius: 20px;
       padding: 24px 28px;
@@ -890,7 +1406,13 @@ select, input {
       box-shadow: 0 10px 30px rgba(0, 128, 255, 0.2);
       transform: translateY(-2px);
     }
-
+    .nota-card label {
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 6px;
+      display: block;
+    }
     /* --- Daftar Item Rapi --- */
     .item-table {
       width: 100%;
@@ -1089,7 +1611,6 @@ select, input {
       color: #ffffff !important;
       border: 2px solid #2ecc71 !important;
       box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3) !important;
-      animation: pulse 2s infinite; /* Animasi pulse berulang */
       transition: all 0.3s ease !important; /* Transisi halus */
     }
     
@@ -1138,13 +1659,41 @@ select, input {
     .input-wrap {
       position: relative;
     }
-
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid var(--sky);
+      border-radius: 50%;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    #tab-nota, .item-list-container {
+        will-change: transform;
+        backface-visibility: hidden;
+        -webkit-overflow-scrolling: touch; /* Membuat scroll di iPhone lebih mulus */
+    }
+    .warning-strip {
+        background: #fff5f5;
+        border: 1px dashed #feb2b2;
+        color: #c53030;
+        padding: 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        margin-bottom: 15px;
+        display: none;
+        align-items: center;
+        gap: 8px;
+      }
   </style>
 </head>
 <body>
   <div class="container">
     <div id="loginCard" class="card">
-      <h2>Login Training Kurir</h2>
+      <h2>Login Kurir</h2>
       <div class="grid grid-3">
         <div>
           <label for="loginUser">Username</label>
@@ -1162,83 +1711,107 @@ select, input {
       </div>
       <p id="loginMsg" class="small" style="color: var(--danger-color); margin-top: 8px;"></p>
     </div>
-
     <div id="app" class="hidden">
-      <button id="notificationBtn" aria-label="Buka notifikasi">🔔<span id="notificationBadge" class="badge hidden"></span></button>
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-        <div>
-          <h2>Halo, <span id="curUser" style="color:#0b4870;font-weight:800"></span></h2>
-          <div class="small">Buat nota khusus Training</div>
+      <button id="notificationBtn" aria-label="Buka notifikasi" style="display: none;">🔔<span id="notificationBadge" class="badge hidden"></span></button>
+      
+      <div class="header-element-premium">
+        <div class="user-visual-group">
+          <div class="avatar-soft-glow">
+            <i data-lucide="user" class="icon-user"></i>
+          </div>
+          <button id="btnLogout" class="btn-logout-tiny hidden">
+            <i data-lucide="log-out" style="width: 14px; height: 14px;"></i>
+            <span></span>
+          </button>
+        <div class="greeting-content">
+          <span class="text-upper-tiny">Professional Courier</span>
+          <h2 class="user-name-stylish">Halo, <span id="curUser"></span> <span class="wave-hand">👋</span></h2>
+          
+          <div class="feature-pills">
+            <span class="pill">Buat nota</span>
+            <span class="pill-dot">•</span>
+            <span class="pill">Rekap</span>
+            <span class="pill-dot">•</span>
+            <span class="pill">Cek Ongkir</span>
+          </div>
+    
+          <button id="btnAbsenModern" class="btn-absen-mini" onclick="window.location.href='kehadiran.html'">
+            <i data-lucide="calendar-check" style="width:14px; height:14px;"></i>
+            <span>Absensi Harian</span>
+          </button>
         </div>
-        <div>
-          <div class="small">No Nota berikutnya:</div>
-          <div id="nextNota" style="font-weight:800;font-size:18px;color:#0b4870">-</div>
+      </div>
+      <div class="nota-status-column">
+        <div class="nota-mini-label">NEXT NOTA ID</div>
+        <div class="nota-value-wrapper">
+          <span id="nextNota" class="nota-number-small">-</span>
+          <div class="pulse-indicator"></div>
         </div>
-          <button id="btnLogout" class="btn danger hidden">Logout</button>
-
       </div>
     </div>
-
+      <nav class="floating-bottom-nav" id="tabNav">
+        <button data-tab="notaTab" class="active"><i data-lucide="layers-3"></i><span>Nota</span></button>
+        <button data-tab="riwayatTab"><i data-lucide="timer"></i><span>Riwayat</span></button>
+        <button data-tab="laporanRekapTab"><i data-lucide="activity"></i><span>Rekap</span></button>
+        <button data-tab="mitraTab"><i data-lucide="contact-2"></i><span>Mitra</span></button>
+        <button data-tab="ongkirTab"><i data-lucide="map-pinned"></i><span>Ongkir</span></button>
+        <button onclick="window.location.href='absensi-kurir-sahabatku.html'"><i data-lucide="calendar-range"></i><span>Jadwal</span></button>
+        <button data-tab="sopTab"><i data-lucide="sparkles"></i><span>SOP</span></button>
+        <button data-tab="pengaturanTab"><i data-lucide="gauge"></i><span>Setting</span></button>
+      </nav>
       <div class="card">
-        <nav class="tab" id="tabNav">
-          <button data-tab="notaTab" class="active" aria-label="Tab Nota">📝 Nota</button>
-          <button data-tab="riwayatTab" aria-label="Tab Riwayat">📋 Riwayat</button>
-          <button data-tab="laporanRekapTab" aria-label="Tab Rekap">📊 Rekap</button>
-          <button data-tab="" aria-label="Tab Cek Ongkir">📍 Cek Ongkir</button>
-          <button onclick="" aria-label="Absensi Kurir">🗓️ Absensi Kurir</button>
-          <button data-tab="mitraTab" aria-label="Tab Data Mitra">🤝 Data Mitra</button>
-          <button data-tab="pengaturanTab" aria-label="Tab Pengaturan">⚙️ Pengaturan</button>
-        </nav>
         <div id="notaTab" class="tabContent active">
-          <h3>Buat / Edit Nota</h3>
+          <h3>Buat Nota</h3>
           <div class="nota-card">
             <div class="grid grid-3">
-              <div>
+              
+              <div style="display: none;">
                 <label for="kurirName">Nama Kurir</label>
                 <input id="kurirName" type="text" readonly>
               </div>
-              <div>
-                <label for="custPhone">Nomor WhatsApp Customer</label>
-                <input id="custPhone" type="text" placeholder="6281234... (opsional)">
-              </div>
+      
               <div>
                 <label for="ongkir">Ongkir (Rp)</label>
-                <div style="display: flex; gap: 6px;">
-                  <input id="ongkir" type="number" value="0" min="0" oninput="calculateTotal()" style="flex:1;">
-                  <button id="btnCekOngkirNota" class="btn secondary" style="padding: 10px 14px;">Cek</button>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                  <input id="ongkir" type="number" value="0" min="0" oninput="calculateTotal()" style="flex:1; margin-top: 0;">
+                  <button id="btnCekOngkirNota" class="btn secondary" style="padding: 10px 14px; margin-top: 0; white-space: nowrap;">Cek</button>
                 </div>
-                <div class="small" id="ongkirNotaInfo" style="margin-top:4px;color:#555;">Belum dihitung</div>
+                <div class="small" id="ongkirNotaInfo" style="margin-top:6px; color:#555;">Belum dihitung</div>
               </div>
+      
+              <div>
+                <label for="statusOrder">Status Order</label>
+                <select id="statusOrder" onchange="updatePreview()">
+                  <option value="Admin">Admin</option>
+                  <option value="OL">OL (Orderan Luar)</option>
+                </select>
+              </div>
+      
             </div>
           </div>
-
           <div class="section-title" style="margin-top: 14px; position: relative;">
             <div class="small" style="font-weight: 700;">Daftar Item</div>
-            <button id="btnAddItem" class="btn btn-fab secondary" style="background: #2ecc71 !important; color: white !important; border: 2px solid #2ecc71 !important;" aria-label="Tambah item">+</button>
+            <button id="btnAddItem" class="btn btn-fab secondary" style="background: #2ecc71 !important; color: white !important; border: 2px solid #2ecc71 !important; width: 45px; height: 45px; border-radius: 50% !important; display: flex; align-items: center; justify-content: center; font-size: 20px; padding: 0;" aria-label="Tambah item">+</button>
           </div>
           <div id="itemsArea" class="list-v" style="margin-top: 10px;"></div>
 
           <div class="section-title" style="margin-top: 14px; position: relative;">
             <div class="small" style="font-weight: 700;">Tambahan Biaya</div>
-            <button id="btnAddTambahan" class="btn btn-fab secondary" style="background: #2ecc71 !important; color: white !important; border: 2px solid #2ecc71 !important;" aria-label="Tambah biaya tambahan">+</button>
+            <button id="btnAddTambahan" class="btn btn-fab secondary" style="background: #2ecc71 !important; color: white !important; border: 2px solid #2ecc71 !important; width: 45px; height: 45px; border-radius: 50% !important; display: flex; align-items: center; justify-content: center; font-size: 20px; padding: 0;" aria-label="Tambah biaya tambahan">+</button>
           </div>
           <div id="tambahanArea" class="list-v" style="margin-top: 10px;"></div>
-
-          <div class="grid grid-3" style="margin-top: 8px; align-items: end;">
-            <div class="nota-card">
-              <div>
-                <label>Total</label>
-                <div id="totalPesanan" style="font-weight: 800; font-size: 22px; color: var(--danger-color);">Rp 0</div>
-                <div class="small">Subtotal item + ongkir + tambahan</div>
-              </div>
-              <div></div>
-              <div class="btnbar" style="justify-content: flex-end;">
-                <button id="btnSaveForm" class="btn secondary" aria-label="Simpan nota">Simpan Nota</button>
-                <button id="btnExportPreview" class="btn secondary" aria-label="Simpan foto">Simpan Foto</button>
-                <button id="btnSharePreview" class="btn secondary" aria-label="Bagikan WhatsApp">Bagikan WhatsApp</button>
-                <button id="btnClearAll" class="btn danger" aria-label="Bersihkan semua">Bersihkan Semua</button>
-              </div>
+          <div class="total-action-card animate__animated animate__fadeInUp">
+            <div class="total-highlight-box animate__animated animate__zoomIn">
+              <div class="label-total">TOTAL KESELURUHAN</div>
+              <div id="totalPesanan" class="total-pesanan-text">Rp 0</div>
+              <div style="font-size: 12px; color: rgba(255,255,255,0.7);">Termasuk ongkir & tambahan</div>
+            </div>
+          
+            <div class="btnbar-grid">
+              <button id="btnSaveForm" class="btn btn-save">Simpan Data</button>
+              <button id="btnExportPreview" class="btn btn-photo">Simpan Foto</button>
+              <button id="btnSharePreview" class="btn btn-wa">Bagikan WA</button>
+              <button id="btnClearAll" class="btn btn-clear">Bersihkan Semua</button>
             </div>
           </div>
 
@@ -1252,48 +1825,75 @@ select, input {
         </div>
 
         <div id="riwayatTab" class="tabContent hidden">
-          <h3>Riwayat Nota</h3>
-          <div class="card">
-            <div class="grid grid-3" style="grid-template-columns: 1fr 1fr 1fr;">
-              <div style="grid-column: span 2;">
-                <label>Cari Tanggal</label>
-                <input id="riwayatDate" type="date">
+            <h3>Riwayat Nota</h3>
+            <div class="card">
+                
+                <div style="margin-bottom: 15px;">
+                    <label>Cari Tanggal</label>
+                    <input id="riwayatDate" type="date" style="width: 100%;"> 
+                </div>
+        
+                <div class="btnbar" style="display: flex; gap: 10px;">
+                    <button id="btnCariRiwayat" class="btn" style="flex-grow: 1;">Cari</button>
+                    <button id="btnResetRiwayat" class="btn secondary" style="flex-grow: 1;">Reset</button>
+                </div>
+        
+            </div>
+            <h3 style="margin-top: 20px;">Semua Riwayat Nota (Akun Ini)</h3>
+            <div id="notaHistory"></div>
+        </div>
+        <div id="laporanRekapTab" class="tabContent hidden">
+          <div style="display: flex; gap: 8px; margin-bottom: 20px; background: white; padding: 12px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <input id="rekapMonth" type="month" style="flex-grow: 1; border: 1px solid #eef2f7; padding: 10px; border-radius: 10px; font-family: inherit; outline: none;">
+            <button id="btnLoadRekap" class="btn" style="background: var(--sky-strong); color: white; border-radius: 10px; padding: 0 20px; font-weight: 700;">MUAT</button>
+          </div>
+        
+          <div id="captureArea" style="background: #fdfdfd; padding: 20px; border-radius: 25px; border: 1px solid #f0f4f8;">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+              <div class="card" style="margin:0; padding:15px; border-radius:20px; border-left: 4px solid #2ecc71;">
+                <small style="font-size:0.6rem; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">Income Hari Ini</small>
+                <h3 id="todayIncome" style="margin:4px 0; color:#2ecc71; font-size:1.2rem; font-weight:800;">Rp 0</h3>
+                <div style="font-size:0.55rem; color:#94a3b8; font-weight: 600;">
+                  O: <span id="hO">0</span> | T: <span id="hT">0</span>
+                </div>
               </div>
-              <div style="align-self: end;">
-                <div class="btnbar">
-                  <button id="btnCariRiwayat" class="btn">Cari</button>
-                  <button id="btnResetRiwayat" class="btn secondary">Reset</button>
+              
+              <div class="card" style="margin:0; padding:15px; border-radius:20px; border-left: 4px solid var(--sky-strong);">
+                <small style="font-size:0.6rem; font-weight:800; color:var(--text-secondary); text-transform:uppercase;">Total Trx Mitra</small>
+                <h3 id="sumTrxBulanan" style="margin:4px 0; color:var(--text-primary); font-size:1.2rem; font-weight:800;">0</h3>
+                <div style="font-size:0.55rem; color:#94a3b8; font-weight: 600;">Aktivitas Bulan Ini</div>
+              </div>
+            </div>
+        
+            <div id="rekapWarning" style="display:none; background:#fff5f5; border:1px dashed #feb2b2; color:#c53030; padding:12px; border-radius:15px; font-size:0.7rem; margin-bottom:15px; text-align:center;">
+              ⚠️ <strong>Status:</strong> Tidak ada aktivitas input dalam 2 hari terakhir!
+            </div>
+        
+            <div style="background: linear-gradient(135deg, #0080f7, #0077c8); padding: 22px; border-radius: 20px; color: white; margin-bottom: 20px;">
+              <span style="font-size: 0.7rem; opacity: 0.9; font-weight: 700; text-transform: uppercase;">Total Pendapatan Bulan Ini</span>
+              <h1 id="sumTotal" style="margin: 5px 0 15px 0; font-size: 1.8rem; font-weight: 800;">Rp 0</h1>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                <div>
+                  <small style="display:block; opacity:0.8; font-size:0.55rem; font-weight:700;">ONGKIR</small>
+                  <strong id="sumOngkir" style="font-size:0.85rem;">0</strong>
+                </div>
+                <div>
+                  <small style="display:block; opacity:0.8; font-size:0.55rem; font-weight:700;">TAMBAHAN</small>
+                  <strong id="sumTambahan" style="font-size:0.85rem;">0</strong>
+                </div>
+                <div>
+                  <small style="display:block; opacity:0.8; font-size:0.55rem; font-weight:700;">JML NOTA</small>
+                  <strong id="sumNota" style="font-size:0.85rem;">0</strong>
                 </div>
               </div>
             </div>
-          </div>
-          <h3 style="margin-top: 20px;">Semua Riwayat Nota (Akun Ini)</h3>
-          <div id="notaHistory"></div>
-        </div>
-
-        <div id="laporanRekapTab" class="tabContent hidden">
-          <h3>Rekap</h3>
-          <div class="card" style="margin-top: 10px;">
-            <h4>Rekap Bulanan</h4>
-            <div class="grid grid-3">
-              <div>
-                <label>Bulan</label>
-                <input id="rekapMonth" type="month">
-              </div>
-              <div style="align-self: end;">
-                <button id="btnLoadRekap" class="btn">Muat Rekap</button>
-              </div>
-            </div>
-            <div class="table-container">
-              <table aria-label="Rekap Bulanan">
-                <thead><tr><th>Tanggal</th><th>Jumlah Nota</th><th>Ongkir</th><th>Tambahan</th><th>Total</th></tr></thead>
-                <tbody id="rekapBody"></tbody>
-                <tfoot><tr><th>Total Bulan</th><th id="sumNota">0</th><th id="sumOngkir">0</th><th id="sumTambahan">0</th><th id="sumTotal">0</th></tr></tfoot>
-              </table>
-            </div>
+        
+            <h4 style="margin:0 0 10px 5px; font-size:0.8rem; color:var(--text-primary); font-weight:800;">RINCIAN HARIAN</h4>
+            <div id="rekapList" style="display: flex; flex-direction: column; gap: 10px;"></div>
           </div>
         </div>
-
         <div id="mitraTab" class="tabContent hidden">
           <h3>Data Mitra</h3>
           <div class="card">
@@ -1308,31 +1908,38 @@ select, input {
               </div>
             </div>
           </div>
-          <div class="card">
-            <div class="btnbar">
-              <button id="btnToggleTrxHistory" class="btn full secondary">Lihat Riwayat Transaksi Mitra</button>
-            </div>
-
-            <div id="trxMitraHistoryContainer" class="hidden" style="margin-top: 20px;">
-              <h4>Riwayat Transaksi Mitra (Akun Ini)</h4>
+          <div class="card" style="margin-top: 20px;">
+              <button id="btnToggleTrxHistory" class="btn secondary full">Lihat Riwayat Transaksi Mitra</button>
+          </div>
+          <div id="trxMitraHistoryContainer" class="hidden">
+              <div class="card" style="margin-top: 10px;">
+                  <h3>Riwayat Transaksi Mitra</h3>
+          
+                  <div style="margin-bottom: 15px;">
+                      <label>Pilih Tanggal</label>
+                      <input id="mitraRiwayatDate" type="date" style="width: 100%;">
+                  </div>
+          
+                  <div class="btnbar" style="display: flex; gap: 10px;">
+                      <button id="btnCariMitraRiwayat" class="btn" style="flex-grow: 1;">Cari</button>
+                      <button id="btnResetMitraRiwayat" class="btn secondary" style="flex-grow: 1;">Reset</button>
+                  </div>
+          
+              </div>
+              
+              <h3 style="margin-top: 20px;">Daftar Transaksi Mitra</h3>
               <div class="table-container">
-                <table aria-label="Riwayat Transaksi Mitra">
-                  <thead>
-                    <tr>
-                      <th style="width: 150px;">Tanggal & Waktu</th>
-                      <th>Nama Mitra</th>
-                      <th style="width: 100px;">Jumlah TRX</th>
-                    </tr>
-                  </thead>
-                  <tbody id="trxMitraHistoryBody">
-                    <tr><td colspan="3">Tekan tombol di atas untuk memuat riwayat.</td></tr>
-                  </tbody>
-                </table>
+                  <table aria-label="Riwayat Transaksi Mitra">
+                      <thead><tr><th>Waktu</th><th>Nama Mitra</th><th>TRX</th></tr></thead>
+                      <tbody id="trxMitraHistoryBody">
+                          <tr><td colspan="3">Memuat data...</td></tr>
+                      </tbody>
+                  </table>
               </div>
-              <div class="btnbar" style="margin-top: 10px;">
-                <button id="btnCloseTrxHistory" class="btn secondary">Tutup Riwayat</button>
+              
+              <div class="btnbar" style="justify-content: center; margin-top: 15px;">
+                  <button id="btnCloseTrxHistory" class="btn secondary">Tutup Riwayat</button>
               </div>
-            </div>
           </div>
           <div class="card">
             <div>
@@ -1398,7 +2005,28 @@ select, input {
             </div>
           </div>
         </div>
-
+        <div id="sopTab" class="tabContent hidden">
+            <h3>Standard Operating Procedure Sahabatku</h3>
+            <div class="card" style="text-align: center; padding: 20px;">
+                <p style="margin-bottom: 20px;">Semua dokumen SOP kini diakses melalui halaman terpusat. Klik tombol di bawah untuk membukanya di jendela baru.</p>
+                
+                <a href="https://sites.google.com/view/websitekhususkurir/dokumen-sahabatku" target="_blank" 
+                   class="sop-item" 
+                   style="display: flex; margin: 20px auto; max-width: 400px; padding: 25px; align-items: center; justify-content: center; text-decoration: none;">
+                    
+                    <span style="background-color: #f6ffed; color: #52c41a; font-size: 24px; width: 50px; height: 50px; border-radius: 50%; margin-right: 15px; display: flex; justify-content: center; align-items: center;">
+                        <span style="font-size: 20px;">🌐</span>
+                    </span>
+                    
+                    <div style="text-align: left; flex-grow: 0;">
+                        <strong style="font-size: 1.1rem; display: block; color: var(--text-primary);">Akses Pusat Dokumen SOP</strong>
+                        <small style="display: block; color: var(--text-secondary);">Buka Google Sites (14+ Panduan Kerja)</small>
+                    </div>
+                </a>
+        
+                <p style="margin-top: 10px; color: var(--text-secondary);"><small>Ini adalah cara tercepat dan teraman untuk mengakses SOP.</small></p>
+            </div>
+        </div>
         <div id="pengaturanTab" class="tabContent hidden">
           <h3>Pengaturan Akun</h3>
           <p class="small" style="margin-top: -8px; margin-bottom: 12px;">Ubah username dan password Anda. Username baru akan menjadi nama kurir baru Anda di sistem.</p>
@@ -1455,12 +2083,34 @@ select, input {
           </div>
         </div>
     </div>
-    <!-- Modal Cek Ongkir dari Tab Nota -->
+    <!-- Modal Cek Ongkir dari Tab Nota (Updated dengan Tombol Kunci) -->
     <div id="cekOngkirNotaModal" class="modal">
       <div class="modal-content">
         <span class="close" id="closeCekOngkirNota">&times;</span>
-        <h3>Cek Ongkir Nota</h3>
-        <div class="grid">
+        
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+          
+          <button id="btnLockOngkirNota" style="
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+          ">
+            🔒
+          </button>
+    
+          <h3 style="margin: 0;">Cek Ongkir Nota</h3>
+          
+        </div>
+        <div class="grid" style="margin-top: 15px;">
           <div class="input-wrap">
             <label>Asal (opsional)</label>
             <select id="asalNotaSelect"></select>
@@ -1478,11 +2128,43 @@ select, input {
         <div class="btnbar">
           <button id="cekOngkirNotaBtn" class="btn primary">Hitung</button>
         </div>
-        <div style="margin-top:12px;">
-          <div id="hasilOngkirNota" class="harga">–</div>
-          <div id="keteranganOngkirNota" class="small">—</div>
+        <div style="margin-top:12px; text-align: center;">
+          <div id="hasilOngkirNota" class="harga" style="font-size: 24px; font-weight: bold; color: #0080f7;">–</div>
+          <div id="keteranganOngkirNota" class="small" style="color: #666; margin-bottom: 10px;">—</div>
+          
+          <button id="btnGunakanOngkirNota" class="btn success" style="
+            display: none; 
+            width: 100%; 
+            padding: 8px; 
+            background: #2ecc71; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer;
+            margin-top: 5px;
+          "> Gunakan
+          </button>
+
+          <button id="btnResetOngkirNota" class="btn" style="
+            display: none; 
+            width: 100%; 
+            padding: 8px; 
+            background: #fee2e2; 
+            color: #ef4444; 
+            border: none; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer;
+            margin-top: 6px;
+          "> Bersihkan
+          </button>
         </div>
       </div>
+    </div>
+    <div id="loadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
+      <div class="spinner"></div>
+      <p style="margin-top:15px; font-weight:bold; color:var(--accent);">Menyimpan Transaksi...</p>
     </div>
 
 
@@ -1513,6 +2195,7 @@ select, input {
   const db = getDatabase(app);
   const sampleUsers = {};
   let currentUser = null;
+  let allNotes = []; // Tambahkan ini untuk menyimpan semua nota
   let lastNoNota = 0;
   let selectedMitraId = ''; 
   let notaCounterLoaded = false;
@@ -1740,40 +2423,49 @@ select, input {
       notificationModal.style.display = 'none';
     }
   });
-
   async function loadAllNotifications() {
-      notificationListEl.innerHTML = '';
-      noNotifMsgEl.classList.add('hidden');
-      
-      if (!currentUser) return;
-
-      try {
-        const notificationRef = ref(db, `messages/${currentUser}`);
-        const snapshot = await get(notificationRef);
-
-        if (snapshot.exists()) {
-          const allNotifications = snapshot.val();
-          const sortedKeys = Object.keys(allNotifications).sort((a, b) => {
-            return allNotifications[b].timestamp.localeCompare(allNotifications[a].timestamp);
+    notificationListEl.innerHTML = '';
+    noNotifMsgEl.classList.add('hidden');
+    
+    if (!currentUser) return;
+  
+    try {
+      const notificationRef = ref(db, `messages/${currentUser}`);
+      const snapshot = await get(notificationRef);
+  
+      if (snapshot.exists()) {
+        const allNotifications = snapshot.val();
+        // Urutkan dari yang terbaru
+        const sortedKeys = Object.keys(allNotifications).sort((a, b) => {
+          return allNotifications[b].timestamp.localeCompare(allNotifications[a].timestamp);
+        });
+        
+        // AMBIL HANYA 1 YANG TERAKHIR (.slice(0, 1))
+        const latestKey = sortedKeys.slice(0, 1);
+        
+        if (latestKey.length > 0) {
+          latestKey.forEach(key => {
+              const notif = allNotifications[key];
+              const li = document.createElement('li');
+              li.className = `notification-item ${notif.read ? '' : 'unread'}`;
+              li.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                  <strong>Pesan Terbaru</strong>
+                  <small style="color:#888; font-size:0.7rem;">${new Date(notif.timestamp).toLocaleString()}</small>
+                </div>
+                <div>${notif.message || 'Tidak ada konten'}</div>
+              `;
+              notificationListEl.appendChild(li);
           });
-          
-          if (sortedKeys.length > 0) {
-            sortedKeys.forEach(key => {
-                const notif = allNotifications[key];
-                const li = document.createElement('li');
-                li.className = `notification-item ${notif.read ? '' : 'unread'}`;
-                li.innerHTML = `<strong>Pesan:</strong><br>${notif.message || 'Tidak ada konten'}`;
-                notificationListEl.appendChild(li);
-            });
-          } else {
-              noNotifMsgEl.classList.remove('hidden');
-          }
         } else {
-          noNotifMsgEl.classList.remove('hidden');
+            noNotifMsgEl.classList.remove('hidden');
         }
-      } catch (error) {
-          console.error("Failed to load notifications:", error);
+      } else {
+        noNotifMsgEl.classList.remove('hidden');
       }
+    } catch (error) {
+        console.error("Failed to load notifications:", error);
+    }
   }
 // Fungsi wrapper untuk menjalankan pengecekan saat login dan setiap 3 jam
 function startMitraReminder() {
@@ -1845,25 +2537,90 @@ async function checkDailyTransactionStatusAndNotify() {
   const formatRp = n => "Rp " + (n || 0).toLocaleString("id-ID");
   let ongkirData = [];
   let todayNotes = [];
-  let allNotes = []; // Tambahkan ini untuk menyimpan semua nota
   // --- CEK ONGKIR DARI TAB NOTA ---
   const modalOngkirNota = el('cekOngkirNotaModal');
   const btnOpenOngkirNota = el('btnCekOngkirNota');
   const btnCloseOngkirNota = el('closeCekOngkirNota');
   const btnHitungOngkirNota = el('cekOngkirNotaBtn');
+  const btnLockOngkirNota = el('btnLockOngkirNota'); // Ambil element tombol kunci
+    
+    // Password konfirmasi
+  const PASSWORD_ONGKIR = "ShbtDlyKU#585";
+  btnOpenOngkirNota.addEventListener('click', async () => {
+    if (!currentUser) {
+      alert("Silahkan login terlebih dahulu.");
+      return;
+    }
   
-  btnOpenOngkirNota.addEventListener('click', () => {
-    // isi dropdown dari data ongkir yang sudah dimuat
+    try {
+      // 1. Ambil status gembok user saat ini dari Firebase
+      const statusSnap = await get(ref(db, `kurir_settings/${currentUser}/ongkirLocked`));
+      
+      // Default adalah true (terkunci) jika data belum ada di Firebase
+      let isLocked = statusSnap.exists() ? statusSnap.val() : true;
+  
+      if (isLocked) {
+        // 2. Jika terkunci, minta password inputan
+        const inputPass = prompt("Masukkan password untuk masuk ke fitur cek ongkir nota:");
+        
+        if (inputPass === null) return; // User membatalkan prompt
+  
+        if (inputPass === PASSWORD_ONGKIR) {
+          // Jika password benar, simpan status "terbuka" (false) ke Firebase per user
+          await set(ref(db, `kurir_settings/${currentUser}/ongkirLocked`), false);
+          bukaModalOngkir();
+        } else {
+          alert("Password salah! Akses ditolak.");
+        }
+      } else {
+        // 3. Jika status di Firebase sudah terbuka (false), langsung buka tanpa password
+        bukaModalOngkir();
+      }
+    } catch (error) {
+      console.error("Gagal memeriksa status keamanan Firebase:", error);
+      // Jalur alternatif jika koneksi Firebase terganggu demi keamanan
+      const inputPass = prompt("Masukkan password (Mode Cadangan):");
+      if (inputPass === PASSWORD_ONGKIR) bukaModalOngkir();
+    }
+  });
+  
+  // Fungsi pembantu untuk mengisi data dan membuka modal
+  function bukaModalOngkir() {
     fillSelect("asalNotaSelect", ongkirData);
     fillSelect("tujuanNotaSelect", ongkirData);
     modalOngkirNota.style.display = 'block';
+  }
+  // Tombol Kunci (Warna Merah) di dalam Fitur Cek Ongkir Nota
+  btnLockOngkirNota.addEventListener('click', async () => {
+    if (!currentUser) return;
+    
+    const konfirmasi = confirm("Apakah Anda ingin mengunci kembali fitur cek ongkir nota?");
+    if (!konfirmasi) return;
+  
+    try {
+      // Ubah nilai status kunci menjadi true di Firebase per user
+      await set(ref(db, `kurir_settings/${currentUser}/ongkirLocked`), true);
+      alert("Fitur berhasil dikunci kembali. Lintas HP akan meminta password saat masuk.");
+      
+      // Tutup modal setelah dikunci
+      modalOngkirNota.style.display = 'none';
+    } catch (error) {
+      console.error("Gagal mengunci fitur di Firebase:", error);
+      alert("Gagal mengunci sistem. Coba cek koneksi internet Anda.");
+    }
   });
   
   btnCloseOngkirNota.addEventListener('click', () => modalOngkirNota.style.display = 'none');
   window.addEventListener('click', e => {
     if (e.target === modalOngkirNota) modalOngkirNota.style.display = 'none';
   });
-
+  // Definisikan tombol baru di bagian atas bersama variable lainnya
+  const btnGunakanOngkirNota = el('btnGunakanOngkirNota');
+  const btnResetOngkirNota = el('btnResetOngkirNota'); // Ambil elemen tombol bersihkan
+  let hasilGlobal = 0; // Untuk menyimpan hasil hitungan sementara
+  let ketGlobal = "";  // Untuk menyimpan keterangan sementara
+  
+  // 1. KETIKA TOMBOL HITUNG DIKLIK (Hanya memunculkan hasil di modal)
   btnHitungOngkirNota.addEventListener('click', () => {
     const asal = el('asalNotaInput').value.trim() || el('asalNotaSelect').value.trim();
     const tujuan = el('tujuanNotaInput').value.trim() || el('tujuanNotaSelect').value.trim();
@@ -1872,36 +2629,91 @@ async function checkDailyTransactionStatusAndNotify() {
     const asalObj = asal ? findOngkir(asal) : null;
     const tujuanObj = tujuan ? findOngkir(tujuan) : null;
   
-    let hasil = 0;
-    let ket = "";
-  
     if (asalObj && tujuanObj) {
-      hasil = Math.max(0, (asalObj.ongkir + tujuanObj.ongkir) - 6000);
-      ket = `(Asal + Tujuan) - 6000`;
+      hasilGlobal = Math.max(0, (asalObj.ongkir + tujuanObj.ongkir) - 6000);
+      ketGlobal = `(Asal + Tujuan) - 6000`;
     } else if (asalObj || tujuanObj) {
-      hasil = (asalObj || tujuanObj).ongkir;
-      ket = `Ongkir normal`;
+      hasilGlobal = (asalObj || tujuanObj).ongkir;
+      ketGlobal = `Ongkir normal`;
     } else {
-      ket = `Lokasi belum dipilih`;
+      hasilGlobal = 0;
+      ketGlobal = `Lokasi belum dipilih`;
     }
   
-    // 🔹 tampilkan hasil ke user (10.000)
-    el('hasilOngkirNota').innerText = hasil > 0 ? hasil.toLocaleString("id-ID") : '–';
-    el('keteranganOngkirNota').innerText = ket;
+    // Tampilkan hasil ke user di DALAM modal (Modal TIDAK ditutup dulu)
+    el('hasilOngkirNota').innerText = hasilGlobal > 0 ? "Rp " + hasilGlobal.toLocaleString("id-ID") : '–';
+    el('keteranganOngkirNota').innerText = ketGlobal;
   
-    // 🔹 masukkan angka murni ke input ongkir
-    el('ongkir').value = hasil || 0;
-  
-    // 🔹 tampilkan info di bawah input ongkir
-    el('ongkirNotaInfo').innerText = `${ket} → Rp ${hasil.toLocaleString("id-ID")}`;
-  
-    // 🔹 PAKSA trigger event "input" agar calculateTotal() benar-benar jalan
-    const evt = new Event('input', { bubbles: true });
-    el('ongkir').dispatchEvent(evt);
-  
-    // 🔹 Tutup modal
+    // MUNCUL BERSAMAAN: Jika ada hasil ongkirnya, munculkan tombol Gunakan & Bersihkan
+    if (hasilGlobal > 0) {
+      btnGunakanOngkirNota.style.display = 'block';
+      btnResetOngkirNota.style.display = 'block'; // Muncul barengan saat berhasil dihitung
+    } else {
+      btnGunakanOngkirNota.style.display = 'none';
+      btnResetOngkirNota.style.display = 'none'; // Tetap sembunyi jika gagal / 0
+    }
+  });
+
+  // 2. KETIKA TOMBOL "GUNAKAN ONGKIR INI" DIKLIK (Baru eksekusi ke input nota & tutup modal)
+  btnGunakanOngkirNota.addEventListener('click', () => {
+    // Ambil elemen input ongkir utama
+    const inputOngkir = el('ongkir');
+    
+    // FORMAT OTOMATIS: Jika ada nilai, ubah ke format ribuan Indonesia (.toLocaleString)
+    if (hasilGlobal > 0) {
+      inputOngkir.value = hasilGlobal.toLocaleString("id-ID");
+    } else {
+      inputOngkir.value = 0;
+    }
+    
+    // Tampilkan info teks di bawah input ongkir nota utama
+    el('ongkirNotaInfo').innerText = `${ketGlobal} → Rp ${hasilGlobal.toLocaleString("id-ID")}`;
+    
+    // Jalankan kalkulasi total bawaan Anda
+    updateTotals(); // Memicu fungsi pembersih format input & hitung total nota
+    
+    // Sembunyikan kembali kedua tombol konfirmasi
+    btnGunakanOngkirNota.style.display = 'none';
+    btnResetOngkirNota.style.display = 'none'; // Ikut disembunyikan
+    
+    // Baru tutup modalnya
     modalOngkirNota.style.display = 'none';
   });
+
+  // 3. KETIKA TOMBOL "BERSIHKAN" DIKLIK (Refresh & sembunyikan tombol kembali)
+  btnResetOngkirNota.addEventListener('click', () => {
+    // Reset input teks dan select option ke default kosong
+    el('asalNotaSelect').selectedIndex = 0;
+    el('tujuanNotaSelect').selectedIndex = 0;
+    el('asalNotaInput').value = '';
+    el('tujuanNotaInput').value = '';
+    el('asalNotaSuggest').innerHTML = '';
+    el('tujuanNotaSuggest').innerHTML = '';
+    
+    // Kembalikan teks status hitungan ke awal
+    el('hasilOngkirNota').innerText = '–';
+    el('keteranganOngkirNota').innerText = '—';
+    
+    // Sembunyikan kedua tombol kembali setelah data bersih semula
+    btnGunakanOngkirNota.style.display = 'none';
+    btnResetOngkirNota.style.display = 'none';
+    
+    // Reset data di latar belakang
+    hasilGlobal = 0;
+    ketGlobal = "";
+  });
+
+  function bukaFiturOngkirNota() {
+    fillSelect("asalNotaSelect", ongkirData);
+    fillSelect("tujuanNotaSelect", ongkirData);
+    
+    // Reset tampilan lama di dalam modal
+    el('hasilOngkirNota').innerText = '–';
+    el('keteranganOngkirNota').innerText = '—';
+    btnGunakanOngkirNota.style.display = 'none'; // Sembunyikan tombol hijau
+    
+    modalOngkirNota.style.display = 'block';
+  }
   // 🔹 Fungsi reusable: buat suggestion dari input
   function setupSuggestion(inputId, suggestId) {
     const input = el(inputId);
@@ -2006,17 +2818,50 @@ function filterMitraTable(){
 if(mitraSearchInput) {
     mitraSearchInput.addEventListener('input', filterMitraTable);
 }
-
 // --- Mitra Section (SYNCHRONIZED) ---
     el('btnCariMitra').addEventListener('click', loadMitraData);
     el('btnAddTrxMitra').addEventListener('click', addMitraTrx);
     el('btnToggleTrxHistory').addEventListener('click', toggleMitraTrxHistory);
     el('btnCloseTrxHistory').addEventListener('click', toggleMitraTrxHistory);
 
+    // --- BARU: Event Listeners untuk Filter Riwayat Transaksi Mitra ---
+    el('btnCariMitraRiwayat').addEventListener('click', () => {
+        const selectedDate = el('mitraRiwayatDate').value;
+        if (selectedDate) {
+            // Memuat data untuk tanggal yang dipilih
+            refreshMitraTrxHistory(selectedDate);
+        } else {
+            // Jika tanggal kosong, muat semua data
+            alert('Mohon pilih tanggal untuk mencari riwayat transaksi.');
+        }
+    });
+
+    // --- Event Listeners untuk Filter Riwayat Transaksi Mitra ---
+    el('btnCariMitraRiwayat').addEventListener('click', () => {
+        const selectedDate = el('mitraRiwayatDate').value;
+        if (selectedDate) {
+            // Muat data untuk tanggal yang dipilih
+            refreshMitraTrxHistory(selectedDate);
+        } else {
+            alert('Mohon pilih tanggal untuk mencari riwayat transaksi.');
+        }
+    });
+    el('btnResetMitraRiwayat').addEventListener('click', () => {
+        // 1. Dapatkan tanggal hari ini dalam format YYYY-MM-DD
+        const today = new Date().toISOString().slice(0, 10);
+        
+        // 2. Set input tanggal ke tanggal hari ini
+        el('mitraRiwayatDate').value = today; 
+        
+        // 3. Muat riwayat transaksi dengan filter tanggal hari ini
+        refreshMitraTrxHistory(today);
+    });
+
     // Otomatis atur bulan ke bulan saat ini saat halaman dimuat
     document.addEventListener('DOMContentLoaded', (event) => {
         const today = new Date();
         const year = today.getFullYear();
+        // ... kode DOMContentLoaded lainnya
         const month = (today.getMonth() + 1).toString().padStart(2, '0');
         el('mitraMonth').value = `${year}-${month}`;
         loadMitraData();
@@ -2088,151 +2933,175 @@ if(mitraSearchInput) {
             mitraListBody.innerHTML = '<tr><td colspan="5">Gagal memuat data.</td></tr>';
         }
     }
-    // index (1).html: di dalam <script type="module">
-    
     async function addMitraTrx() {
         const mitraSelectEl = el('mitraSelect');
         const mitraId = mitraSelectEl.value;
         const trxToAdd = parseInt(el('trxMitraInput').value);
-        // Asumsi Anda sudah menambahkan input 'mitraMonth' di HTML dan mengisinya
         const selectedMonth = el('mitraMonth').value; 
-        
-        // Menggunakan currentUser sebagai ID Kurir
         const kurirId = currentUser; 
-    
+        
+        const loader = el('loadingOverlay');
+
         if (!mitraId || !selectedMonth || isNaN(trxToAdd) || trxToAdd <= 0 || !kurirId) {
             if (!kurirId) return alert('Error: ID Kurir tidak ditemukan. Mohon Login ulang.');
             return alert('Pilih mitra, bulan, dan isi jumlah TRX yang valid.');
         }
-        
-        // Ambil nama mitra dari teks option yang dipilih (Tambahkan ini agar bisa ditampilkan di riwayat)
-        const mitraName = mitraSelectEl.options[mitraSelectEl.selectedIndex].text;
-    
-        const trxRef = ref(db, `mitra_trx_monthly/${mitraId}/${selectedMonth}`);
-        const today = new Date().toISOString().slice(0, 10);
-        const trxDailyRef = ref(db, `mitra_trx_daily/${mitraId}/${today}`); 
-    
+
+        loader.style.display = 'flex';
+
         try {
+            const mitraName = mitraSelectEl.options[mitraSelectEl.selectedIndex].text;
+            
+            // LOGIKA WAKTU INDONESIA (WIB)
+            const now = new Date();
+            const wibString = now.toLocaleString("en-CA", { 
+                timeZone: "Asia/Jakarta", 
+                hour12: false 
+            }).replace(', ', 'T'); 
+            
+            const today = wibString.split('T')[0]; 
+            const timestampWIB = now.getTime();
+
+            const trxRef = ref(db, `mitra_trx_monthly/${mitraId}/${selectedMonth}`);
+            const trxDailyRef = ref(db, `mitra_trx_daily/${mitraId}/${today}`); 
+
             const snap = await get(trxRef);
-            const currentTrx = snap.exists() ? snap.val().trx : 0;
+            const currentTrx = snap.exists() ? (snap.val().trx || 0) : 0;
             
-            // 1. Update total TRX bulanan (Menggunakan transaction untuk keandalan)
+            // 1. Update total TRX bulanan
             await set(trxRef, { trx: currentTrx + trxToAdd });
-    
-            // 2. SIMPAN LOG DETAIL TRANSAKSI (Untuk riwayat Kurir & Admin)
+
+            // 2. SIMPAN LOG
             const logRef = push(ref(db, 'mitra_trx_log')); 
-            
             await set(logRef, {
                 kurirId: kurirId, 
                 mitraId: mitraId, 
-                mitraName: mitraName, // Tambahkan ini agar nama mitra bisa ditampilkan
+                mitraName: mitraName,
                 trxCount: trxToAdd, 
-                timestamp: Date.now(),
+                timestamp: timestampWIB,
+                tanggal: today,
                 bulanTujuan: selectedMonth
             });
-    
+
             // 3. Tambahkan transaksi harian
             await set(trxDailyRef, { trx: true }); 
-    
+
             alert(`Berhasil menambahkan ${trxToAdd} transaksi.`);
-            el('trxMitraInput').value = '1';
-            el('mitraSelect').value = '';
+
+            // --- BAGIAN RESET FORM ---
+            el('trxMitraInput').value = '0';       // Reset jumlah ke 1
+            el('mitraSelect').value = '';          // Reset pilihan mitra ke default
+            // el('mitraMonth').value = '';        // Boleh direset atau tidak (tergantung kebutuhan)
+
+            // --- AUTO REFRESH RIWAYAT ---
+            // Agar setelah klik "OK" di alert, tabel di bawah langsung muncul data baru
+            if (!el('trxMitraHistoryContainer').classList.contains('hidden')) {
+                refreshMitraTrxHistory(today); 
+            }
+            
         } catch (error) {
             console.error("Gagal menambahkan transaksi:", error);
             alert("Gagal menambahkan transaksi: " + error.message);
+        } finally {
+            loader.style.display = 'none';
         }
     }
-    // index (2).html: di dalam <script type="module">
-    
-    function toggleMitraTrxHistory() {
+    async function toggleMitraTrxHistory() {
         const container = el('trxMitraHistoryContainer');
         const button = el('btnToggleTrxHistory');
-        
-        // Toggle class 'hidden' pada container
-        container.classList.toggle('hidden');
+        const dateInput = el('mitraRiwayatDate');
     
-        if (!container.classList.contains('hidden')) {
-            // Jika container ditampilkan, ubah teks tombol dan muat data
+        if (container.classList.contains('hidden')) {
+            container.classList.remove('hidden');
             button.textContent = 'Memuat Riwayat...';
             button.disabled = true;
+    
+            // 🎯 OTOMATIS HARI INI (WIB)
+            const todayIndo = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
+            dateInput.value = todayIndo; 
             
-            // Panggil fungsi data
-            refreshMitraTrxHistory().then(() => {
+            // Langsung refresh data berdasarkan hari ini
+            refreshMitraTrxHistory(todayIndo).then(() => {
                 button.textContent = 'Sembunyikan Riwayat Transaksi Mitra';
                 button.disabled = false;
             });
+    
         } else {
-            // Jika container disembunyikan
+            container.classList.add('hidden');
             button.textContent = 'Lihat Riwayat Transaksi Mitra';
             button.disabled = false;
         }
     }
-    // --- Fungsi untuk Memuat Riwayat Transaksi Mitra (Difilter Kurir) ---
-    async function refreshMitraTrxHistory() {
+    // --- Fungsi untuk Memuat Riwayat Transaksi Mitra (Sinkron WIB) ---
+    async function refreshMitraTrxHistory(filterDate = null) {
         return new Promise((resolve) => {
-            // Menggunakan currentUser sebagai kunci kurir
             if (!currentUser) {
                 el('trxMitraHistoryBody').innerHTML = '<tr><td colspan="3">Silakan login untuk melihat riwayat.</td></tr>';
                 resolve();
                 return;
             }
-    
             const historyBody = el('trxMitraHistoryBody');
             historyBody.innerHTML = '<tr><td colspan="3">Memuat riwayat...</td></tr>';
     
-            // Ganti node dari trx_mitra_history ke mitra_trx_log
-            const historyRef = ref(db, 'mitra_trx_log'); 
-            
+            const historyRef = ref(db, 'mitra_trx_log');
             get(historyRef).then((snapshot) => {
                 const trxs = [];
                 if (snapshot.exists()) {
                     snapshot.forEach((childSnapshot) => {
                         const trx = childSnapshot.val();
-                        // FILTERING: Ganti kunci filter dari trx.kurir menjadi trx.kurirId
-                        if (trx.kurirId === currentUser) { 
-                            trxs.push(trx);
+                        
+                        if (trx.kurirId === currentUser) {
+                            // 🎯 SINKRONISASI TANGGAL:
+                            // Kita gunakan field 'tanggal' yang sudah kita simpan saat addMitraTrx
+                            // Jika tidak ada, baru fallback ke timestamp yang diconvert ke WIB
+                            const trxDate = trx.tanggal || new Date(trx.timestamp).toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
+    
+                            if (!filterDate || trxDate === filterDate) {
+                                 trxs.push(trx);
+                            }
                         }
                     });
                 }
     
-                // Urutkan berdasarkan waktu terbaru (descending)
-                trxs.sort((a, b) => b.timestamp - a.timestamp); 
-    
-                historyBody.innerHTML = ''; 
-    
+                // Urutkan: Terbaru di atas
+                trxs.sort((a, b) => b.timestamp - a.timestamp);
+                historyBody.innerHTML = '';
+                
                 if (trxs.length === 0) {
-                    historyBody.innerHTML = '<tr><td colspan="3">Belum ada riwayat transaksi Mitra untuk akun ini.</td></tr>';
+                    const msg = filterDate 
+                        ? `Tidak ada riwayat transaksi untuk tanggal ${filterDate}.` 
+                        : 'Belum ada riwayat transaksi.';
+                    historyBody.innerHTML = `<tr><td colspan="3">${msg}</td></tr>`;
                     resolve();
                     return;
                 }
     
+                // Tampilkan data ke tabel
                 trxs.forEach(trx => {
-                    const date = new Date(trx.timestamp).toLocaleString('id-ID', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
+                    // Format jam menit untuk tampilan tabel (WIB)
+                    const jamIndo = new Date(trx.timestamp).toLocaleString('id-ID', {
+                        timeZone: 'Asia/Jakarta',
                         hour: '2-digit',
                         minute: '2-digit'
                     });
     
                     const row = `
                         <tr>
-                            <td>${date}</td>
-                            <td style="text-align:left;">${trx.mitraName || trx.mitraId || '-'}</td>
-                            <td>${trx.trxCount}</td>
+                            <td style="font-size: 0.75rem;">${trx.tanggal}<br><small>${jamIndo} WIB</small></td>
+                            <td style="text-align:left; font-weight:600;">${trx.mitraName || '-'}</td>
+                            <td style="font-weight:bold; color:#2ecc71;">${trx.trxCount}</td>
                         </tr>
                     `;
                     historyBody.insertAdjacentHTML('beforeend', row);
                 });
-                resolve(); 
+                resolve();
             }).catch((error) => {
-                console.error("Gagal memuat riwayat transaksi mitra:", error);
+                console.error("Gagal memuat riwayat:", error);
                 historyBody.innerHTML = '<tr><td colspan="3" style="color:#c0392b;">Gagal memuat data.</td></tr>';
                 resolve();
             });
         });
     }
-    // Fungsi untuk memeriksa dan mengirim notifikasi
 // Fungsi untuk memeriksa dan mengirim notifikasi
     async function checkDailyTransactionStatusAndNotify() {
         // Pastikan currentUser sudah ada
@@ -2415,7 +3284,6 @@ loadOngkir();
 
   // Reset input lain
   el('ongkir').value = 0;
-  el('custPhone').value = '';
 
   // Reset total & preview
   updateTotals();
@@ -2434,27 +3302,28 @@ loadOngkir();
   function addItemUI(pref = {}) {
     const wrap = document.createElement('div');
     wrap.className = 'line-card';
+    // Di dalam fungsi addItemUI
     wrap.innerHTML = `
-      <div class="top-row">
-        <div class="col-name">
-          <label class="small">Nama Item</label>
-          <input class="iname" type="text" value="${pref.name || ''}" placeholder="Nama menu / barang">
-        </div>
+      <button class="removeBtn" style="position: absolute; top: 12px; right: 12px; background:#ff4757; color:white; border:none; padding:5px 12px; border-radius:8px; font-size:10px; font-weight:bold;">HAPUS</button>
+    
+      <div class="col-name">
+        <label class="small" style="color:white; margin-bottom:5px; display:block;">Nama Item</label>
+        <input class="iname" type="text" placeholder="Masukkan nama barang/keterangan...">
+      </div>
+    
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
         <div class="col-qty">
-          <label class="small">Qty</label>
-          <input class="iqty" type="number" min="1" value="${pref.qty || 1}">
+          <label class="small" style="color:white; margin-bottom:5px; display:block;">Qty</label>
+          <input class="iqty" type="number" min="1" value="1">
         </div>
         <div class="col-price">
-          <label class="small">Harga (Rp)</label>
-          <input class="iprice" type="text" inputmode="numeric" 
-            value="${pref.price ? pref.price.toLocaleString('id-ID') : ''}" 
-            placeholder="0">
+          <label class="small" style="color:white; margin-bottom:5px; display:block;">Harga (Rp)</label>
+          <input class="iprice" type="text" placeholder="0">
         </div>
       </div>
-  
-      <div class="bottom-row">
-        <button class="btn danger mini-btn removeBtn">🗑 Hapus</button>
-        <div class="sub isub">Rp 0</div>
+    
+      <div class="isub">
+        <span></span> <span class="total-val">Rp 0</span>
       </div>
     `;
   
@@ -2491,137 +3360,114 @@ loadOngkir();
   
     updateTotals();
   }
-
   function addTambahanUI(pref = {}) {
-      const row = document.createElement("div");
-      row.className = "line-card line-card-tambahan";
+    const row = document.createElement("div");
+    row.className = "line-card line-card-tambahan";
+    row.style.position = "relative"; // Penting untuk tombol hapus absolut
+    
+    row.innerHTML = `
+      <button class="t-remove" style="position: absolute; top: 12px; right: 12px; background:#ff4757; color:white; border:none; padding:4px 10px; border-radius:8px; font-size:10px; font-weight:bold;">HAPUS</button>
       
-      // Perhatikan bahwa di sini saya sudah memastikan input nominal bertipe text
-      // dan sudah diformat di awal: value="${(pref.nominal || 0).toLocaleString('id-ID')}"
-      row.innerHTML = `
-        <div class="top-row" style="
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 14px;
-            align-items: end;
-        ">
-          <div>
-            <label class="small">Jenis Tambahan</label>
-            <select class="t-type" style="width: 100%;">
-              <option ${!pref.type ? "selected" : ""} value="">-- Pilih --</option>
-              <option ${pref.type === "Tambahan Ojeg" ? "selected" : ""}>Tambahan Ojeg</option>
-              <option ${pref.type === "Tambahan Malam" ? "selected" : ""}>Tambahan Malam</option>
-              <option ${pref.type === "Tambahan Tempat" ? "selected" : ""}>Tambahan Tempat</option>
-              <option ${pref.type === "Tambahan Hujan" ? "selected" : ""}>Tambahan Hujan</option>
-              <option ${pref.type === "Tambahan Parkir" ? "selected" : ""}>Tambahan Parkir</option>
-              <option ${pref.type === "Tambahan Kapasitas" ? "selected" : ""}>Tambahan Kapasitas</option>
-              <option ${pref.type === "Tambahan Cash Minuman" ? "selected" : ""}>Tambahan Cash Minuman</option>
-              <option ${pref.type === "Lainnya" ? "selected" : ""}>Lainnya</option>
-            </select>
-          </div>
-          <div>
-            <label class="small">Nominal (Rp)</label>
-            <input class="t-nom" type="text" min="0" value="${(pref.nominal || 0).toLocaleString('id-ID')}" style="width: 100%;">
-          </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div class="col-type">
+          <label class="small" style="color:white; display:block; margin-bottom:4px; font-size:11px;">Jenis Tambahan</label>
+          <select class="t-type" style="width: 100%; padding: 10px; border-radius: 8px; border:none; background:white; color:black;">
+            <option ${!pref.type ? "selected" : ""} value="">-- Pilih --</option>
+            <option ${pref.type === "Tambahan Ojeg" ? "selected" : ""}>Tambahan Ojeg</option>
+            <option ${pref.type === "Tambahan Malam" ? "selected" : ""}>Tambahan Malam</option>
+            <option ${pref.type === "Tambahan Tempat" ? "selected" : ""}>Tambahan Tempat</option>
+            <option ${pref.type === "Tambahan Tempat (Ojek)" ? "selected" : ""}>Tambahan Tempat (Ojek)</option>
+            <option ${pref.type === "Tambahan Hujan" ? "selected" : ""}>Tambahan Hujan</option>
+            <option ${pref.type === "Tambahan Parkir" ? "selected" : ""}>Tambahan Parkir</option>
+            <option ${pref.type === "Tambahan Kapasitas" ? "selected" : ""}>Tambahan Kapasitas</option>
+            <option ${pref.type === "Tambahan Cash Minuman" ? "selected" : ""}>Tambahan Cash Minuman</option>
+            <option ${pref.type === "Tambahan Tempat >3 (Pasar)" ? "selected" : ""}>Tambahan Tempat >3 (Pasar)</option>
+            <option ${pref.type === "Lainnya" ? "selected" : ""}>Lainnya</option>
+          </select>
         </div>
-        
-        <div class="bottom-row" style="margin-top: 14px;">
-          <button class="mini-btn t-remove" style="width: 100%;">Hapus Tambahan</button>
+        <div class="col-nom">
+          <label class="small" style="color:white; display:block; margin-bottom:4px; font-size:11px;">Nominal (Rp)</label>
+          <input class="t-nom" type="text" min="0" value="${(pref.nominal || 0).toLocaleString('id-ID')}" 
+                 style="width: 100%; padding: 10px; border-radius: 8px; border:none; background:white; color:black; box-sizing:border-box;">
         </div>
-      `;
-      
-      tambahanArea.appendChild(row);
-      
-      // Ambil referensi elemen setelah mereka dimasukkan ke dalam DOM
-      const typeSelect = row.querySelector(".t-type");
-      const nominalInput = row.querySelector(".t-nom");
+      </div>
+    `;
+    
+    tambahanArea.appendChild(row);
   
-      // 🎯 KODE BARU DIMULAI DI SINI 🎯
-      
-      // 1. Event Listener INPUT pada Nominal (Untuk Formatting 2.000, 5.000, dll.)
-      nominalInput.addEventListener("input", (e) => {
-          let value = e.target.value;
-          value = value.replace(/\D/g, ''); // Hapus semua non-digit (termasuk titik/koma)
+    // --- LOGIKA EVENT LISTENER ---
+    const typeSelect = row.querySelector(".t-type");
+    const nominalInput = row.querySelector(".t-nom");
   
-          if (value === '') {
-              e.target.value = '';
-          } else {
-              const numericValue = Number(value);
-              e.target.value = numericValue.toLocaleString('id-ID');
-          }
-          updateTotals(); // Hitung ulang total
-      });
-  
-      // 2. Event Listener CHANGE pada Tipe Tambahan (Untuk Harga Otomatis)
-      typeSelect.addEventListener("change", () => {
-          const selectedType = typeSelect.value;
-          let autoNominal = 0;
-  
-          switch(selectedType) {
-              case "Tambahan Ojeg":
-              case "Tambahan Malam":
-              case "Tambahan Hujan":
-              case "Tambahan Parkir":
-              case "Tambahan Tempat":
-                  autoNominal = 2000;
-                  break;
-              case "Tambahan Cash Minuman":
-                  autoNominal = 5000;
-                  break;
-              // Tambahan Kapasitas & Lainnya akan tetap 0 (input manual)
-              default:
-                  autoNominal = 0; 
-                  break;
-          }
-  
-          // Set nilai nominal input. Gunakan toLocaleString agar tampil 2.000 atau 5.000
-          nominalInput.value = autoNominal > 0 ? autoNominal.toLocaleString('id-ID') : '0';
-          
-          // Setelah nilai berubah, panggil updateTotals
-          updateTotals();
-      });
-      
-      // 3. Event Listener Hapus (Kode lama Anda)
-      row.querySelector(".t-remove").addEventListener("click", () => {
-        row.remove();
+    // Formatting Nominal
+    nominalInput.addEventListener("input", (e) => {
+        let value = e.target.value.replace(/\D/g, '');
+        e.target.value = value ? Number(value).toLocaleString('id-ID') : '';
         updateTotals();
-      });
-      
+    });
+  
+    // Auto-Nominal berdasarkan Jenis
+    typeSelect.addEventListener("change", () => {
+        const selectedType = typeSelect.value;
+        const rates = {
+            "Tambahan Ojeg": 2000, "Tambahan Malam": 2000, "Tambahan Hujan": 2000,
+            "Tambahan Parkir": 2000, "Tambahan Tempat": 2000, "Tambahan Tempat (Ojek)": 2000,
+            "Tambahan Tempat >3 (Pasar)": 3000, "Tambahan Cash Minuman": 5000
+        };
+        
+        const autoNominal = rates[selectedType] || 0;
+        nominalInput.value = autoNominal > 0 ? autoNominal.toLocaleString('id-ID') : '0';
+        updateTotals();
+    });
+    
+    // Hapus Baris
+    row.querySelector(".t-remove").addEventListener("click", () => {
+      row.remove();
       updateTotals();
-   }
+    });
+    
+    updateTotals();
+  }
   function updateTotals() {
     let total = 0;
-  
-    // Loop semua item
+    
+    // 1. Hitung Item
     itemsArea.querySelectorAll('.line-card').forEach(c => {
       const qty = parseInt(c.querySelector('.iqty').value) || 0;
-  
-      // 🔹 Ambil harga dan bersihkan titik pemisah
-      const priceRaw = c.querySelector('.iprice').value.replace(/\./g, '') || '0';
+      const priceRaw = c.querySelector('.iprice').value.replace(/\D/g, '') || '0';
       const price = parseInt(priceRaw);
-  
       const sub = qty * price;
-  
-      // 🔹 Tampilkan subtotal dengan format "Rp 10.000"
+      
+      // Update subtotal per item (Pastikan selector .isub sesuai dengan struktur baru Anda)
       c.querySelector('.isub').innerText = 'Rp ' + sub.toLocaleString('id-ID');
-  
       total += sub;
     });
-  
-    // 🔹 Tambahkan ongkir (hapus titik dulu)
-    const ong = parseInt((el('ongkir')?.value || '0').replace(/\./g, '')) || 0;
+    
+    // 2. Tambah Ongkir
+    const ongkirEl = document.getElementById('ongkir');
+    const ong = parseInt((ongkirEl?.value || '0').replace(/\D/g, '')) || 0;
     total += ong;
-  
-    // 🔹 Tambahan biaya (hapus titik juga)
-    let tambahan = 0;
+    
+    // 3. Tambah Biaya Tambahan
     tambahanArea.querySelectorAll('.t-nom').forEach(n => {
-      tambahan += parseInt((n.value || '0').replace(/\./g, '')) || 0;
+      total += parseInt((n.value || '0').replace(/\D/g, '')) || 0;
     });
-    total += tambahan;
-  
-    // 🔹 Tampilkan total keseluruhan dengan format ribuan
-    el('totalPesanan').innerText = 'Rp ' + total.toLocaleString('id-ID');
-  
+    
+    // 4. Update Tampilan dengan Animasi
+    const totalDisplay = document.getElementById('totalPesanan');
+    const formattedTotal = 'Rp ' + total.toLocaleString('id-ID');
+    
+    // Jika nilai berubah, jalankan animasi pop
+    if (totalDisplay.innerText !== formattedTotal) {
+        totalDisplay.innerText = formattedTotal;
+        
+        // Animasi "Pop" yang keren
+        totalDisplay.style.transform = 'scale(1.1)';
+        setTimeout(() => {
+            totalDisplay.style.transform = 'scale(1)';
+        }, 200);
+    }
+    
     updatePreviewFilename();
     return total;
   }
@@ -2669,18 +3515,18 @@ loadOngkir();
 
     // PERBAIKAN: Gunakan helper untuk mendapatkan nilai murni
     const ongkir = getNumericValueFromInput(el('ongkir'))||0;
-    const custPhone=(el('custPhone').value||'').replace(/\D/g,'');
     const kurir = currentUser || '';
 
     const total = subtotal + ongkir + tambahTotal;
     const noNota = leftPad((lastNoNota||0)+1);
     const createdAt = new Date().toISOString();
-
+    const statusOrder = document.getElementById('statusOrder').value; // <--- TAMBAHKAN INI
     // Text nota
     const lines = [];
     lines.push('📒 NOTA SAHABATKU DELIVERY');
     lines.push('══════════════════════');
-    lines.push(`Kurir Training   : ${kurir}`);
+    lines.push(`Kurir   : ${kurir}`);
+    lines.push(`Status  : ${statusOrder}`); // <--- TAMBAHKAN BARIS INI
     lines.push(`No Nota : ${noNota}`);
     lines.push(`Tanggal : ${new Date(createdAt).toLocaleString('id-ID')}`);
     lines.push('──────────────────────');
@@ -2719,7 +3565,8 @@ loadOngkir();
     
     return {
       kurir, noNota, createdAt,
-      items, tambahans, ongkir, total, custPhone,
+      statusOrder, // <--- MASUKKAN KE OBJEK AGAR TERSIMPAN DI FIREBASE
+      items, tambahans, ongkir, total,
       text: lines.join('\n')
     };
 
@@ -2820,6 +3667,7 @@ loadOngkir();
 
     // tulis ke /nota/{user}/{noteId}
     await set(ref(db, `nota/${currentUser}/${noteId}`), noteObj);
+    
     alert(`Nota Tersimpan ✅ (No Nota ${data.noNota})`);
     refreshNotaHistory();
     updatePreviewFilename();
@@ -2827,104 +3675,122 @@ loadOngkir();
 
   /* ===================
      RIWAYAT & PELACAK (Realtime)
-  ====================*/
-function refreshNotaHistory(filterDate = null){
-    if(!currentUser) return;
-    const listEl = el('notaHistory'); 
-    listEl.innerHTML = 'Memuat...';
-
-    const notesRef = ref(db, `nota/${currentUser}`);
-    
-    // Gunakan get() untuk sekali ambil data saat ada filter tanggal
-    if (filterDate) {
-        get(notesRef).then(snap => {
-            const val = snap.val() || {};
-            const allNotes = Object.values(val).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-            const filteredNotes = allNotes.filter(n => n.createdAt.startsWith(filterDate));
-            displayNotes(filteredNotes, listEl, filterDate);
-        }).catch(error => {
-            console.error("Error fetching filtered notes:", error);
-            listEl.innerHTML = '<p class="small" style="color:#c0392b">Gagal memuat riwayat. Cek koneksi internet Anda.</p>';
-        });
-    } else {
-        // Gunakan onValue() untuk load awal dan update realtime
-        onValue(notesRef, (snap) => {
-            const val = snap.val() || {};
-            allNotes = Object.values(val).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-            displayNotes(allNotes, listEl);
-            todayNotes = allNotes.filter(n => n.createdAt.slice(0, 10) === new Date().toISOString().slice(0, 10));
-            updateDailyReport();
-        }, (error) => {
-            console.error("Error fetching all notes:", error);
-            listEl.innerHTML = '<p class="small" style="color:#c0392b">Gagal memuat riwayat. Cek koneksi internet Anda.</p>';
-        });
-    }
-}
-// Tambahkan di akhir fungsi refreshNotaHistory(), setelah elemen tombol "Lihat" dibuat
-document.querySelectorAll('.btnLihatNota').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const notaId = btn.dataset.id;
-    const notaRef = ref(db, `nota/${currentUser}/${notaId}`);
-    const snap = await get(notaRef);
-
-    if (snap.exists()) {
-      const notaData = snap.val();
-
-      // Gunakan fungsi buildNotaPreviewText() kalau sudah ada,
-      // atau buat sederhana:
-      const notaText = `
-No Nota: ${notaData.noNota}
-Kurir: ${notaData.kurir}
-Tanggal: ${notaData.tanggal}
-Customer: ${notaData.customer || '-'}
-Ongkir: Rp ${notaData.ongkir?.toLocaleString('id-ID') || 0}
-Total: Rp ${notaData.total?.toLocaleString('id-ID') || 0}
-
-Daftar Item:
-${(notaData.items || [])
-  .map(i => `- ${i.nama} (${i.qty}x) @Rp${i.harga.toLocaleString('id-ID')}`)
-  .join('\n')}
-      `.trim();
-
-      // tampilkan modal sama seperti di tab Nota
-      el('notaModalText').innerText = notaText;
-      el('notaTextModal').style.display = 'block';
-    }
-  });
-});
-
-// Tombol tutup modal tetap sama
-el('closeNotaTextModal').addEventListener('click', () => {
-  el('notaTextModal').style.display = 'none';
-});
-
-function displayNotes(notes, listEl, filterDate = null) {
-    if (notes.length === 0) {
-        if (filterDate) {
-            listEl.innerHTML = `<p class="small">Tidak ada nota pada tanggal ini.</p>`;
-        } else {
-            listEl.innerHTML = '<p class="small">Belum ada nota.</p>';
-        }
-        return;
-    }
-    
-    let html = '<div class="list-v">';
-    notes.forEach(n => {
-        html += `<div style="display:flex;justify-content:space-between;align-items:center;border:1px solid #eef6ff;padding:12px;border-radius:12px;background:#fff;gap:8px">
-            <div style="flex:1">
-                <div class="small">${new Date(n.createdAt).toLocaleString('id-ID')}</div>
-                <div style="font-weight:800">No: ${n.noNota} • Total: Rp ${(Number(n.total) || 0).toLocaleString('id-ID')}</div>
-                <div class="small">${(n.items || []).length} item • Ongkir Rp ${(Number(n.ongkir) || 0).toLocaleString('id-ID')}</div>
-            </div>
-            <div class="btnbar">
-                <button class="btn" onclick="viewNote('${n.id}')">Lihat</button>
-                <button class="btn danger" onclick="hapusNote('${n.id}')">Hapus</button>
-            </div>
-        </div>`;
+    ====================*/
+  function refreshNotaHistory(filterDate = null) {
+      if (!currentUser) return;
+      const listEl = el('notaHistory');
+      listEl.innerHTML = 'Memuat...';
+  
+      // Helper untuk mendapatkan tanggal YYYY-MM-DD format Indonesia (WIB)
+      const getTglIndo = (dateObj) => {
+          return new Date(dateObj).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+      };
+  
+      const notesRef = ref(db, `nota/${currentUser}`);
+  
+      if (filterDate) {
+          // Jika user mencari tanggal spesifik
+          get(notesRef).then(snap => {
+              const val = snap.val() || {};
+              const allNotes = Object.values(val).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+              
+              // Filter berdasarkan tanggal Indonesia
+              const filteredNotes = allNotes.filter(n => getTglIndo(n.createdAt) === filterDate);
+              displayNotes(filteredNotes, listEl, filterDate);
+          });
+      } else {
+          // Tampilan AWAL: Otomatis ambil hari ini (WIB)
+          const todayIndo = getTglIndo(new Date());
+  
+          onValue(notesRef, (snap) => {
+              const val = snap.val() || {};
+              const allNotes = Object.values(val).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  
+              // Filter hanya yang tanggal pembuatannya = hari ini di Indonesia
+              const filteredToday = allNotes.filter(n => getTglIndo(n.createdAt) === todayIndo);
+  
+              displayNotes(filteredToday, listEl, todayIndo);
+              
+              // Update variabel global jika diperlukan untuk dashboard
+              window.todayNotes = filteredToday;
+              if(typeof updateDailyReport === "function") updateDailyReport();
+          });
+      }
+  }
+  // Tambahkan di akhir fungsi refreshNotaHistory(), setelah elemen tombol "Lihat" dibuat
+  document.querySelectorAll('.btnLihatNota').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const notaId = btn.dataset.id;
+      const notaRef = ref(db, `nota/${currentUser}/${notaId}`);
+      const snap = await get(notaRef);
+  
+      if (snap.exists()) {
+        const notaData = snap.val();
+  
+        // Gunakan fungsi buildNotaPreviewText() kalau sudah ada,
+        // atau buat sederhana:
+        const notaText = `
+  No Nota: ${notaData.noNota}
+  Kurir: ${notaData.kurir}
+  Tanggal: ${notaData.tanggal}
+  Customer: ${notaData.customer || '-'}
+  Ongkir: Rp ${notaData.ongkir?.toLocaleString('id-ID') || 0}
+  Total: Rp ${notaData.total?.toLocaleString('id-ID') || 0}
+  
+  Daftar Item:
+  ${(notaData.items || [])
+    .map(i => `- ${i.nama} (${i.qty}x) @Rp${i.harga.toLocaleString('id-ID')}`)
+    .join('\n')}
+        `.trim();
+  
+        // tampilkan modal sama seperti di tab Nota
+        el('notaModalText').innerText = notaText;
+        el('notaTextModal').style.display = 'block';
+      }
     });
-    html += '</div>';
-    listEl.innerHTML = html;
-}
+  });
+  
+  // Tombol tutup modal tetap sama
+  el('closeNotaTextModal').addEventListener('click', () => {
+    el('notaTextModal').style.display = 'none';
+  });
+  
+  function displayNotes(notes, listEl, filterDate = null) {
+      if (notes.length === 0) {
+          listEl.innerHTML = `<p class="small" style="text-align:center; padding:20px;">Tidak ada nota pada tanggal ${filterDate || ''}.</p>`;
+          return;
+      }
+  
+      let html = '<div class="list-v" style="display:flex; flex-direction:column; gap:10px;">';
+      notes.forEach(n => {
+          // Konversi jam ke WIB untuk tampilan di list
+          const jamIndo = new Date(n.createdAt).toLocaleTimeString('id-ID', { 
+              timeZone: 'Asia/Jakarta', 
+              hour: '2-digit', 
+              minute: '2-digit' 
+          });
+  
+          html += `
+          <div style="display:flex; justify-content:space-between; align-items:center; border:1px solid #eef6ff; padding:12px; border-radius:12px; background:#fff; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+              <div style="flex:1">
+                  <div class="small" style="color:#64748b; font-weight:bold;">🕒 Jam ${jamIndo}</div>
+                  <div style="font-weight:800; margin:4px 0;">
+                      No: ${n.noNota} • <span style="color:var(--sky)">[${n.statusOrder || 'Admin'}]</span>
+                  </div>
+                  <div style="font-size:0.9rem; font-weight:700; color:#2ecc71;">
+                      Total: Rp ${(Number(n.total) || 0).toLocaleString('id-ID')}
+                  </div>
+                  <div class="small" style="color:#94a3b8;">${(n.items || []).length} item • Ongkir Rp ${(Number(n.ongkir) || 0).toLocaleString('id-ID')}</div>
+              </div>
+              <div class="btnbar" style="display:flex; flex-direction:column; gap:5px;">
+                  <button class="btn" style="padding:6px 12px; font-size:0.8rem;" onclick="viewNote('${n.id}')">Lihat</button>
+                  <button class="btn danger" style="padding:6px 12px; font-size:0.8rem;" onclick="hapusNote('${n.id}')">Hapus</button>
+              </div>
+          </div>`;
+      });
+      html += '</div>';
+      listEl.innerHTML = html;
+  }
   
   const notaTextModal = el('notaTextModal');
   const notaModalText = el('notaModalText');
@@ -2997,7 +3863,8 @@ function displayNotes(notes, listEl, filterDate = null) {
       const lines = [];
       lines.push('📒 NOTA SAHABATKU DELIVERY');
       lines.push('══════════════════════════');
-      lines.push(`Kurir Training   : ${nota.kurir || '-'}`);
+      lines.push(`Kurir   : ${nota.kurir || '-'}`);
+      lines.push(`Status  : ${nota.statusOrder || '-'}`); // <--- TAMBAHKAN INI
       lines.push(`No Nota : ${nota.noNota || '-'}`);
       lines.push(`Tanggal : ${new Date(nota.createdAt).toLocaleString('id-ID')}`); // Gunakan createdAt dari DB jika ada
       lines.push('────────────────────────────');
@@ -3066,7 +3933,7 @@ function displayNotes(notes, listEl, filterDate = null) {
   }
 );
 window.hapusNote = async (id)=>{
-    if(!confirm('Hapus nota ini dari Firebase?')) return;
+    if(!confirm('Hapus nota ini dari Riwayat?')) return;
     const snap = await get(ref(db, `nota/${currentUser}/${id}`));
     if(!snap.exists()){ alert('Nota tidak ditemukan'); return; }
     const n = snap.val();
@@ -3097,7 +3964,13 @@ window.hapusNote = async (id)=>{
     alert('Nota berhasil dihapus. Nomor nota berikutnya telah diperbarui.');
     refreshNotaHistory();
 };
-
+// Fungsi mendapatkan waktu WIB saat ini dalam format ISO string
+function getWIBTime() {
+  const now = new Date();
+  // Menambahkan offset 7 jam untuk WIB
+  const wibTime = new Date(now.getTime() + (7 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
+  return now.toISOString(); // Firebase biasanya simpan ISO, kita atur tampilannya saja nanti
+}
 // Fungsi bantu
 function clearPreviewNota(){
     const preview = document.getElementById('previewNota');
@@ -3111,11 +3984,11 @@ function updateTotalPesananLabel(){
 }
 
 el('btnCariRiwayat').addEventListener('click', () => {
-    const date = el('riwayatDate').value;
-    if (date) {
-        refreshNotaHistory(date);
+    const dateInput = el('riwayatDate').value; // Hasilnya YYYY-MM-DD
+    if (dateInput) {
+        refreshNotaHistory(dateInput);
     } else {
-        alert('Pilih tanggal untuk mencari.');
+        alert('Pilih tanggal dulu.');
     }
 });
 
@@ -3141,57 +4014,133 @@ function updateDailyReport() {
     el('laporanNotaHarian').innerText = todayNotes.length;
     el('laporanOngkirHarian').innerText = formatRp(ongkirHarian + tambahanHarian);
 }
+el('btnLoadRekap').addEventListener('click', async () => {
+    if (!currentUser) return alert('Login dulu!');
+    const ym = el('rekapMonth').value; 
+    if (!ym) return alert('Pilih bulan!');
 
-el('btnLoadRekap').addEventListener('click', async ()=>{
-  if(!currentUser){ alert('Login dulu'); return; }
-  const ym = el('rekapMonth').value;
-  if(!ym){ alert('Pilih bulan'); return; }
-  const [year, month] = ym.split('-').map(Number);
+    const [year, month] = ym.split('-').map(Number);
+    
+    // 1. Ambil Data
+    const snapNota = await get(ref(db, `nota/${currentUser}`));
+    const snapTrxLog = await get(ref(db, 'mitra_trx_log'));
+    
+    const dataNota = snapNota.val() || {};
+    const dataTrx = snapTrxLog.val() || {};
+    
+    const byDate = {};
 
-  const snap = await get(ref(db, `nota/${currentUser}`));
-  const val = snap.val()||{};
-  const arr = Object.values(val);
-  const byDate = {};
+    // --- LOGIKA WAKTU INDONESIA ---
+    const options = { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' };
+    const todayStr = new Date().toLocaleDateString('en-CA', options); // YYYY-MM-DD jam HP
 
-  arr.forEach(n=>{
-    const d = new Date(n.createdAt);
-    if(d.getFullYear()===year && (d.getMonth()+1)===month){
-      const key = n.createdAt.slice(0,10);
-      if(!byDate[key]) byDate[key] = {count:0,ongkir:0,tambahan:0,total:0, ids:[]};
-      byDate[key].count++;
-      byDate[key].ongkir += Number(n.ongkir)||0;
-      const t = Array.isArray(n.tambahans) ? n.tambahans.reduce((s,x)=> s+(Number(x.nominal)||0), 0) : 0;
-      byDate[key].tambahan += t;
-      byDate[key].total += (Number(n.ongkir)||0) + t;
-      byDate[key].ids.push(n.id || n._id || n.key); // simpan id nota
+    let hIncome = 0, hO = 0, hT = 0;
+    let totalTrxBulanan = 0;
+
+    // --- 2. PROSES DATA NOTA (Sumber Utama Rincian Harian) ---
+    Object.values(dataNota).forEach(n => {
+        if (!n.createdAt) return;
+        
+        // Konversi createdAt (UTC) ke Tanggal Indonesia (WIB)
+        const dObj = new Date(n.createdAt);
+        const dStrIndo = dObj.toLocaleDateString('en-CA', options); // Hasil: YYYY-MM-DD
+        
+        const ong = Number(n.ongkir) || 0;
+        const tam = Array.isArray(n.tambahans) 
+            ? n.tambahans.reduce((s, x) => s + (Number(x.nominal) || 0), 0) 
+            : (Number(n.tambahan) || 0);
+        const tot = ong + tam;
+
+        // Dashboard Atas: Income Hari Ini (Realtime WIB)
+        if (dStrIndo === todayStr) {
+            hIncome += tot;
+            hO += ong;
+            hT += tam;
+        }
+
+        // Kelompokkan Nota per Tanggal (Hanya untuk bulan yang dipilih user)
+        const [yIndo, mIndo] = dStrIndo.split('-').map(Number);
+        if (yIndo === year && mIndo === month) {
+            if (!byDate[dStrIndo]) {
+                byDate[dStrIndo] = { notaCount: 0, trxCount: 0, ongkir: 0, tambahan: 0, total: 0 };
+            }
+            byDate[dStrIndo].notaCount++;
+            byDate[dStrIndo].ongkir += ong;
+            byDate[dStrIndo].tambahan += tam;
+            byDate[dStrIndo].total += tot;
+        }
+    });
+
+    // --- 3. PROSES DATA TRX MITRA (Sinkronkan dengan Tanggal Indonesia) ---
+    Object.values(dataTrx).forEach(t => {
+        if (t.kurirId === currentUser && t.timestamp) {
+            const tObj = new Date(t.timestamp);
+            const tStrIndo = t.tanggal || tObj.toLocaleDateString('en-CA', options);
+
+            const [yT, mT] = tStrIndo.split('-').map(Number);
+            
+            // Akumulasi Total TRX Mitra Sebulan (Dashboard Atas)
+            if (yT === year && mT === month) {
+                totalTrxBulanan += (Number(t.trxCount) || 0);
+                
+                // Masukkan ke rincian harian hanya jika tanggal tersebut ada notanya
+                if (byDate[tStrIndo]) {
+                    byDate[tStrIndo].trxCount += (Number(t.trxCount) || 0);
+                }
+            }
+        }
+    });
+
+    // --- 4. UPDATE DASHBOARD ATAS ---
+    el('todayIncome').innerText = "Rp " + hIncome.toLocaleString('id-ID');
+    el('hO').innerText = hO.toLocaleString('id-ID');
+    el('hT').innerText = hT.toLocaleString('id-ID');
+    el('sumTrxBulanan').innerText = totalTrxBulanan.toLocaleString('id-ID');
+
+    // --- 5. RENDER LIST (Hanya Tanggal yang ada Riwayat Nota) ---
+    const listContainer = el('rekapList');
+    listContainer.innerHTML = '';
+    let sN = 0, sOng = 0, sTam = 0, sTot = 0;
+
+    const sortedDates = Object.keys(byDate).sort().reverse();
+
+    if (sortedDates.length === 0) {
+        listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;">Tidak ada riwayat nota di bulan ini.</div>';
+    } else {
+        sortedDates.forEach(k => {
+            const v = byDate[k];
+            const card = `
+                <div style="background:white; padding:12px; border-radius:15px; border:1px solid #f1f5f9; display:grid; grid-template-columns: 50px 1fr 90px; align-items:center; margin-bottom:8px;">
+                    <div style="text-align:center; border-right:2px solid #f8fbff;">
+                        <small style="display:block; font-size:0.5rem; color:#94a3b8; font-weight:800;">TGL</small>
+                        <strong style="font-size:1rem;">${k.split('-')[2]}</strong>
+                    </div>
+                    <div style="padding-left:12px;">
+                        <div style="font-size:0.85rem; font-weight:800;">${v.notaCount} Nota | ${v.trxCount || 0} Trx Mitra</div>
+                        <div style="font-size:0.6rem; color:#64748b;">O: ${v.ongkir.toLocaleString()} | T: ${v.tambahan.toLocaleString()}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <small style="display:block; font-size:0.5rem; color:#94a3b8;">TOTAL</small>
+                        <strong style="font-size:0.85rem; color:#2ecc71;">Rp${v.total.toLocaleString()}</strong>
+                    </div>
+                </div>`;
+            listContainer.insertAdjacentHTML('beforeend', card);
+            
+            sN += v.notaCount;
+            sOng += v.ongkir;
+            sTam += v.tambahan;
+            sTot += v.total;
+        });
     }
-  });
 
-  const tbody = el('rekapBody'); 
-  tbody.innerHTML='';
-  let sumNota=0,sumO=0,sumT=0,sumTot=0;
-
-  Object.keys(byDate).sort().forEach(k=>{
-      const v = byDate[k];
-      const totalHarian = v.ongkir + v.tambahan;
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-          <td>${new Date(k).toLocaleDateString('id-ID')}</td>
-          <td>${v.count}</td>
-          <td>${v.ongkir.toLocaleString('id-ID')}</td>
-          <td>${v.tambahan.toLocaleString('id-ID')}</td>
-          <td>${totalHarian.toLocaleString('id-ID')}</td>
-      `;
-      tbody.appendChild(tr);
-      sumNota += v.count; sumO += v.ongkir; sumT += v.tambahan; sumTot += totalHarian;
-  });
-
-  el('sumNota').innerText = sumNota;
-  el('sumOngkir').innerText = sumO.toLocaleString('id-ID');
-  el('sumTambahan').innerText = sumT.toLocaleString('id-ID');
-  el('sumTotal').innerText = sumTot.toLocaleString('id-ID');
+    // --- 6. UPDATE SUMMARY TOTAL (BOX BIRU) ---
+    el('sumNota').innerText = sN;
+    el('sumOngkir').innerText = "Rp " + sOng.toLocaleString('id-ID');
+    el('sumTambahan').innerText = "Rp " + sTam.toLocaleString('id-ID');
+    el('sumTotal').innerText = "Rp " + sTot.toLocaleString('id-ID');
+    
+    el('btnDownloadRekap').style.display = 'block';
 });
-
 /* ===================
    Export / Share Image (Web)
    Versi Sinkron dengan Preview (#notaPreview)
@@ -3331,8 +4280,12 @@ btnCloseOngkirNota.addEventListener('click', () => modalOngkirNota.style.display
 window.addEventListener('click', e => {
   if (e.target === modalOngkirNota) modalOngkirNota.style.display = 'none';
 });
+// Definisikan tombol baru di bagian atas bersama variable lainnya
+const btnGunakanOngkirNota = el('btnGunakanOngkirNota');
+let hasilGlobal = 0; // Untuk menyimpan hasil hitungan sementara
+let ketGlobal = "";  // Untuk menyimpan keterangan sementara
 
-// --- Fungsi cari dan hitung ongkir ---
+// 1. KETIKA TOMBOL HITUNG DIKLIK (Hanya memunculkan hasil di modal)
 btnHitungOngkirNota.addEventListener('click', () => {
   const asal = el('asalNotaInput').value.trim() || el('asalNotaSelect').value.trim();
   const tujuan = el('tujuanNotaInput').value.trim() || el('tujuanNotaSelect').value.trim();
@@ -3341,29 +4294,46 @@ btnHitungOngkirNota.addEventListener('click', () => {
   const asalObj = asal ? findOngkir(asal) : null;
   const tujuanObj = tujuan ? findOngkir(tujuan) : null;
 
-  let hasil = 0;
-  let ket = "";
-
   if (asalObj && tujuanObj) {
-    hasil = Math.max(0, (asalObj.ongkir + tujuanObj.ongkir) - 6000);
-    ket = `(Asal + Tujuan) - 6000`;
+    hasilGlobal = Math.max(0, (asalObj.ongkir + tujuanObj.ongkir) - 6000);
+    ketGlobal = `(Asal + Tujuan) - 6000`;
   } else if (asalObj || tujuanObj) {
-    hasil = (asalObj || tujuanObj).ongkir;
-    ket = `Ongkir normal`;
+    hasilGlobal = (asalObj || tujuanObj).ongkir;
+    ketGlobal = `Ongkir normal`;
   } else {
-    ket = `Lokasi belum dipilih`;
+    hasilGlobal = 0;
+    ketGlobal = `Lokasi belum dipilih`;
   }
 
-  el('hasilOngkirNota').innerText = hasil > 0 ? hasil.toLocaleString("id-ID") : '–';
-  el('keteranganOngkirNota').innerText = ket;
+  // Tampilkan hasil ke user di DALAM modal (Modal TIDAK ditutup dulu)
+  el('hasilOngkirNota').innerText = hasilGlobal > 0 ? "Rp " + hasilGlobal.toLocaleString("id-ID") : '–';
+  el('keteranganOngkirNota').innerText = ketGlobal;
 
-  // masukkan nilai murni (tanpa titik) ke input utama
-  el('ongkir').value = hasil || 0;
-  el('ongkirNotaInfo').innerText = `${ket} → Rp ${hasil}`;
-  calculateTotal();
-  modalOngkirNota.style.display = 'none';
+  // Jika ada hasil ongkirnya, munculkan tombol "Gunakan Ongkir Ini"
+  if (hasilGlobal > 0) {
+    btnGunakanOngkirNota.style.display = 'block';
+  } else {
+    btnGunakanOngkirNota.style.display = 'none';
+  }
 });
 
+// 2. KETIKA TOMBOL "GUNAKAN ONGKIR INI" DIKLIK (Baru eksekusi ke input nota & tutup modal)
+btnGunakanOngkirNota.addEventListener('click', () => {
+  // Masukkan nilai murni (tanpa titik) ke input utama
+  el('ongkir').value = hasilGlobal || 0;
+  
+  // Tampilkan info teks di bawah input ongkir nota utama
+  el('ongkirNotaInfo').innerText = `${ketGlobal} → Rp ${hasilGlobal.toLocaleString("id-ID")}`;
+  
+  // Jalankan kalkulasi total bawaan Anda
+  calculateTotal();
+  
+  // Sembunyikan kembali tombol konfirmasi hijau
+  btnGunakanOngkirNota.style.display = 'none';
+  
+  // Baru tutup modalnya
+  modalOngkirNota.style.display = 'none';
+});
 // --- Suggestion function reusable ---
 function setupSuggestion(inputId, suggestId) {
   const input = el(inputId);
@@ -3394,11 +4364,100 @@ function setupSuggestion(inputId, suggestId) {
     if (!suggest.contains(e.target) && e.target !== input) suggest.classList.remove('show');
   });
 }
+function scrollToCenter(element) {
+  const container = document.getElementById('tabNav');
+  const scrollPos = element.offsetLeft - (container.offsetWidth / 2) + (element.offsetWidth / 2);
+  container.scrollTo({ left: scrollPos, behavior: 'smooth' });
+}
+
+document.querySelectorAll('nav.tab button').forEach(button => {
+  button.addEventListener('click', function() {
+    scrollToCenter(this);
+  });
+});
 
 // Aktifkan suggestion untuk asal & tujuan
 setupSuggestion('asalNotaInput', 'asalNotaSuggest');
 setupSuggestion('tujuanNotaInput', 'tujuanNotaSuggest');
+// Fungsi Kirim Lokasi yang Lebih Stabil
+async function kirimDataKeSheets(jenisAksi) {
+  if (!navigator.geolocation) return;
 
+  // --- 1. KUNCI DATA DI SINI (Snapshot) ---
+  // Kita ambil data sebelum GPS berjalan agar No Nota tidak berubah
+  const namaKurir = document.getElementById('curUser').innerText.trim();
+  
+  let noNotaAktif = "-";
+  let statusOrderAktif = "-";
+
+  if (jenisAksi !== "Login Aplikasi") {
+    // Ambil nomor nota yang sedang dikerjakan user saat ini
+    noNotaAktif = document.getElementById('nextNota').innerText.trim();
+    statusOrderAktif = document.getElementById('statusOrder').value;
+  }
+
+  // --- 2. JALANKAN GPS ---
+  navigator.geolocation.getCurrentPosition(async (position) => {
+    if (!namaKurir && jenisAksi !== "Login Aplikasi") return;
+
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+    // Link Maps yang benar (menggunakan koordinat)
+    const mapsLink = `https://www.google.com/maps?q=${lat},${lng}`;
+
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzAMH4FQP1POtoQDEY56U0WEL4_EdzaTWlmZyXq42ZyX5YsSwpPkolY0LDYVFRJq2M-/exec';
+
+    const payload = {
+      waktu: new Date().toLocaleString('id-ID'),
+      kurir: namaKurir,
+      noNota: noNotaAktif, // Menggunakan nota yang sudah dikunci di atas
+      statusOrder: statusOrderAktif,
+      lokasi: mapsLink,
+      aksi: jenisAksi
+    };
+
+    try {
+      await fetch(scriptURL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      console.log(`Berhasil: ${jenisAksi} | Nota: ${noNotaAktif}`);
+    } catch (error) {
+      console.error("Gagal", error);
+    }
+  }, (error) => {
+    console.error("Error: ", error.message);
+  }, { enableHighAccuracy: true });
+}
+
+// --- TRIGGER OTOMATIS SAAT LOGIN ---
+const observerApp = new MutationObserver(() => {
+  const appLayar = document.getElementById('app');
+  if (!appLayar.classList.contains('hidden')) {
+    setTimeout(() => kirimDataKeSheets("Login Aplikasi"), 2000);
+    observerApp.disconnect();
+  }
+});
+observerApp.observe(document.getElementById('app'), { attributes: true, attributeFilter: ['class'] });
+
+// --- TRIGGER SAAT KLIK TOMBOL ---
+document.getElementById('btnSaveForm').addEventListener('click', () => {
+    kirimDataKeSheets("Simpan Nota");
+});
+
+document.getElementById('btnExportPreview').addEventListener('click', () => {
+    kirimDataKeSheets("Simpan Foto");
+});
+document.querySelectorAll('.floating-bottom-nav button').forEach(button => {
+  button.addEventListener('click', function() {
+    document.querySelector('.floating-bottom-nav button.active').classList.remove('active');
+    this.classList.add('active');
+  });
+});
+observerApp.observe(document.getElementById('app'), { attributes: true, attributeFilter: ['class'] });
+lucide.createIcons();
 </script>
 </body>
 </html>
