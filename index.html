@@ -139,7 +139,7 @@
                 <div class="grid grid-cols-4 gap-2.5">
                     <button onclick="openModulNota()" class="bg-white dark:bg-darkCard p-3 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center space-y-1.5 shadow-sm">
                         <div class="p-2 bg-blue-50 dark:bg-blue-950 rounded-lg text-primary"><i data-lucide="file-plus" class="w-4 h-4"></i></div>
-                        <span class="text-[11px] font-medium">Buat Nota</span>
+                        <span class="text-[11px] font-medium">Nota</span>
                     </button>
                     <button onclick="navigateTo('screen-riwayat')" class="bg-white dark:bg-darkCard p-3 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center space-y-1.5 shadow-sm">
                         <div class="p-2 bg-indigo-50 dark:bg-indigo-950 rounded-lg text-indigo-500"><i data-lucide="history" class="w-4 h-4"></i></div>
@@ -157,11 +157,12 @@
                         <div class="p-2 bg-purple-50 dark:bg-purple-950 rounded-lg text-purple-500"><i data-lucide="navigation" class="w-4 h-4"></i></div>
                         <span class="text-[11px] font-medium">Ongkir</span>
                     </button>
-                    <button onclick="openAbsensi()" class="bg-white dark:bg-darkCard p-3 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center space-y-1.5 shadow-sm">
+                    <button onclick="openJadwal()" class="bg-white dark:bg-darkCard p-3 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center space-y-1.5 shadow-sm">
                         <div class="p-2 bg-teal-50 dark:bg-teal-950 rounded-lg text-teal-500"><i data-lucide="calendar" class="w-4 h-4"></i></div>
                         <span class="text-[11px] font-medium">Jadwal</span>
                     </button>
-                    <button onclick="openAbsensi()" class="bg-white dark:bg-darkCard p-3 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center space-y-1.5 shadow-sm">
+                    
+                    <button onclick="openSOP()" class="bg-white dark:bg-darkCard p-3 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center space-y-1.5 shadow-sm">
                         <div class="p-2 bg-orange-50 dark:bg-orange-950 rounded-lg text-orange-500"><i data-lucide="bookmark" class="w-4 h-4"></i></div>
                         <span class="text-[11px] font-medium">SOP</span>
                     </button>
@@ -604,6 +605,11 @@
                     <i data-lucide="home" class="w-5 h-5"></i>
                     <span class="text-[10px] font-bold mt-1">Dashboard</span>
                 </button>
+        
+                <button onclick="navigateTo('screen-nota')" class="relative -top-7 flex items-center justify-center w-14 h-14 bg-primary text-white rounded-full shadow-lg border-4 border-white dark:border-darkCard transition-transform active:scale-95">
+                    <i data-lucide="plus" class="w-7 h-7"></i>
+                </button>
+        
                 <button onclick="navigateTo('screen-pengaturan')" class="flex flex-col items-center justify-center w-12 h-12 text-slate-400">
                     <i data-lucide="settings" class="w-5 h-5"></i>
                     <span class="text-[10px] font-medium mt-1">Sistem</span>
@@ -622,11 +628,21 @@
             </div>
         </div>
     </div>
+    <div id="modal-sop" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-700">
+            <h3 class="text-lg font-bold text-slate-800 dark:text-white">Panduan SOP Kurir</h3>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                Anda akan diarahkan ke dokumen SOP Sahabatku. Pastikan Anda sudah memahami prosedur yang berlaku untuk kelancaran operasional.
+            </p>
+            <div class="mt-6 flex gap-3">
+                <button onclick="closeModal('modal-sop')" class="flex-1 px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl">Batal</button>
+                <a href="https://sites.google.com/view/websitekhususkurir/dokumen-sahabatku" target="_blank" onclick="closeModal('modal-sop')" class="flex-1 px-4 py-2 text-sm font-semibold text-white bg-orange-500 rounded-xl text-center">Buka Dokumen</a>
+            </div>
+        </div>
+    </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, remove, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
         const firebaseConfig = {
           apiKey: "AIzaSyDweL8xXcOu6ZODYzCa1KpqZVPLH5Ocijk",
           authDomain: "aplikasi-sahabatkugroup.firebaseapp.com",
@@ -1193,11 +1209,9 @@
                 if (typeof renderKurirMitraView === 'function') renderKurirMitraView();
                 if (typeof renderAdminLogMitra === 'function') renderAdminLogMitra();
                 
-                // Panggil fungsi statistik agar dashboard selalu update sesuai WIB
                 if (typeof calculateMitraStats === 'function') calculateMitraStats();
             });
         
-            // Pemeriksaan Sesi Otomatis (Auto-Login)
             const savedSession = localStorage.getItem('sahabatku_session');
             if (savedSession) {
                 userSession = JSON.parse(savedSession);
@@ -1352,24 +1366,19 @@
             }
         }
 
-        // Fungsi baru untuk mengisi opsi dropdown kurir pada Riwayat Transaksi Mitra secara otomatis
         window.populateMitraLogKurirDropdown = function() {
             const dropdown = document.getElementById('am-log-filter-kurir');
             if (!dropdown) return;
             
-            // Simpan pilihan yang sedang dipilih user agar tidak reset saat realtime database berubah
             const currentSelection = dropdown.value || 'semua';
             
             dropdown.innerHTML = '<option value="semua">-- Semua Kurir --</option>';
             
-            // Ambil daftar kurir unik yang ada dari state data akun kurir (cloudKurirList)
             for (let k in cloudKurirList) {
                 if (cloudKurirList[k].role !== 'admin' && cloudKurirList[k].nama) {
                     dropdown.innerHTML += `<option value="${cloudKurirList[k].nama}">${cloudKurirList[k].nama}</option>`;
                 }
             }
-            
-            // Kembalikan ke pilihan user sebelumnya
             dropdown.value = currentSelection;
         }
 
@@ -1389,7 +1398,6 @@
                 const m = cloudMitraList[key];
                 if(searchKey && !m.nama.toLowerCase().includes(searchKey)) continue;
 
-                // Hitung Kalkulasi Trx Bulan Ini dari Log
                 let trxBulanIni = 0;
                 for(let lk in cloudLogMitra) {
                     if(cloudLogMitra[lk].mitraNama === m.nama) {
@@ -1422,15 +1430,12 @@
         window.openModulNota = function() {
             document.getElementById('nota-kurir').value = userSession.nama;
             
-            // Set Ongkir Awal otomatis menjadi 6000 saat buka modul nota
             const inputOngkir = document.getElementById('nota-ongkir');
             if (inputOngkir) inputOngkir.value = '6.000';
             
-            // Berikan placeholder / info contoh 10.000 pada form input harga
             if (document.getElementById('item-harga')) document.getElementById('item-harga').placeholder = 'Contoh: 10000';
             if (document.getElementById('biaya-nominal')) document.getElementById('biaya-nominal').placeholder = 'Contoh: 10000';
 
-            // Reset state nota baru
             notaState = { items: [], biaya: [], subtotal: 0, ongkir: 6.000, total: 6.000 };
             if (document.getElementById('container-items')) document.getElementById('container-items').innerHTML = '';
             if (document.getElementById('container-biaya')) document.getElementById('container-biaya').innerHTML = '';
@@ -1438,29 +1443,22 @@
             calculateNotaTotal();
             navigateTo('screen-nota');
         };
-      // Fungsi otomatis mengubah teks jadi Kapital di Awal Kata saat diketik
         window.autocapitalText = function(el) {
             let posisiKursor = el.selectionStart;
             let teksAsli = el.value;
             
-            // Ubah huruf pertama tiap kata jadi kapital
             let teksKapital = teksAsli.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
             
             el.value = teksKapital;
-            // Kembalikan posisi kursor biar gak loncat ke belakang saat mengetik
             el.setSelectionRange(posisiKursor, posisiKursor);
         }
-
-        // Fungsi otomatis mengubah angka menjadi format Rupiah bermata titik saat diketik
         window.autoformatRupiah = function(el) {
-            // Ambil hanya angka saja, buang karakter huruf/titik/koma
             let angka = el.value.replace(/[^,\d]/g, '').toString();
             let split   = angka.split(',');
             let sisa    = split[0].length % 3;
             let rupiah  = split[0].substr(0, sisa);
             let ribuan  = split[0].substr(sisa).match(/\d{3}/gi);
 
-            // tambahkan titik jika yang diketik ribuan
             if (ribuan) {
                 let separator = sisa ? '.' : '';
                 rupiah += separator + ribuan.join('.');
@@ -2157,8 +2155,19 @@
             document.getElementById('ongkir-tujuan').value = '';
             document.getElementById('ongkir-result-card').classList.add('hidden');
         }
-
-        window.openAbsensi = function() { window.open('https://forms.google.com', '_blank'); }
+        window.openJadwal = function() {
+            window.location.href = "absensi-kurir-sahabatku.html";
+        };
+        
+        window.openSOP = function() {
+            const modal = document.getElementById('modal-sop');
+            if (modal) modal.classList.remove('hidden');
+        };
+        
+        window.closeModal = function(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.add('hidden');
+        };
         window.toggleSection = function(id) { document.getElementById(id).classList.toggle('hidden'); }
 
         // Theme Engine Manager
