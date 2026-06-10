@@ -156,7 +156,7 @@
                         <div class="p-2 bg-amber-50 dark:bg-amber-950 rounded-lg text-amber-500"><i data-lucide="store" class="w-4 h-4"></i></div>
                         <span class="text-[11px] font-medium">Mitra</span>
                     </button>
-                    <button onclick="navigateTo('screen-ongkir')" class="bg-white dark:bg-darkCard p-3 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center space-y-1.5 shadow-sm">
+                    <button onclick="openOngkirFeature()" class="bg-white dark:bg-darkCard p-3 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center space-y-1.5 shadow-sm">
                         <div class="p-2 bg-purple-50 dark:bg-purple-950 rounded-lg text-purple-500"><i data-lucide="navigation" class="w-4 h-4"></i></div>
                         <span class="text-[11px] font-medium">Ongkir</span>
                     </button>
@@ -210,6 +210,15 @@
                         <div>
                             <span class="text-xs font-bold block">Manajemen Mitra</span>
                             <span class="text-[10px] text-slate-400">Tambah, edit data & trx mitra</span>
+                        </div>
+                    </button>
+                    <button onclick="navigateTo('screen-admin-ongkir')" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
+                        <div class="p-2.5 bg-purple-50 dark:bg-purple-950/40 rounded-xl text-purple-500">
+                            <i data-lucide="truck" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold block">Daftar Ongkir</span>
+                            <span class="text-[10px] text-slate-400">Wilayah & tarif</span>
                         </div>
                     </button>
 
@@ -269,8 +278,8 @@
                         <div class="col-span-2">
                             <label class="block text-[10px] text-slate-400 mb-1">Status Blokir / Akses</label>
                             <select id="ak-status" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-                                <option value="aktif">Aktif (Bisa Login)</option>
-                                <option value="nonaktif">Nonaktif / Terblokir</option>
+                                <option value="aktif">AKTIF</option>
+                                <option value="nonaktif">BLOKIR</option>
                             </select>
                         </div>
                     </div>
@@ -361,6 +370,87 @@
                     </div>
                     <div id="container-admin-daftar-mitra" class="space-y-2">
                         </div>
+                </div>
+            </div>
+            
+            <div id="screen-admin-ongkir" class="screen p-4 space-y-4">
+            
+                <!-- Tombol Mode -->
+                <div class="flex gap-2">
+                    <button onclick="showAdminOngkirMode('normal')" class="flex-1 py-2 rounded-xl text-xs font-bold bg-primary text-white">Cek Ongkir</button>
+                    <button onclick="showAdminOngkirMode('jarak')" class="flex-1 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800">Hitung Jarak</button>
+                    <button onclick="showAdminOngkirMode('rahasia')" class="flex-1 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800">3 Arah</button>
+                </div>
+            
+                <!-- Form Tambah / Edit Ongkir -->
+                <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border shadow-sm space-y-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400" id="title-form-ongkir">Tambah / Edit Ongkir</h3>
+                    <input type="hidden" id="ongkir-id-edit">
+                    <input type="text" id="ongkir-wilayah" placeholder="Nama wilayah" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                    <input type="text" id="ongkir-tarif" oninput="autoformatRupiah(this)" placeholder="Tarif ongkir, contoh: 10.000" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                    <div class="flex gap-2">
+                        <button onclick="saveDataOngkir()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl uppercase">Simpan</button>
+                        <button onclick="resetFormOngkir()" class="px-3 py-2 bg-slate-100 text-slate-500 dark:bg-slate-800 text-xs rounded-xl">Batal</button>
+                    </div>
+                </div>
+            
+                <!-- Popup Mode Ongkir -->
+                <div id="admin-ongkir-popup" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative">
+                        
+                        <button onclick="closeAdminOngkirPopup()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
+                            ✕
+                        </button>
+            
+                        <!-- Normal -->
+                        <div id="admin-ongkir-normal" class="hidden space-y-3">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Cek Ongkir</h3>
+                            <div class="relative">
+                                <input type="text" id="admin-ongkir-asal" oninput="updateAdminOngkirSuggestions('asal')" placeholder="Ketik asal wilayah..." class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                                <div id="suggest-admin-ongkir-asal" class="hidden absolute left-0 right-0 top-full mt-1 bg-white dark:bg-darkCard border rounded-xl shadow-lg max-h-40 overflow-y-auto z-20"></div>
+                            </div>
+                            <div class="relative">
+                                <input type="text" id="admin-ongkir-tujuan" oninput="updateAdminOngkirSuggestions('tujuan')" placeholder="Ketik tujuan wilayah..." class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                                <div id="suggest-admin-ongkir-tujuan" class="hidden absolute left-0 right-0 top-full mt-1 bg-white dark:bg-darkCard border rounded-xl shadow-lg max-h-40 overflow-y-auto z-20"></div>
+                            </div>
+                            <button onclick="hitungOngkirAdminNormal()" class="w-full py-2 bg-primary text-white text-xs font-bold rounded-xl uppercase">Hitung</button>
+                            <div id="admin-ongkir-result-normal" class="hidden bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 p-4 rounded-2xl text-center">
+                                <h3 class="text-xl font-black text-success" id="admin-ongkir-display-normal">Rp 0</h3>
+                            </div>
+                        </div>
+            
+                        <!-- Jarak -->
+                        <div id="admin-ongkir-jarak" class="hidden space-y-3">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Hitung Jarak</h3>
+                            <div class="relative">
+                                <input type="text" id="admin-jarak-asal" oninput="updateAdminOngkirSuggestionsJarak()" placeholder="Ketik wilayah/asal..." class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                                <div id="suggest-admin-jarak-asal" class="hidden absolute left-0 right-0 top-full mt-1 bg-white dark:bg-darkCard border rounded-xl shadow-lg max-h-40 overflow-y-auto z-20"></div>
+                            </div>
+                            <input type="number" id="admin-jarak-km" placeholder="Jarak dalam KM" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                            <button onclick="hitungOngkirJarak()" class="w-full py-2 bg-indigo-600 text-white text-xs font-bold rounded-xl uppercase">Hitung Jarak</button>
+                            <div id="admin-ongkir-result-jarak" class="hidden bg-indigo-50 dark:bg-indigo-950 border border-indigo-200 p-4 rounded-2xl text-center">
+                                <h3 class="text-xl font-black text-indigo-600" id="admin-ongkir-display-jarak">Rp 0</h3>
+                            </div>
+                        </div>
+            
+                        <!-- 3 Arah -->
+                        <div id="admin-ongkir-rahasia" class="hidden space-y-3">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Cek Ongkir 3 Arah</h3>
+                            <input type="text" id="admin-ongkir-3-asal" placeholder="Asal" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                            <input type="text" id="admin-ongkir-3-titik" placeholder="Titik" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                            <input type="text" id="admin-ongkir-3-tujuan" placeholder="Tujuan" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                            <button onclick="hitungOngkirTigaArah()" class="w-full py-2 bg-amber-500 text-white text-xs font-bold rounded-xl uppercase">Hitung 3 Arah</button>
+                            <div id="admin-ongkir-result-3" class="hidden bg-amber-50 dark:bg-amber-950 border border-amber-200 p-4 rounded-2xl text-center">
+                                <h3 class="text-xl font-black text-amber-600" id="admin-ongkir-display-3">Rp 0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            
+                <!-- Daftar Ongkir -->
+                <div class="space-y-2">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Daftar Wilayah Ongkir</h4>
+                    <div id="container-admin-ongkir" class="space-y-2"></div>
                 </div>
             </div>
 
@@ -581,19 +671,24 @@
 
             <div id="screen-ongkir" class="screen p-4 space-y-4">
                 <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border shadow-sm space-y-4">
-                    <div>
+                    <div class="relative">
                         <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Asal</label>
-                        <input type="text" id="ongkir-asal" placeholder="Ketik nama lokasi..." class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg">
+                        <input type="text" id="ongkir-asal" oninput="updateOngkirSuggestions('asal')" placeholder="Ketik nama wilayah..." class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg">
+                        <div id="suggest-ongkir-asal" class="hidden absolute left-0 right-0 top-full mt-1 bg-white dark:bg-darkCard border rounded-xl shadow-lg max-h-40 overflow-y-auto z-20"></div>
                     </div>
-                    <div>
+            
+                    <div class="relative">
                         <label class="block text-xs font-bold text-slate-400 mb-1 uppercase">Tujuan</label>
-                        <input type="text" id="ongkir-tujuan" placeholder="Ketik tujuan pengiriman..." class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg">
+                        <input type="text" id="ongkir-tujuan" oninput="updateOngkirSuggestions('tujuan')" placeholder="Ketik nama wilayah..." class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg">
+                        <div id="suggest-ongkir-tujuan" class="hidden absolute left-0 right-0 top-full mt-1 bg-white dark:bg-darkCard border rounded-xl shadow-lg max-h-40 overflow-y-auto z-20"></div>
                     </div>
+            
                     <div class="grid grid-cols-2 gap-2">
                         <button onclick="hitungTarifOngkir()" class="py-2.5 bg-primary text-white font-bold text-xs rounded-xl uppercase">Cek Ongkir</button>
                         <button onclick="clearOngkirForm()" class="py-2.5 bg-slate-100 text-slate-500 dark:bg-slate-800 text-xs rounded-xl">Clear</button>
                     </div>
                 </div>
+            
                 <div id="ongkir-result-card" class="hidden bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 p-5 rounded-2xl text-center">
                     <p class="text-xs text-emerald-600 font-bold uppercase">Hasil Estimasi Tarif</p>
                     <h3 class="text-2xl font-black text-success mt-1" id="ongkir-tarif-display">Rp 0</h3>
@@ -695,6 +790,8 @@
         let cloudNotaList = {};
         let cloudMitraList = {};
         let cloudLogMitra = {};
+        let cloudOngkirList = {};
+        let adminOngkirMode = 'normal';
         
         function getWibDate() {
             const now = new Date();
@@ -775,6 +872,10 @@
                 if (typeof renderAdminDaftarMitra === 'function') renderAdminDaftarMitra();
                 if (typeof sembunyikanRiwayatMitraAdmin === 'function') sembunyikanRiwayatMitraAdmin();
                 if (typeof calculateMitraStats === 'function') calculateMitraStats();
+            });
+            onValue(ref(db, 'ongkir_wilayah'), (snapshot) => {
+                cloudOngkirList = snapshot.val() || {};
+                if (typeof renderAdminOngkirList === 'function') renderAdminOngkirList();
             });
 
             // Pemeriksaan Sesi Otomatis (Auto-Login)
@@ -1145,9 +1246,11 @@
                 password: password,
                 tglGabung: tglGabung,
                 status: status,
-                role: "kurir" 
+                role: "kurir",
+                ongkirLocked: true,
+                ongkirPassword: ""
             };
-        
+
             let targetRef;
             if (idEdit) {
                 // Mode Edit data yang ada
@@ -1234,10 +1337,28 @@
                             </div>
                             <span class="text-[10px] text-slate-400">Gabung: ${item.tglGabung}</span>
                         </div>
+                
                         <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg grid grid-cols-2 gap-1 font-mono text-[11px]">
                             <div class="dark:text-slate-300">User: <span class="text-primary font-bold">@${item.username}</span></div>
                             <div class="dark:text-slate-300">Pass: <span class="text-amber-500 font-bold">${item.password}</span></div>
                         </div>
+                
+                        <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] text-slate-500">Akses Cek Ongkir</span>
+                                <span class="text-[10px] font-bold ${item.ongkirLocked ? 'text-rose-500' : 'text-emerald-500'}">
+                                    ${item.ongkirLocked ? 'TERKUNCI' : 'TERBUKA'}
+                                </span>
+                            </div>
+                            <input type="text" id="ongkir-pass-${key}" value="${item.ongkirPassword || ''}" placeholder="Password khusus ongkir" class="w-full px-2 py-1 border rounded-md text-[11px] dark:bg-darkBg dark:border-slate-700">
+                            <button onclick="toggleOngkirAkses('${key}')" class="w-full py-1.5 rounded-md text-[10px] font-bold uppercase ${item.ongkirLocked ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">
+                                ${item.ongkirLocked ? 'Buka Akses Ongkir' : 'Kunci Akses Ongkir'}
+                            </button>
+                            <button onclick="simpanPasswordOngkir('${key}')" class="w-full py-1.5 rounded-md bg-blue-50 text-blue-600 font-bold text-[10px] uppercase">
+                                Simpan Password Ongkir
+                            </button>
+                        </div>
+                
                         <div class="flex justify-end space-x-2 pt-1">
                             <button onclick="editAkunKurir('${key}')" class="px-2.5 py-1 bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-white rounded-md font-semibold">Edit</button>
                             <button onclick="hapusAkunKurir('${key}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 rounded-md font-semibold">Hapus</button>
@@ -1247,6 +1368,35 @@
             }
             if (typeof lucide !== 'undefined') lucide.createIcons();
         }
+        window.simpanPasswordOngkir = function(key) {
+            const input = document.getElementById(`ongkir-pass-${key}`);
+            if (!input) return;
+        
+            const passwordOngkir = input.value.trim();
+            if (!passwordOngkir) {
+                alert('Password ongkir tidak boleh kosong!');
+                return;
+            }
+        
+            update(ref(db, `users/${key}`), {
+                ongkirPassword: passwordOngkir
+            }).then(() => {
+                alert('Password ongkir berhasil disimpan!');
+            });
+        };
+        
+        window.toggleOngkirAkses = function(key) {
+            const item = cloudKurirList[key];
+            if (!item) return;
+        
+            const newStatus = !item.ongkirLocked;
+        
+            update(ref(db, `users/${key}`), {
+                ongkirLocked: newStatus
+            }).then(() => {
+                alert(newStatus ? 'Akses ongkir dikunci.' : 'Akses ongkir dibuka.');
+            });
+        };
 
         function populateKurirDropdownFilter() {
             const dropdown = document.getElementById('an-filter-kurir');
@@ -2326,20 +2476,36 @@
                 calculateMitraStats();
             }
         });
-        // ==================================================
-        // SYSTEM UTILITIES (ONGKIR, THEME, UTILS)
-        // ==================================================
         window.hitungTarifOngkir = function() {
             const asal = document.getElementById('ongkir-asal').value.trim();
             const tujuan = document.getElementById('ongkir-tujuan').value.trim();
-            if(!asal && !tujuan) return;
-            
-            const calc = (asal.length * 1000) + (tujuan.length * 1000) - 6000;
-            const finalTarif = Math.max(6000, calc);
-            
-            document.getElementById('ongkir-tarif-display').innerText = "Rp " + finalTarif.toLocaleString('id-ID');
+        
+            if (!asal && !tujuan) {
+                alert('Isi minimal salah satu: asal atau tujuan.');
+                return;
+            }
+        
+            const cariTarif = (nama) => {
+                for (let k in cloudOngkirList) {
+                    const item = cloudOngkirList[k];
+                    if (item && normalizeNama(item.wilayah) === normalizeNama(nama)) {
+                        return parseInt(item.tarif) || 0;
+                    }
+                }
+                return 0;
+            };
+        
+            const tarifAsal = asal ? cariTarif(asal) : 0;
+            const tarifTujuan = tujuan ? cariTarif(tujuan) : 0;
+        
+            let hasil = 0;
+            if (asal && tujuan) hasil = tarifAsal + tarifTujuan - 6000;
+            else if (asal) hasil = tarifAsal;
+            else hasil = tarifTujuan;
+        
+            document.getElementById('ongkir-tarif-display').innerText = 'Rp ' + Math.max(0, hasil).toLocaleString('id-ID');
             document.getElementById('ongkir-result-card').classList.remove('hidden');
-        }
+        };
 
         window.clearOngkirForm = function() {
             document.getElementById('ongkir-asal').value = '';
@@ -2828,6 +2994,323 @@
             if (!adaData) {
                 container.innerHTML = `<div class="text-center text-xs text-slate-400 py-4">Tidak ada nota sesuai filter.</div>`;
             }
+        };
+        window.saveDataOngkir = function() {
+            const idEdit = document.getElementById('ongkir-id-edit').value;
+            const wilayah = document.getElementById('ongkir-wilayah').value.trim();
+            const tarif = bersihkanAngka(document.getElementById('ongkir-tarif').value);
+        
+            if (!wilayah || tarif <= 0) {
+                alert('Lengkapi nama wilayah dan tarif ongkir!');
+                return;
+            }
+        
+            const payload = { wilayah, tarif };
+        
+            if (idEdit) {
+                update(ref(db, `ongkir_wilayah/${idEdit}`), payload).then(() => {
+                    alert('Data ongkir berhasil diupdate!');
+                    resetFormOngkir();
+                });
+            } else {
+                push(ref(db, 'ongkir_wilayah'), payload).then(() => {
+                    alert('Data ongkir berhasil disimpan!');
+                    resetFormOngkir();
+                });
+            }
+        };
+        window.showAdminOngkirMode = function(mode) {
+            document.getElementById('admin-ongkir-popup').classList.remove('hidden');
+        
+            document.getElementById('admin-ongkir-normal').classList.add('hidden');
+            document.getElementById('admin-ongkir-jarak').classList.add('hidden');
+            document.getElementById('admin-ongkir-rahasia').classList.add('hidden');
+        
+            if (mode === 'normal') document.getElementById('admin-ongkir-normal').classList.remove('hidden');
+            if (mode === 'jarak') document.getElementById('admin-ongkir-jarak').classList.remove('hidden');
+            if (mode === 'rahasia') document.getElementById('admin-ongkir-rahasia').classList.remove('hidden');
+        };
+        
+        window.closeAdminOngkirPopup = function() {
+            document.getElementById('admin-ongkir-popup').classList.add('hidden');
+        };
+
+        window.editDataOngkir = function(key) {
+            const d = cloudOngkirList[key];
+            if (!d) return;
+            document.getElementById('ongkir-id-edit').value = key;
+            document.getElementById('ongkir-wilayah').value = d.wilayah || '';
+            document.getElementById('ongkir-tarif').value = (d.tarif || 0).toLocaleString('id-ID');
+            document.getElementById('title-form-ongkir').innerText = 'Edit Ongkir';
+        };
+        
+        window.resetFormOngkir = function() {
+            document.getElementById('ongkir-id-edit').value = '';
+            document.getElementById('ongkir-wilayah').value = '';
+            document.getElementById('ongkir-tarif').value = '';
+            document.getElementById('title-form-ongkir').innerText = 'Tambah / Edit Ongkir';
+        };
+        
+        window.hapusDataOngkir = function(key) {
+            if (confirm('Hapus data ongkir ini?')) {
+                remove(ref(db, `ongkir_wilayah/${key}`));
+            }
+        };
+        
+        window.renderAdminOngkirList = function() {
+            const container = document.getElementById('container-admin-ongkir');
+            if (!container) return;
+        
+            container.innerHTML = '';
+        
+            const keys = Object.keys(cloudOngkirList || {});
+            if (keys.length === 0) {
+                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data ongkir.</div>';
+                return;
+            }
+        
+            keys.forEach(key => {
+                const d = cloudOngkirList[key];
+                container.innerHTML += `
+                    <div class="bg-white dark:bg-darkCard p-3 rounded-xl border shadow-sm flex justify-between items-center">
+                        <div>
+                            <div class="font-bold text-sm">${d.wilayah || '-'}</div>
+                            <div class="text-primary font-semibold">Rp ${(d.tarif || 0).toLocaleString('id-ID')}</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="editDataOngkir('${key}')" class="px-2.5 py-1 rounded-md bg-blue-50 text-blue-600 font-bold text-[10px]">Edit</button>
+                            <button onclick="hapusDataOngkir('${key}')" class="px-2.5 py-1 rounded-md bg-red-50 text-red-600 font-bold text-[10px]">Hapus</button>
+                        </div>
+                    </div>
+                `;
+            });
+        };
+
+        window.updateOngkirSuggestions = function(type) {
+            const input = document.getElementById(type === 'asal' ? 'ongkir-asal' : 'ongkir-tujuan');
+            const box = document.getElementById(type === 'asal' ? 'suggest-ongkir-asal' : 'suggest-ongkir-tujuan');
+            if (!input || !box) return;
+        
+            const q = normalizeNama(input.value);
+            if (!q) {
+                box.classList.add('hidden');
+                box.innerHTML = '';
+                return;
+            }
+        
+            const matches = [];
+            for (let k in cloudOngkirList) {
+                const item = cloudOngkirList[k];
+                if (item && normalizeNama(item.wilayah).includes(q)) {
+                    matches.push(item.wilayah);
+                }
+            }
+        
+            if (matches.length === 0) {
+                box.classList.add('hidden');
+                box.innerHTML = '';
+                return;
+            }
+        
+            box.innerHTML = matches.slice(0, 6).map(nama => `
+                <div onclick="pilihSuggestionOngkir('${type}', '${nama.replace(/'/g, "\\'")}')" class="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    ${nama}
+                </div>
+            `).join('');
+        
+            box.classList.remove('hidden');
+        };
+        
+        window.pilihSuggestionOngkir = function(type, nama) {
+            const input = document.getElementById(type === 'asal' ? 'ongkir-asal' : 'ongkir-tujuan');
+            const box = document.getElementById(type === 'asal' ? 'suggest-ongkir-asal' : 'suggest-ongkir-tujuan');
+            if (input) input.value = nama;
+            if (box) {
+                box.classList.add('hidden');
+                box.innerHTML = '';
+            }
+        };
+        window.clearOngkirForm = function() {
+            document.getElementById('ongkir-asal').value = '';
+            document.getElementById('ongkir-tujuan').value = '';
+            document.getElementById('ongkir-result-card').classList.add('hidden');
+        };
+        window.updateAdminOngkirSuggestions = function(type) {
+            const input = document.getElementById(type === 'asal' ? 'admin-ongkir-asal' : 'admin-ongkir-tujuan');
+            const box = document.getElementById(type === 'asal' ? 'suggest-admin-ongkir-asal' : 'suggest-admin-ongkir-tujuan');
+            if (!input || !box) return;
+        
+            const q = normalizeNama(input.value);
+            if (!q) {
+                box.classList.add('hidden');
+                box.innerHTML = '';
+                return;
+            }
+        
+            const matches = [];
+            for (let k in cloudOngkirList) {
+                const item = cloudOngkirList[k];
+                if (item && normalizeNama(item.wilayah).includes(q)) matches.push(item.wilayah);
+            }
+        
+            if (!matches.length) {
+                box.classList.add('hidden');
+                box.innerHTML = '';
+                return;
+            }
+        
+            box.innerHTML = matches.slice(0, 6).map(nama => `
+                <div onclick="pilihAdminOngkirSuggestion('${type}', '${nama.replace(/'/g, "\\'")}')" class="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
+                    ${nama}
+                </div>
+            `).join('');
+        
+            box.classList.remove('hidden');
+        };
+        
+        window.pilihAdminOngkirSuggestion = function(type, nama) {
+            const input = document.getElementById(type === 'asal' ? 'admin-ongkir-asal' : 'admin-ongkir-tujuan');
+            const box = document.getElementById(type === 'asal' ? 'suggest-admin-ongkir-asal' : 'suggest-admin-ongkir-tujuan');
+            if (input) input.value = nama;
+            if (box) {
+                box.classList.add('hidden');
+                box.innerHTML = '';
+            }
+        };
+      window.hitungOngkirAdminNormal = function() {
+          const asal = document.getElementById('admin-ongkir-asal').value.trim();
+          const tujuan = document.getElementById('admin-ongkir-tujuan').value.trim();
+      
+          if (!asal && !tujuan) return alert('Isi minimal salah satu.');
+      
+          const cariTarif = (nama) => {
+              for (let k in cloudOngkirList) {
+                  const item = cloudOngkirList[k];
+                  if (item && normalizeNama(item.wilayah) === normalizeNama(nama)) return parseInt(item.tarif) || 0;
+              }
+              return 0;
+          };
+      
+          const tarifAsal = asal ? cariTarif(asal) : 0;
+          const tarifTujuan = tujuan ? cariTarif(tujuan) : 0;
+      
+          const hasil = (asal && tujuan) ? (tarifAsal + tarifTujuan - 6000) : (asal ? tarifAsal : tarifTujuan);
+      
+          document.getElementById('admin-ongkir-display-normal').innerText = 'Rp ' + Math.max(0, hasil).toLocaleString('id-ID');
+          document.getElementById('admin-ongkir-result-normal').classList.remove('hidden');
+      };
+        window.updateAdminOngkirSuggestionsJarak = function() {
+            const input = document.getElementById('admin-jarak-asal');
+            const box = document.getElementById('suggest-admin-jarak-asal');
+            if (!input || !box) return;
+        
+            const q = normalizeNama(input.value);
+            if (!q) {
+                box.classList.add('hidden');
+                box.innerHTML = '';
+                return;
+            }
+        
+            const matches = [];
+            for (let k in cloudOngkirList) {
+                const item = cloudOngkirList[k];
+                if (item && normalizeNama(item.wilayah).includes(q)) matches.push(item.wilayah);
+            }
+        
+            box.innerHTML = matches.slice(0, 6).map(nama => `
+                <div onclick="pilihAdminOngkirJarak('${nama.replace(/'/g, "\\'")}')" class="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
+                    ${nama}
+                </div>
+            `).join('');
+        
+            box.classList.remove('hidden');
+        };
+        
+        window.pilihAdminOngkirJarak = function(nama) {
+            const input = document.getElementById('admin-jarak-asal');
+            const box = document.getElementById('suggest-admin-jarak-asal');
+            if (input) input.value = nama;
+            if (box) {
+                box.classList.add('hidden');
+                box.innerHTML = '';
+            }
+        };
+        
+        window.hitungOngkirJarak = function() {
+            const asal = document.getElementById('admin-jarak-asal').value.trim();
+            const jarak = parseFloat(document.getElementById('admin-jarak-km').value) || 0;
+        
+            if (!asal || jarak <= 0) return alert('Isi wilayah dan jarak.');
+        
+            const cariTarif = (nama) => {
+                for (let k in cloudOngkirList) {
+                    const item = cloudOngkirList[k];
+                    if (item && normalizeNama(item.wilayah) === normalizeNama(nama)) return parseInt(item.tarif) || 0;
+                }
+                return 0;
+            };
+        
+            const tarifAsal = cariTarif(asal);
+            const hasil = (jarak * 2 * 1000) + 2000 + tarifAsal;
+        
+            document.getElementById('admin-ongkir-display-jarak').innerText = 'Rp ' + hasil.toLocaleString('id-ID');
+            document.getElementById('admin-ongkir-result-jarak').classList.remove('hidden');
+        };
+        window.toggleAdminOngkirHidden = function() {
+            const box = document.getElementById('admin-ongkir-hidden-box');
+            if (box) box.classList.toggle('hidden');
+        };
+        window.hitungOngkirTigaArah = function() {
+            const asal = document.getElementById('admin-ongkir-3-asal').value.trim();
+            const titik = document.getElementById('admin-ongkir-3-titik').value.trim();
+            const tujuan = document.getElementById('admin-ongkir-3-tujuan').value.trim();
+        
+            if (!asal || !titik || !tujuan) return alert('Lengkapi semua kolom.');
+        
+            const cariTarif = (nama) => {
+                for (let k in cloudOngkirList) {
+                    const item = cloudOngkirList[k];
+                    if (item && normalizeNama(item.wilayah) === normalizeNama(nama)) return parseInt(item.tarif) || 0;
+                }
+                return 0;
+            };
+        
+            const hasil = cariTarif(asal) + cariTarif(titik) - 6000 + cariTarif(tujuan);
+        
+            document.getElementById('admin-ongkir-display-3').innerText = 'Rp ' + Math.max(0, hasil).toLocaleString('id-ID');
+            document.getElementById('admin-ongkir-result-3').classList.remove('hidden');
+        };
+
+        window.clearAdminOngkirNormal = function() {
+            document.getElementById('admin-ongkir-asal').value = '';
+            document.getElementById('admin-ongkir-tujuan').value = '';
+            document.getElementById('admin-ongkir-result-normal').classList.add('hidden');
+        };
+
+        window.openOngkirFeature = function() {
+            if (!userSession || userSession.role !== 'kurir') return;
+        
+            const currentKurir = cloudKurirList[userSession.id];
+            if (!currentKurir) {
+                alert('Data akun tidak ditemukan.');
+                return;
+            }
+        
+            if (currentKurir.ongkirLocked) {
+                const inputPass = prompt('Masukkan password khusus untuk membuka fitur ongkir:');
+                if (!inputPass) return;
+        
+                if (inputPass !== currentKurir.ongkirPassword) {
+                    alert('Password ongkir salah!');
+                    return;
+                }
+        
+                update(ref(db, `users/${userSession.id}`), {
+                    ongkirLocked: false
+                });
+            }
+        
+            navigateTo('screen-ongkir');
         };
 
     </script>
