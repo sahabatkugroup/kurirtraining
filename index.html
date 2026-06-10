@@ -399,12 +399,12 @@
                             <option value="Tambahan Tempat (Ojek)" data-harga="2.000">Tambahan Tempat (Ojek) (2.000)</option>
                             <option value="Tambahan Hujan" data-harga="2000">Tambahan Hujan (2.000)</option>
                             <option value="Tambahan Parkir" data-harga="2.000">Tambahan Parkir (2.000)</option>
-                            <option value="Tambahan Kapasitas" data-harga="manual">Tambahan Kapasitas (isi manual)</option>
+                            <option value="Tambahan Kapasitas" data-harga="manual">Tambahan Kapasitas</option>
                             <option value="Tambahan Cash Minuman" data-harga="5.000">Tambahan Cash Minuman (5.000)</option>
                             <option value="Tambahan Tempat >3 (Pasar)" data-harga="3.000">Tambahan Tempat >3 (Pasar) (3.000)</option>
-                            <option value="Tambahan Lainnya" data-harga="manual">Tambahan Lainnya (isi manual)</option>
+                            <option value="Tambahan Lainnya" data-harga="manual">Tambahan Lainnya</option>
                         </select>
-                        <div class="grid grid-cols-2 gap-2">
+                        <div class="grid grid-cols-1 gap-2">
                             <input type="text" id="biaya-nama-manual" oninput="autocapitalText(this)" placeholder="Misal: Parkir Pasar" class="w-full px-3 py-2 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700 hidden">
                             <input type="text" id="biaya-nominal" oninput="autoformatRupiah(this)" placeholder="Contoh: 10.000" class="w-full px-3 py-2 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
                         </div>
@@ -678,19 +678,26 @@
         let cloudNotaList = {};
         let cloudMitraList = {};
         let cloudLogMitra = {};
+        
+        function getWibDate() {
+            const now = new Date();
+            return new Date(now.getTime() + (7 * 60 * 60 * 1000));
+        }
+        
+        function getWibRawDate() {
+            const wib = getWibDate();
+            const tahun = wib.getFullYear();
+            const bulan = String(wib.getMonth() + 1).padStart(2, '0');
+            const tanggal = String(wib.getDate()).padStart(2, '0');
+            return `${tahun}-${bulan}-${tanggal}`;
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();
             if (typeof initTheme === 'function') initTheme();
             
-            // =========================================================================
-            // PERBAIKAN: SET DEFAULT INPUT TANGGAL FILTER KE HARI INI (WIB)
-            // =========================================================================
-            // Menghitung waktu WIB (UTC + 7 jam)
-            const now = new Date();
-            const wib = new Date(now.getTime() + (7 * 60 * 60 * 1000));
-            const tglSkrgWib = wib.toISOString().split('T')[0]; // Hasil: YYYY-MM-DD
-            
+            const tglSkrgWib = getWibRawDate();
+
             // Daftar semua ID input tanggal yang ada di aplikasi Anda
             const daftarInputTgl = [
                 'an-filter-tgl',        // Admin Nota
@@ -975,64 +982,59 @@
             else navigateTo('screen-dashboard');
         };
 
-        // Dashboard Stats Analytics
         function calculateDashboardStats() {
             let totalNotaToday = 0;
             let totalOmsetToday = 0;
             let kurirNotaCount = 0;
             let kurirIncomeCount = 0;
-
-            const tglSkrg = new Date().toISOString().split('T')[0];
-
+        
+            const tglSkrg = getWibRawDate();
+        
             for (let k in cloudNotaList) {
                 const n = cloudNotaList[k];
+        
                 if (n.tanggalRaw === tglSkrg) {
                     totalNotaToday++;
                     totalOmsetToday += (n.total || 0);
                 }
-                if (userSession && userSession.role === 'kurir' && n.kurirUsername === userSession.username) {
+        
+                if (userSession && userSession.role === 'kurir' && n.kurirUsername === userSession.username && n.tanggalRaw === tglSkrg) {
                     kurirNotaCount++;
-                    kurirIncomeCount += (n.total || 0);
+                    kurirIncomeCount += ((n.ongkir || 0) + ((n.biayaTambahan || []).reduce((a, b) => a + (b.nominal || 0), 0)));
                 }
             }
-
+        
             const elTotalNota = document.getElementById('adm-dash-total-nota');
             const elTotalOmset = document.getElementById('adm-dash-total-omset');
             const elKTrx = document.getElementById('dash-k-total-trx');
             const elKIncome = document.getElementById('dash-k-total-income');
-            const elNextNota = document.getElementById('dash-next-nota');
-
+        
             if (elTotalNota) elTotalNota.innerText = totalNotaToday;
             if (elTotalOmset) elTotalOmset.innerText = "Rp " + totalOmsetToday.toLocaleString('id-ID');
             if (elKTrx) elKTrx.innerText = kurirNotaCount;
             if (elKIncome) elKIncome.innerText = "Rp " + kurirIncomeCount.toLocaleString('id-ID');
-            
-            if (elNextNota) {
-                const nextCode = "NT-" + new Date().toISOString().slice(2,10).replace(/-/g,'') + "-" + String(totalNotaToday + 1).padStart(4, '0');
-                elNextNota.innerText = nextCode;
-            }
-        }
-        window.calculateMitraStats = function() {
-            // Hitung tanggal WIB hari ini
-            const now = new Date();
-            const wib = new Date(now.getTime() + (7 * 60 * 60 * 1000));
-            const tglSkrgWib = wib.toISOString().split('T')[0];
         
+            if (typeof updateKurirDashboard === 'function') updateKurirDashboard();
+        }
+
+        window.calculateMitraStats = function() {
+            const tglSkrgWib = getWibRawDate();
             let countMitraTrx = 0;
         
-            // Filter log berdasarkan tanggal hari ini (WIB)
-            if (typeof cloudLogMitra !== 'undefined') {
+            if (typeof cloudLogMitra !== 'undefined' && userSession && userSession.role === 'kurir') {
                 for (let key in cloudLogMitra) {
                     const entry = cloudLogMitra[key];
-                    if (entry.tglRaw === tglSkrgWib) {
-                        countMitraTrx += (parseInt(entry.trxInput) || 0);
-                    }
+                    if (entry.kurirUsername !== userSession.username) continue;
+                    if (entry.tglRaw !== tglSkrgWib) continue;
+        
+                    countMitraTrx += (parseInt(entry.trxInput) || 0);
                 }
             }
         
             const el = document.getElementById('dash-k-total-mitra-trx');
             if (el) el.innerText = countMitraTrx;
         };
+
         // =========================================================================
         // PANEL ADMIN LOGIC: MANAGEMENT KURIR (Murni Modern SDK v10)
         // =========================================================================
@@ -1171,10 +1173,8 @@
         window.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();
             if (typeof initTheme === 'function') initTheme();
-            const now = new Date();
-            const wib = new Date(now.getTime() + (7 * 60 * 60 * 1000));
-            const tglSkrgWib = wib.toISOString().split('T')[0]; // Format YYYY-MM-DD
-            
+            const tglSkrgWib = getWibRawDate();
+
             // Daftar semua ID input tanggal yang ada di aplikasi Anda
             const daftarInputTgl = [
                 'an-filter-tgl',        // Admin Nota
@@ -1523,12 +1523,20 @@
             const drop = document.getElementById('biaya-dropdown');
             const selectedOpt = drop.options[drop.selectedIndex];
             const hargaAttr = selectedOpt.getAttribute('data-harga');
-            if (hargaAttr === 'manual') {
-                document.getElementById('biaya-nama-manual').classList.remove('hidden');
-                document.getElementById('biaya-nominal').value = '';
+            const namaManual = document.getElementById('biaya-nama-manual');
+            const nominalInput = document.getElementById('biaya-nominal');
+        
+            if (drop.value === 'Tambahan Lainnya') {
+                namaManual.classList.remove('hidden');
+                nominalInput.value = '';
+                nominalInput.placeholder = 'Isi nominal harga';
             } else if (hargaAttr) {
-                document.getElementById('biaya-nama-manual').classList.add('hidden');
-                document.getElementById('biaya-nominal').value = hargaAttr;
+                namaManual.classList.add('hidden');
+                nominalInput.value = hargaAttr === 'manual' ? '' : hargaAttr;
+                nominalInput.placeholder = 'Contoh: 10.000';
+            } else {
+                namaManual.classList.add('hidden');
+                nominalInput.value = '';
             }
         }
 
@@ -1537,10 +1545,11 @@
             // Gunakan bersihkanAngka() di sini juga
             const nominal = bersihkanAngka(document.getElementById('biaya-nominal').value);
             let nama = drop.value;
-            
-            if (drop.options[drop.selectedIndex].getAttribute('data-harga') === 'manual') {
-                nama = document.getElementById('biaya-nama-manual').value || "Tambahan Manual";
+
+            if (drop.value === 'Tambahan Lainnya') {
+                nama = document.getElementById('biaya-nama-manual').value.trim() || "Tambahan Lainnya";
             }
+
             if (!nama || nominal <= 0) return;
 
             notaState.biaya.push({ nama, nominal });
@@ -1658,7 +1667,7 @@
             const payload = {
                 id: notaNum,
                 tanggal: document.getElementById('p-nota-date').innerText,
-                tanggalRaw: new Date().toISOString().split('T')[0],
+                tanggalRaw: getWibRawDate(),
                 kurirNama: userSession.nama,
                 kurirUsername: userSession.username,
                 status: document.getElementById('p-nota-status').innerText || "Lunas",
@@ -1671,7 +1680,7 @@
             };
 
             push(ref(db, 'nota'), payload).then(() => {
-                alert("Nota kiriman berhasil disimpan ke Cloud Realtime DB!");
+                alert("Nota kiriman berhasil disimpan!");
                 // Reset kembali ke nilai default baru (ongkir default 6000)
                 notaState = { items: [], biaya: [], subtotal: 0, ongkir: 6.000, total: 6.000 };
                 document.getElementById('container-items').innerHTML = '';
@@ -1914,13 +1923,10 @@
             if(!mNama) { alert("Silahkan pilih mitra terlebih dahulu!"); return; }
             if(trxInput <= 0) { alert("Jumlah transaksi harus lebih dari 0!"); return; }
         
-            // 1. Hitung Waktu WIB secara konsisten
-            const now = new Date();
-            const wib = new Date(now.getTime() + (7 * 60 * 60 * 1000));
-            
-            const tglRawLokal = wib.toISOString().split('T')[0]; // Format YYYY-MM-DD
-            const waktuLokal = wib.toISOString().split('T')[1].split('.')[0]; // Format HH:mm:ss
-            
+            const wib = getWibDate();
+            const tglRawLokal = getWibRawDate();
+            const waktuLokal = wib.toTimeString().split(' ')[0];
+        
             const payload = {
                 mitraNama: mNama,
                 trxInput: trxInput,
@@ -1930,17 +1936,13 @@
                 tglRaw: tglRawLokal
             };
         
-            // 2. Push ke Firebase
             push(ref(db, 'log_mitra'), payload).then(() => {
                 alert("Transaksi mitra berhasil di-input!");
                 document.getElementById('m-input-trx').value = '';
-                
-                if (typeof renderKurirMitraView === 'function') renderKurirMitraView();
-                if (typeof sembunyikanRiwayatMitra === 'function') sembunyikanRiwayatMitra();
-                
                 if (typeof calculateMitraStats === 'function') calculateMitraStats();
             });
         };
+
         
         // --- FUNGSI KONTROL RIWAYAT ---
         window.sembunyikanRiwayatMitra = function() {
@@ -2117,12 +2119,8 @@
             }
         }
         document.addEventListener('DOMContentLoaded', () => {
-            // 1. Hitung Tanggal Hari Ini (WIB) secara akurat
-            const now = new Date();
-            const wib = new Date(now.getTime() + (7 * 60 * 60 * 1000));
-            const tglSkrgWib = wib.toISOString().split('T')[0]; // Format YYYY-MM-DD
-        
-            // 2. Set otomatis ke input filter tanggal (termasuk m-filter-tgl-kurir)
+            const tglSkrgWib = getWibRawDate();
+
             const daftarInputTgl = ['an-filter-tgl', 'riwayat-filter-tgl', 'am-log-tgl', 'm-filter-tgl-kurir'];
             daftarInputTgl.forEach(id => {
                 const el = document.getElementById(id);
@@ -2389,71 +2387,62 @@
             }
             initChartsEngine(rekapHarianMap);
         };
-        // =========================================================================
-        // ENGINE OTOMATISASI DASHBOARD UTAMA KURIR (TANGGAL & OMSET REAL-TIME)
-        // =========================================================================
         window.updateKurirDashboard = function() {
             if (!userSession || userSession.role !== 'kurir') return;
-            const usernameKurir = userSession.username;
         
-            const elemenTanggal = document.getElementById('dash-date');
-            const sekarang = new Date();
-            
-            const formatHariIni = sekarang.toLocaleDateString('id-ID', {
+            const usernameKurir = userSession.username;
+            const wib = getWibDate();
+        
+            const formatHariIni = wib.toLocaleDateString('id-ID', {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric'
             });
-            
-            // Format Mentah untuk filter database (YYYY-MM-DD) sesuai waktu lokal
-            const tahun = sekarang.getFullYear();
-            const bulan = String(sekarang.getMonth() + 1).padStart(2, '0');
-            const tanggal = String(sekarang.getDate()).padStart(2, '0');
-            const tanggalRawHariIni = `${tahun}-${bulan}-${tanggal}`;
         
+            const tanggalRawHariIni = getWibRawDate();
+        
+            const elemenTanggal = document.getElementById('dash-date');
             if (elemenTanggal) {
                 elemenTanggal.innerText = formatHariIni;
             }
         
-            // 3. Variabel Hitungan Data Hari Ini
             let totalNotaHariIni = 0;
             let totalOmsetHariIni = 0;
         
-            // 4. Kalkulasi Data Nota Milik Kurir Aktif Khusus Hari Ini
             for (let key in cloudNotaList) {
                 const nota = cloudNotaList[key];
         
-                // Filter 1: Harus nota miliknya sendiri
                 if (nota.kurirUsername !== usernameKurir) continue;
-        
-                // Filter 2: Hanya hitung yang tanggalnya cocok dengan Hari Ini
                 if (nota.tanggalRaw !== tanggalRawHariIni) continue;
         
-                // Ambil nominal keuangan nota
                 const nominalOngkir = parseInt(nota.ongkir) || 0;
                 let nominalTambahan = 0;
         
-                // Hitung total biaya tambahan jika ada
                 if (nota.biayaTambahan && Array.isArray(nota.biayaTambahan)) {
                     nota.biayaTambahan.forEach(item => {
                         nominalTambahan += (parseInt(item.nominal) || 0);
                     });
                 }
         
-                // RUMUS: Pendapatan = Ongkir + Tambahan saja
                 const omsetNotaIni = nominalOngkir + nominalTambahan;
         
                 totalNotaHariIni++;
                 totalOmsetHariIni += omsetNotaIni;
             }
         
-            // 5. Suntik Angka Hasil Perhitungan ke Elemen HTML Dashboard
             const elTotalTrx = document.getElementById('dash-k-total-trx');
             const elTotalIncome = document.getElementById('dash-k-total-income');
+            const elNextNota = document.getElementById('dash-next-nota');
         
             if (elTotalTrx) elTotalTrx.innerText = totalNotaHariIni;
             if (elTotalIncome) elTotalIncome.innerText = "Rp " + totalOmsetHariIni.toLocaleString('id-ID');
+        
+            const nextCode = `NT-${tanggalRawHariIni.replace(/-/g, '')}-${String(totalNotaHariIni + 1).padStart(4, '0')}`;
+            if (elNextNota) elNextNota.innerText = nextCode;
+        
+            if (typeof calculateMitraStats === 'function') calculateMitraStats();
         };
+
         // Simpan instance grafik secara global agar bisa di-reset saat filter berubah
         let instanceChartRekap = null;
         
