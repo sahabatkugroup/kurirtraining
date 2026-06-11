@@ -190,6 +190,46 @@
                     </div>
                     <span class="text-[10px] bg-amber-500/20 text-amber-400 font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Super Admin</span>
                 </div>
+                <div class="bg-gradient-to-br from-amber-100 via-yellow-100 to-amber-200 text-slate-900 p-4 rounded-2xl shadow-2xl border border-amber-300/60 space-y-4 dark:from-[#2a2118] dark:via-[#1f1811] dark:to-[#15110c] dark:text-amber-50 dark:border-amber-900/40">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <h4 class="text-[10px] font-bold uppercase tracking-[0.25em] text-amber-700 dark:text-amber-300">
+                                Monitoring Omset Hari Ini
+                            </h4>
+                            <p class="text-xs text-amber-800/80 dark:text-amber-200/70 mt-1">
+                                Ringkasan operasional harian
+                            </p>
+                        </div>
+                
+                        <div class="flex items-center gap-2 shrink-0">
+                            <button onclick="refreshAdminMonitoring()" class="w-11 h-11 rounded-2xl bg-white/70 dark:bg-[#2a2118] flex items-center justify-center border border-amber-300/60 dark:border-amber-900/40 active:scale-95 transition-transform">
+                                <i data-lucide="refresh-cw" class="w-5 h-5 text-amber-700 dark:text-amber-300"></i>
+                            </button>
+                
+                            <div class="w-11 h-11 rounded-2xl bg-white/60 dark:bg-[#2a2118] flex items-center justify-center border border-amber-300/60 dark:border-amber-900/40">
+                                <i data-lucide="bar-chart-3" class="w-5 h-5 text-amber-700 dark:text-amber-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white/70 dark:bg-[#2a2118] rounded-2xl p-3 border border-amber-300/50 dark:border-amber-900/40">
+                            <p class="text-[10px] text-amber-700/80 dark:text-amber-300/80 uppercase tracking-wider">Total Nota Masuk</p>
+                            <p class="text-xl font-black mt-1 text-slate-900 dark:text-amber-50" id="adm-dash-total-nota">0</p>
+                        </div>
+                        <div class="bg-white/70 dark:bg-[#2a2118] rounded-2xl p-3 border border-amber-300/50 dark:border-amber-900/40">
+                            <p class="text-[10px] text-amber-700/80 dark:text-amber-300/80 uppercase tracking-wider">Total Omset</p>
+                            <p class="text-xl font-black mt-1 text-amber-700 dark:text-amber-300" id="adm-dash-total-omset">Rp 0</p>
+                        </div>
+                        <div class="bg-white/70 dark:bg-[#2a2118] rounded-2xl p-3 border border-amber-300/50 dark:border-amber-900/40">
+                            <p class="text-[10px] text-amber-700/80 dark:text-amber-300/80 uppercase tracking-wider">Trx Mitra Hari Ini</p>
+                            <p class="text-xl font-black mt-1 text-slate-900 dark:text-amber-50" id="adm-dash-total-mitra">0</p>
+                        </div>
+                        <div class="bg-white/70 dark:bg-[#2a2118] rounded-2xl p-3 border border-amber-300/50 dark:border-amber-900/40">
+                            <p class="text-[10px] text-amber-700/80 dark:text-amber-300/80 uppercase tracking-wider">Kurir Aktif</p>
+                            <p class="text-xl font-black mt-1 text-slate-900 dark:text-amber-50" id="adm-dash-kurir-aktif">0</p>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <button onclick="navigateTo('screen-admin-kurir')" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
@@ -213,6 +253,15 @@
                         <div>
                             <span class="text-xs font-bold block">Manajemen Mitra</span>
                             <span class="text-[10px] text-slate-400">Tambah, edit data & trx mitra</span>
+                        </div>
+                    </button>
+                    <button onclick="navigateTo('screen-admin-laporan')" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
+                        <div class="p-2.5 bg-cyan-50 dark:bg-cyan-950/40 rounded-xl text-cyan-500">
+                            <i data-lucide="file-text" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold block">Laporan Data</span>
+                            <span class="text-[10px] text-slate-400">Filter bulan & laporan kurir</span>
                         </div>
                     </button>
                     <button onclick="navigateTo('screen-admin-tracking')" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
@@ -242,28 +291,6 @@
                             <span class="text-[10px] text-slate-400">Dark mode & logout</span>
                         </div>
                     </button>
-                </div>
-
-                <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Monitoring Omset Hari Ini</h4>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                            <span class="text-[10px] text-slate-400 block">Total Nota Masuk</span>
-                            <span class="text-base font-black text-primary" id="adm-dash-total-nota">0</span>
-                        </div>
-                        <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                            <span class="text-[10px] text-slate-400 block">Total Omset Lapangan</span>
-                            <span class="text-base font-black text-success" id="adm-dash-total-omset">Rp 0</span>
-                        </div>
-                        <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                            <span class="text-[10px] text-slate-400 block">Trx Mitra Hari Ini</span>
-                            <span class="text-base font-black text-indigo-600" id="adm-dash-total-mitra">0</span>
-                        </div>
-                        <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                            <span class="text-[10px] text-slate-400 block">Kurir Aktif Hari Ini</span>
-                            <span class="text-base font-black text-amber-500" id="adm-dash-kurir-aktif">0</span>
-                        </div>
-                    </div>
                 </div>
             </div>
             <div id="screen-admin-kurir" class="screen p-4 space-y-4">
@@ -382,6 +409,43 @@
                     </div>
                     <div id="container-admin-daftar-mitra" class="space-y-2">
                         </div>
+                </div>
+            </div>
+            <div id="screen-admin-laporan" class="screen p-4 space-y-4">
+                <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Laporan Data</h3>
+            
+                    <div class="grid grid-cols-2 gap-2">
+                        <select id="laporan-filter-bulan" onchange="renderLaporanData()" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700"></select>
+                        <select id="laporan-filter-kurir" onchange="renderLaporanData()" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                            <option value="semua">Semua Kurir</option>
+                        </select>
+                    </div>
+            
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800">
+                            <div class="text-[10px] text-slate-400 uppercase">Total Nota</div>
+                            <div class="text-lg font-black" id="laporan-total-nota">0</div>
+                            <div class="text-[10px] text-slate-400 mt-1" id="laporan-total-nota-detail">Admin 0 • OL 0</div>
+                        </div>
+                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800">
+                            <div class="text-[10px] text-slate-400 uppercase">Total Pendapatan</div>
+                            <div class="text-lg font-black text-success" id="laporan-total-pendapatan">Rp 0</div>
+                        </div>
+                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800">
+                            <div class="text-[10px] text-slate-400 uppercase">Rata-Rata/Nota</div>
+                            <div class="text-lg font-black text-primary" id="laporan-rata-rata">Rp 0</div>
+                        </div>
+                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800">
+                            <div class="text-[10px] text-slate-400 uppercase">Kurir Aktif</div>
+                            <div class="text-lg font-black text-amber-500" id="laporan-kurir-aktif">0</div>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-2">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Daftar Laporan Per Hari</h4>
+                    <div id="container-laporan-harian" class="space-y-2"></div>
                 </div>
             </div>
             <div id="screen-admin-tracking" class="screen p-4 space-y-4">
@@ -879,6 +943,7 @@
         let cloudNotaList = {};
         let cloudMitraList = {};
         let cloudLogMitra = {};
+        let laporanBulanAktif = '';
         let cloudOngkirList = {};
         let adminOngkirMode = 'normal';
         let liveLocations = {};
@@ -916,6 +981,14 @@
         
             return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
+        window.refreshAdminMonitoring = function() {
+            calculateDashboardStats();
+            if (typeof populateLaporanFilter === 'function') populateLaporanFilter();
+            if (typeof renderLaporanData === 'function') renderLaporanData();
+            if (typeof renderAdminNota === 'function') renderAdminNota();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+        
         window.startLiveLocationTracking = function() {
             if (!navigator.geolocation) {
                 alert('Browser tidak mendukung geolocation.');
@@ -1190,6 +1263,8 @@
                 cloudNotaList = snapshot.val() || {};
                 if (typeof renderAdminNota === 'function') renderAdminNota();
                 if (typeof renderKurirRiwayatList === 'function') renderKurirRiwayatList();
+                if (typeof populateLaporanFilter === 'function') populateLaporanFilter();
+                if (typeof renderLaporanData === 'function') renderLaporanData();
                 calculateDashboardStats();
             });
         
@@ -1427,6 +1502,12 @@
             if (screenId === 'screen-nota' && (!userSession || userSession.role !== 'kurir')) {
                 alert('Menu Nota hanya untuk login kurir.');
                 return;
+            }
+            if (screenId === 'screen-admin-laporan') {
+                setTimeout(() => {
+                    populateLaporanFilter();
+                    renderLaporanData();
+                }, 100);
             }
             if (screenId === 'screen-admin-tracking') {
                 setTimeout(() => {
@@ -1788,16 +1869,6 @@
                 populateMitraLogKurirDropdown();
                 renderAdminLogMitra();
             });
-        
-            // Ambil Data Nota secara Realtime
-            onValue(ref(db, 'nota'), (snapshot) => {
-                cloudNotaList = snapshot.val() || {};
-                if (typeof renderAdminNota === 'function') renderAdminNota();
-                if (typeof renderKurirRiwayatList === 'function') renderKurirRiwayatList();
-                calculateDashboardStats();
-            });
-        
-            // Ambil Data Mitra secara Realtime
             onValue(ref(db, 'mitra'), (snapshot) => {
                 cloudMitraList = snapshot.val() || {};
                 if (typeof renderAdminDaftarMitra === 'function') renderAdminDaftarMitra();
@@ -2668,7 +2739,6 @@
                 remove(ref(db, `nota/${key}`))
                     .then(() => {
                         alert("Nota sukses dihapus!");
-                        // Fungsi render otomatis terpanggil jika Anda menggunakan listener onValue(ref(db, 'nota'))
                     })
                     .catch((error) => {
                         alert("Gagal menghapus nota: " + error.message);
@@ -3432,6 +3502,146 @@
             if (!adaData) {
                 container.innerHTML = `<div class="text-center text-xs text-slate-400 py-4">Tidak ada nota sesuai filter.</div>`;
             }
+        };
+        window.populateLaporanFilter = function() {
+            const bulanSelect = document.getElementById('laporan-filter-bulan');
+            const kurirSelect = document.getElementById('laporan-filter-kurir');
+            if (!bulanSelect || !kurirSelect) return;
+        
+            const bulanSet = new Set();
+            bulanSet.add(getWibRawDate().substring(0, 7));
+        
+            Object.values(cloudNotaList || {}).forEach(n => {
+                if (n?.tanggalRaw) bulanSet.add(n.tanggalRaw.substring(0, 7));
+            });
+        
+            bulanSelect.innerHTML = '';
+            Array.from(bulanSet).sort((a, b) => b.localeCompare(a)).forEach(bulan => {
+                const [y, m] = bulan.split('-');
+                const label = new Date(y, parseInt(m) - 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+                bulanSelect.innerHTML += `<option value="${bulan}">${label}</option>`;
+            });
+        
+            const kurirSet = new Set();
+            Object.values(cloudNotaList || {}).forEach(n => {
+                if (n?.kurirUsername) kurirSet.add(n.kurirUsername);
+            });
+        
+            kurirSelect.innerHTML = '<option value="semua">Semua Kurir</option>';
+            Object.entries(cloudKurirList || {}).forEach(([id, u]) => {
+                if (u && u.role === 'kurir') {
+                    kurirSelect.innerHTML += `<option value="${u.username}">${u.nama || u.username}</option>`;
+                }
+            });
+        
+            bulanSelect.value = getWibRawDate().substring(0, 7);
+        };
+        window.renderLaporanData = function() {
+            const container = document.getElementById('container-laporan-harian');
+            const bulan = document.getElementById('laporan-filter-bulan')?.value || '';
+            const kurir = document.getElementById('laporan-filter-kurir')?.value || 'semua';
+            if (!container) return;
+        
+            let totalNota = 0;
+            let totalPendapatan = 0;
+            let totalNotaAdmin = 0;
+            let totalNotaOL = 0;
+            let kurirAktifSet = new Set();
+            let mapHarian = {};
+        
+            Object.values(cloudNotaList || {}).forEach(n => {
+                if (!n || !n.tanggalRaw) return;
+                if (bulan && n.tanggalRaw.substring(0, 7) !== bulan) return;
+                if (kurir !== 'semua' && n.kurirUsername !== kurir) return;
+        
+                const tgl = n.tanggalRaw;
+                if (!mapHarian[tgl]) {
+                    mapHarian[tgl] = {
+                        totalNota: 0,
+                        notaAdmin: 0,
+                        notaOL: 0,
+                        pendapatan: 0,
+                        kurirSet: new Set()
+                    };
+                }
+        
+                const ongkir = parseInt(n.ongkir) || 0;
+                const biaya = (n.biayaTambahan || []).reduce((a, b) => a + (parseInt(b.nominal) || 0), 0);
+                const pendapatan = ongkir + biaya;
+        
+                mapHarian[tgl].totalNota++;
+                mapHarian[tgl].pendapatan += pendapatan;
+                mapHarian[tgl].kurirSet.add(n.kurirUsername);
+                kurirAktifSet.add(n.kurirUsername);
+        
+                const status = (n.status || '').toLowerCase();
+                if (status === 'admin') {
+                    mapHarian[tgl].notaAdmin++;
+                    totalNotaAdmin++;
+                }
+                if (status === 'ol') {
+                    mapHarian[tgl].notaOL++;
+                    totalNotaOL++;
+                }
+        
+                totalNota++;
+                totalPendapatan += pendapatan;
+            });
+        
+            const rataRata = totalNota > 0 ? Math.round(totalPendapatan / totalNota) : 0;
+        
+            document.getElementById('laporan-total-nota').innerText = totalNota;
+            const detailNota = document.getElementById('laporan-total-nota-detail');
+            if (detailNota) {
+                detailNota.innerText = `Admin ${totalNotaAdmin} • OL ${totalNotaOL}`;
+            }
+        
+            document.getElementById('laporan-total-pendapatan').innerText = 'Rp ' + totalPendapatan.toLocaleString('id-ID');
+            document.getElementById('laporan-rata-rata').innerText = 'Rp ' + rataRata.toLocaleString('id-ID');
+            document.getElementById('laporan-kurir-aktif').innerText = kurirAktifSet.size;
+        
+            const urutan = Object.keys(mapHarian).sort((a, b) => b.localeCompare(a));
+            let html = '';
+        
+            urutan.forEach(tgl => {
+                const d = mapHarian[tgl];
+                const avg = d.totalNota > 0 ? Math.round(d.pendapatan / d.totalNota) : 0;
+        
+                let infoKurir = '-';
+                if (kurir === 'semua') {
+                    infoKurir = `${d.kurirSet.size} kurir aktif`;
+                } else {
+                    const found = Object.values(cloudKurirList || {}).find(u => u.username === kurir);
+                    infoKurir = found?.nama || kurir;
+                }
+        
+                html += `
+                    <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700 text-xs space-y-1.5">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-bold text-sm">${new Date(tgl).toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' })}</div>
+                                <div class="text-[10px] text-slate-400">
+                                    ${kurir === 'semua' ? `Kurir aktif: ${d.kurirSet.size}` : `Kurir: ${infoKurir}`}
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-black text-primary">${d.totalNota} Nota</div>
+                                <div class="text-[10px] text-slate-400">Admin: ${d.notaAdmin} | OL: ${d.notaOL}</div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><span class="text-[10px] text-slate-400 block">Pendapatan</span><span class="font-bold text-success">Rp ${d.pendapatan.toLocaleString('id-ID')}</span></div>
+                            <div><span class="text-[10px] text-slate-400 block">Rata-rata</span><span class="font-bold text-amber-500">Rp ${avg.toLocaleString('id-ID')}</span></div>
+                        </div>
+                    </div>
+                `;
+            });
+        
+            if (!html) {
+                html = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data laporan.</div>';
+            }
+        
+            container.innerHTML = html;
         };
         window.saveDataOngkir = function() {
             const idEdit = document.getElementById('ongkir-id-edit').value;
