@@ -12,12 +12,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -214,6 +215,16 @@
                             <span class="text-[10px] text-slate-400">Tambah, edit data & trx mitra</span>
                         </div>
                     </button>
+                    <button onclick="navigateTo('screen-admin-tracking')" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
+                        <div class="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl text-emerald-500">
+                            <i data-lucide="map-pin" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold block">Tracking Kurir</span>
+                            <span class="text-[10px] text-slate-400">Pantau lokasi kurir realtime</span>
+                        </div>
+                    </button>
+                    
                     <button onclick="navigateTo('screen-admin-ongkir')" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
                         <div class="p-2.5 bg-purple-50 dark:bg-purple-950/40 rounded-xl text-purple-500">
                             <i data-lucide="truck" class="w-5 h-5"></i>
@@ -255,7 +266,6 @@
                     </div>
                 </div>
             </div>
-
             <div id="screen-admin-kurir" class="screen p-4 space-y-4">
                 <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400" id="title-form-kurir">Registrasi / Edit Akun Kurir</h3>
@@ -374,10 +384,17 @@
                         </div>
                 </div>
             </div>
+            <div id="screen-admin-tracking" class="screen p-4 space-y-4">
+                <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Tracking Kurir</h3>
+            
+                    <div id="container-tracking-kurir" class="space-y-2"></div>
+            
+                    <div id="tracking-map" style="height: 360px; border-radius: 16px; overflow: hidden;"></div>
+                </div>
+            </div>
             
             <div id="screen-admin-ongkir" class="screen p-4 space-y-4">
-            
-                <!-- Tombol Mode -->
                 <div class="flex gap-2">
                     <button onclick="showAdminOngkirMode('normal')" class="flex-1 py-2 rounded-xl text-xs font-bold bg-primary text-white">Cek Ongkir</button>
                     <button onclick="showAdminOngkirMode('jarak')" class="flex-1 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800">Hitung Jarak</button>
@@ -807,7 +824,6 @@
         // Inisialisasi Firebase secara tunggal & bersih dari bentrok
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-
         // Core Global Session State Variables
         let userSession = null; 
         let currentScreen = 'screen-login';
@@ -821,6 +837,16 @@
         let cloudLogMitra = {};
         let cloudOngkirList = {};
         let adminOngkirMode = 'normal';
+        let liveLocations = {};
+        let liveMap = null;
+        let liveMarkers = {};
+        let watchId = null;
+        let lastSentLocation = null;
+        let lastSentTime = 0;
+        let trackingMap = null;
+        let trackingMarker = null;
+        let selectedKurirTracking = null;
+        let selectedTrackingUser = null;
         
         function getWibDate() {
             return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
@@ -832,6 +858,242 @@
             const bulan = String(wib.getMonth() + 1).padStart(2, '0');
             const tanggal = String(wib.getDate()).padStart(2, '0');
             return `${tahun}-${bulan}-${tanggal}`;
+        }
+        function getDistanceMeters(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const toRad = (v) => v * Math.PI / 180;
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+        
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        
+            return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+        window.startLiveLocationTracking = function() {
+            if (!navigator.geolocation) {
+                alert('Browser tidak mendukung geolocation.');
+                return;
+            }
+        
+            if (!userSession || userSession.role !== 'kurir') return;
+        
+            const sendLocation = async (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                const locInfo = await reverseGeocode(lat, lng);
+                const waktu = getWibDateTimeString();
+        
+                const payload = {
+                    lat,
+                    lng,
+                    accuracy: pos.coords.accuracy || null,
+                    kurirNama: userSession.nama,
+                    kurirUsername: userSession.username,
+                    desa: locInfo.desa,
+                    blok: locInfo.blok,
+                    kecamatan: locInfo.kecamatan,
+                    wilayah: locInfo.wilayah,
+                    alamatLengkap: locInfo.alamatLengkap,
+                    tanggalTracking: waktu.tanggal,
+                    jamTracking: waktu.jam,
+                    updatedAt: new Date().toISOString()
+                };
+        
+                lastSentLocation = { lat, lng };
+                lastSentTime = Date.now();
+                set(ref(db, `live_locations/${userSession.id}`), payload);
+            };
+        
+            navigator.geolocation.getCurrentPosition(
+                (pos) => sendLocation(pos),
+                (err) => alert('Izin lokasi ditolak / gagal: ' + err.message),
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+        
+            watchId = navigator.geolocation.watchPosition(
+                async (pos) => {
+                    const now = Date.now();
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+        
+                    const shouldSendByTime = (now - lastSentTime) >= 15000;
+                    const shouldSendByDistance = lastSentLocation
+                        ? getDistanceMeters(lastSentLocation.lat, lastSentLocation.lng, lat, lng) >= 50
+                        : true;
+        
+                    if (!shouldSendByTime && !shouldSendByDistance) return;
+        
+                    const locInfo = await reverseGeocode(lat, lng);
+                    const waktu = getWibDateTimeString();
+        
+                    const payload = {
+                        lat,
+                        lng,
+                        accuracy: pos.coords.accuracy || null,
+                        kurirNama: userSession.nama,
+                        kurirUsername: userSession.username,
+                        desa: locInfo.desa,
+                        blok: locInfo.blok,
+                        kecamatan: locInfo.kecamatan,
+                        wilayah: locInfo.wilayah,
+                        alamatLengkap: locInfo.alamatLengkap,
+                        tanggalTracking: waktu.tanggal,
+                        jamTracking: waktu.jam,
+                        updatedAt: new Date().toISOString()
+                    };
+        
+                    lastSentLocation = { lat, lng };
+                    lastSentTime = now;
+                    set(ref(db, `live_locations/${userSession.id}`), payload);
+                },
+                (err) => console.log('Tracking lokasi berhenti:', err.message),
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+        };
+
+        window.renderTrackingKurirList = function() {
+            const container = document.getElementById('container-tracking-kurir');
+            if (!container) return;
+        
+            container.innerHTML = '';
+        
+            const kurirEntries = Object.entries(cloudKurirList || {}).filter(([id, user]) => {
+                return user && user.role === 'kurir';
+            });
+        
+            if (kurirEntries.length === 0) {
+                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data kurir.</div>';
+                return;
+            }
+        
+            kurirEntries.forEach(([id, user]) => {
+                const loc = liveLocations[id];
+                const hasLocation = loc && typeof loc.lat === 'number' && typeof loc.lng === 'number';
+        
+                container.innerHTML += `
+                    <button onclick="selectTrackingKurir('${id}')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl border bg-slate-50 dark:bg-slate-800 dark:border-slate-700 hover:border-primary text-left">
+                        <div>
+                            <div class="font-bold text-sm">${user.nama || user.username}</div>
+                            <div class="text-[10px] text-slate-400">${hasLocation ? 'Lokasi terdeteksi' : 'Belum ada lokasi'}</div>
+                        </div>
+                        <span class="w-3 h-3 rounded-full ${hasLocation ? 'bg-emerald-500' : 'bg-slate-300'}"></span>
+                    </button>
+                `;
+            });
+        };
+        window.selectTrackingKurir = function(id) {
+            selectedKurirTracking = id;
+            selectedTrackingUser = cloudKurirList[id] || null;
+            renderTrackingMap(id);
+        };
+
+        window.renderLiveMap = function() {
+            const mapEl = document.getElementById('live-map');
+            if (!mapEl || typeof L === 'undefined') return;
+        
+            if (!liveMap) {
+                liveMap = L.map('live-map').setView([-6.326, 108.326], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(liveMap);
+            }
+        
+            Object.values(liveMarkers).forEach(m => liveMap.removeLayer(m));
+            liveMarkers = {};
+        
+            const bounds = [];
+        
+            Object.entries(liveLocations).forEach(([id, loc]) => {
+                if (!loc || typeof loc.lat !== 'number' || typeof loc.lng !== 'number') return;
+        
+                const marker = L.marker([loc.lat, loc.lng]).addTo(liveMap).bindPopup(`
+                    <b>${loc.kurirNama || 'Kurir'}</b><br>
+                    ${loc.updatedAt ? new Date(loc.updatedAt).toLocaleString('id-ID') : '-'}
+                `);
+        
+                liveMarkers[id] = marker;
+                bounds.push([loc.lat, loc.lng]);
+            });
+        
+            if (bounds.length > 0) liveMap.fitBounds(bounds, { padding: [40, 40] });
+        };
+        window.renderTrackingMap = function(id) {
+            const mapEl = document.getElementById('tracking-map');
+            if (!mapEl || typeof L === 'undefined') return;
+        
+            const loc = liveLocations[id];
+            const user = selectedTrackingUser || cloudKurirList[id];
+        
+            if (!trackingMap) {
+                trackingMap = L.map('tracking-map').setView([-6.326, 108.326], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(trackingMap);
+            }
+        
+            if (trackingMarker) {
+                trackingMap.removeLayer(trackingMarker);
+                trackingMarker = null;
+            }
+        
+            if (!loc || typeof loc.lat !== 'number' || typeof loc.lng !== 'number') {
+                trackingMap.setView([-6.326, 108.326], 13);
+                return;
+            }
+        
+            trackingMarker = L.marker([loc.lat, loc.lng]).addTo(trackingMap)
+                .bindPopup(`
+                    <b>${user?.nama || 'Kurir'}</b><br>
+                    ${loc.updatedAt ? new Date(loc.updatedAt).toLocaleString('id-ID') : '-'}
+                `)
+                .openPopup();
+        
+            trackingMap.setView([loc.lat, loc.lng], 16);
+        };
+        async function reverseGeocode(lat, lng) {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+                const data = await res.json();
+                const a = data.address || {};
+        
+                return {
+                    desa: a.village || a.hamlet || a.suburb || a.neighbourhood || '-',
+                    blok: a.residential || a.road || '-',
+                    kecamatan: a.county || a.city_district || a.district || '-',
+                    wilayah: a.state || a.region || a.county || '-',
+                    alamatLengkap: data.display_name || '-'
+                };
+            } catch (e) {
+                return {
+                    desa: '-',
+                    blok: '-',
+                    kecamatan: '-',
+                    wilayah: '-',
+                    alamatLengkap: '-'
+                };
+            }
+        }
+        function getWibDateTimeString() {
+            const wib = getWibDate();
+            return {
+                tanggal: wib.toLocaleDateString('id-ID', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric'
+                }),
+                jam: wib.toLocaleTimeString('id-ID', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                })
+            };
         }
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -892,6 +1154,13 @@
                 if (typeof renderAdminDaftarMitra === 'function') renderAdminDaftarMitra();
                 if (typeof renderKurirMitraView === 'function') renderKurirMitraView();
                 if (typeof populateMitraSelectionDropdown === 'function') populateMitraSelectionDropdown();
+            });
+            onValue(ref(db, 'live_locations'), (snapshot) => {
+                liveLocations = snapshot.val() || {};
+                if (userSession && userSession.role === 'admin' && currentScreen === 'screen-admin-tracking') {
+                    renderTrackingKurirList();
+                    if (selectedKurirTracking) renderTrackingMap(selectedKurirTracking);
+                }
             });
         
             onValue(ref(db, 'log_mitra'), (snapshot) => {
@@ -957,6 +1226,9 @@
                 document.querySelectorAll('.session-fullname').forEach(el => el.innerText = userSession.nama);
                 
                 launchApplicationSession("screen-admin-dashboard");
+                setTimeout(() => {
+                    renderLiveMap();
+                }, 200);
                 if(btnSubmit) { btnSubmit.disabled = false; btnSubmit.innerText = "Masuk Sistem"; }
                 return;
             }
@@ -1000,6 +1272,7 @@
                     }
                     
                     launchApplicationSession("screen-dashboard");
+                    startLiveLocationTracking();
                 } else {
                     alert("Username & Password tidak terdaftar atau salah!");
                 }
@@ -1098,7 +1371,10 @@
                         el.classList.add('hidden', 'opacity-0', 'pointer-events-none');
                     }
                 });
-        
+                if (watchId) {
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
+                }
                 navigateTo('screen-login');
             }
         }
@@ -1107,6 +1383,12 @@
             if (screenId === 'screen-nota' && (!userSession || userSession.role !== 'kurir')) {
                 alert('Menu Nota hanya untuk login kurir.');
                 return;
+            }
+            if (screenId === 'screen-admin-tracking') {
+                setTimeout(() => {
+                    renderTrackingKurirList();
+                    if (selectedKurirTracking) renderTrackingMap(selectedKurirTracking);
+                }, 100);
             }
             if (screenId === currentScreen) return;
             
@@ -1497,6 +1779,7 @@
         
                 if (userSession.role === 'admin') {
                     launchApplicationSession("screen-admin-dashboard");
+                    
                 } else {
                     setTimeout(() => {
                         const currentKurir = cloudKurirList[userSession.id];
@@ -3431,7 +3714,6 @@
                     alert('Password ongkir salah!');
                     return;
                 }
-        
                 update(ref(db, `users/${userSession.id}`), {
                     ongkirLocked: false
                 });
