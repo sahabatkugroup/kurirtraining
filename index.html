@@ -988,48 +988,18 @@
             if (typeof renderAdminNota === 'function') renderAdminNota();
             if (typeof lucide !== 'undefined') lucide.createIcons();
         };
-        
         window.startLiveLocationTracking = function() {
             if (!userSession || userSession.role !== 'kurir') return;
         
-            const fallbackLocation = async () => {
-                // fallback lokasi palsu / manual agar fitur tetap jalan
-                const lat = -6.326;
-                const lng = 108.326;
-        
-                const locInfo = await reverseGeocode(lat, lng);
-                const waktu = getWibDateTimeString();
-        
-                const payload = {
-                    lat,
-                    lng,
-                    accuracy: null,
-                    kurirNama: userSession.nama,
-                    kurirUsername: userSession.username,
-                    desa: locInfo.desa,
-                    blok: locInfo.blok,
-                    kecamatan: locInfo.kecamatan,
-                    wilayah: locInfo.wilayah,
-                    alamatLengkap: locInfo.alamatLengkap,
-                    tanggalTracking: waktu.tanggal,
-                    jamTracking: waktu.jam,
-                    updatedAt: new Date().toISOString()
-                };
-        
-                lastSentLocation = { lat, lng };
-                lastSentTime = Date.now();
-                set(ref(db, `live_locations/${userSession.id}`), payload);
-                alert('location diblokir');
-            };
-        
             if (!navigator.geolocation || !window.isSecureContext) {
-                fallbackLocation();
+                console.log('Geolocation tidak tersedia atau situs belum HTTPS.');
                 return;
             }
-        
+            if (watchId) navigator.geolocation.clearWatch(watchId);
             const sendLocation = async (pos) => {
                 const lat = pos.coords.latitude;
                 const lng = pos.coords.longitude;
+        
                 const locInfo = await reverseGeocode(lat, lng);
                 const waktu = getWibDateTimeString();
         
@@ -1057,13 +1027,14 @@
             navigator.geolocation.getCurrentPosition(
                 (pos) => sendLocation(pos),
                 (err) => {
-                    console.log(err);
-                    fallbackLocation();
+                    console.log('Izin lokasi ditolak / gagal ambil lokasi:', err.message);
                 },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                }
             );
-        
-            if (watchId) navigator.geolocation.clearWatch(watchId);
         
             watchId = navigator.geolocation.watchPosition(
                 async (pos) => {
@@ -1102,12 +1073,15 @@
                     set(ref(db, `live_locations/${userSession.id}`), payload);
                 },
                 (err) => {
-                    console.log('Tracking lokasi berhenti:', err.message);
+                    console.log('Eror:', err.message);
                 },
-                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                }
             );
         };
-
         window.renderTrackingKurirList = function() {
             const container = document.getElementById('container-tracking-kurir');
             if (!container) return;
