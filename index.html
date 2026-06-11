@@ -202,10 +202,6 @@
                         </div>
                 
                         <div class="flex items-center gap-2 shrink-0">
-                            <button onclick="refreshAdminMonitoring()" class="w-11 h-11 rounded-2xl bg-white/70 dark:bg-[#2a2118] flex items-center justify-center border border-amber-300/60 dark:border-amber-900/40 active:scale-95 transition-transform">
-                                <i data-lucide="refresh-cw" class="w-5 h-5 text-amber-700 dark:text-amber-300"></i>
-                            </button>
-                
                             <div class="w-11 h-11 rounded-2xl bg-white/60 dark:bg-[#2a2118] flex items-center justify-center border border-amber-300/60 dark:border-amber-900/40">
                                 <i data-lucide="bar-chart-3" class="w-5 h-5 text-amber-700 dark:text-amber-300"></i>
                             </div>
@@ -354,8 +350,17 @@
                         <input type="month" id="an-filter-bulan" onchange="renderAdminNota()" class="w-full px-2 py-1.5 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
                     </div>
                 </div>
-            
-                <div id="container-admin-nota" class="space-y-2.5"></div>
+                <div class="flex gap-2">
+                    <button onclick="toggleAdminNotaList(true)" class="flex-1 py-2 rounded-xl bg-primary text-white text-xs font-bold uppercase">
+                        Cari
+                    </button>
+                    <button onclick="toggleAdminNotaList(false)" class="flex-1 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-xs font-bold uppercase">
+                        Tutup
+                    </button>
+                </div>
+                
+                <div id="container-admin-nota" class="space-y-2.5 hidden"></div>
+                
             </div>
 
             <div id="screen-admin-mitra" class="screen p-4 space-y-4">
@@ -904,6 +909,38 @@
             </div>
         </div>
     </div>
+    <div id="modal-edit-kurir" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative">
+            <button onclick="closeEditKurirModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
+                ✕
+            </button>
+    
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400" id="title-edit-kurir">
+                Edit Data Kurir
+            </h3>
+    
+            <input type="hidden" id="edit-kurir-id">
+            <input type="text" id="edit-kurir-nama" placeholder="Nama lengkap" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+            <input type="text" id="edit-kurir-username" placeholder="Username" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+            <input type="text" id="edit-kurir-password" placeholder="Password" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+            <input type="date" id="edit-kurir-tgl-gabung" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+            
+            <select id="edit-kurir-status" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                <option value="aktif">AKTIF</option>
+                <option value="nonaktif">BLOKIR</option>
+            </select>
+    
+            <div class="flex gap-2">
+                <button onclick="saveEditKurir()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl uppercase">
+                    Simpan Perubahan
+                </button>
+                <button onclick="closeEditKurirModal()" class="px-3 py-2 bg-slate-100 text-slate-500 dark:bg-slate-800 text-xs rounded-xl">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <div id="modal-sop" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
         <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-700">
             <h3 class="text-lg font-bold text-slate-800 dark:text-white">Panduan SOP Kurir</h3>
@@ -981,13 +1018,6 @@
         
             return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
-        window.refreshAdminMonitoring = function() {
-            calculateDashboardStats();
-            if (typeof populateLaporanFilter === 'function') populateLaporanFilter();
-            if (typeof renderLaporanData === 'function') renderLaporanData();
-            if (typeof renderAdminNota === 'function') renderAdminNota();
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        };
         window.startLiveLocationTracking = function() {
             if (!userSession || userSession.role !== 'kurir') return;
         
@@ -1745,22 +1775,47 @@
             const formTitle = document.getElementById('title-form-kurir');
             if (formTitle) formTitle.innerText = 'Registrasi / Edit Akun Kurir';
         };
-
         window.editAkunKurir = function(key) {
             const item = cloudKurirList[key];
             if (!item) return;
-
-            document.getElementById('ak-id-edit').value = key;
-            document.getElementById('ak-nama').value = item.nama;
-            document.getElementById('ak-username').value = item.username;
-            document.getElementById('ak-password').value = item.password;
-            document.getElementById('ak-tgl-gabung').value = item.tglGabung;
-            document.getElementById('ak-status').value = item.status;
-            
-            const formTitle = document.getElementById('title-form-kurir');
-            if (formTitle) formTitle.innerText = "Edit Akun: " + item.nama;
-            
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+            document.getElementById('edit-kurir-id').value = key;
+            document.getElementById('edit-kurir-nama').value = item.nama || '';
+            document.getElementById('edit-kurir-username').value = item.username || '';
+            document.getElementById('edit-kurir-password').value = item.password || '';
+            document.getElementById('edit-kurir-tgl-gabung').value = item.tglGabung || '';
+            document.getElementById('edit-kurir-status').value = item.status || 'aktif';
+        
+            document.getElementById('title-edit-kurir').innerText = 'Edit Akun: ' + (item.nama || '');
+            document.getElementById('modal-edit-kurir').classList.remove('hidden');
+        };
+        window.closeEditKurirModal = function() {
+            document.getElementById('modal-edit-kurir').classList.add('hidden');
+        };
+        
+        window.saveEditKurir = function() {
+            const id = document.getElementById('edit-kurir-id').value;
+            const nama = document.getElementById('edit-kurir-nama').value.trim();
+            const username = document.getElementById('edit-kurir-username').value.trim().toLowerCase();
+            const password = document.getElementById('edit-kurir-password').value.trim();
+            const tglGabung = document.getElementById('edit-kurir-tgl-gabung').value;
+            const status = document.getElementById('edit-kurir-status').value;
+        
+            if (!id) return alert('Data kurir tidak ditemukan!');
+            if (!nama || !username || !password || !tglGabung) return alert('Lengkapi semua data kurir!');
+        
+            update(ref(db, `users/${id}`), {
+                nama,
+                username,
+                password,
+                tglGabung,
+                status
+            }).then(() => {
+                alert('Data kurir berhasil diperbarui!');
+                closeEditKurirModal();
+            }).catch(err => {
+                alert('Gagal update kurir: ' + err.message);
+            });
         };
 
         window.hapusAkunKurir = function(key) {
@@ -3379,6 +3434,17 @@
                 }
             });
         }
+        window.toggleAdminNotaList = function(show) {
+            const container = document.getElementById('container-admin-nota');
+            if (!container) return;
+            if (show) {
+                container.classList.remove('hidden');
+                renderAdminNota();
+            } else {
+                container.classList.add('hidden');
+                container.innerHTML = '';
+            }
+        };
         window.renderAdminNota = function() {
             const container = document.getElementById('container-admin-nota');
             if (!container) return;
