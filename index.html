@@ -279,7 +279,15 @@
                             <span class="text-[10px] text-slate-400">Wilayah & tarif</span>
                         </div>
                     </button>
-
+                    <button onclick="navigateTo('screen-admin-testimonial')" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
+                        <div class="p-2.5 bg-pink-50 dark:bg-pink-950/40 rounded-xl text-pink-500">
+                            <i data-lucide="message-circle-more" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold block">Testimoni Customer</span>
+                            <span class="text-[10px] text-slate-400">Lihat, tampilkan, sembunyikan & hapus</span>
+                        </div>
+                    </button>
                     <button onclick="navigateTo('screen-pengaturan')" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
                         <div class="p-2.5 bg-rose-50 dark:bg-rose-950/40 rounded-xl text-rose-500"><i data-lucide="settings" class="w-5 h-5"></i></div>
                         <div>
@@ -470,7 +478,6 @@
                     <button onclick="showAdminOngkirMode('rahasia')" class="flex-1 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800">3 Arah</button>
                 </div>
             
-                <!-- Form Tambah / Edit Ongkir -->
                 <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border shadow-sm space-y-3">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400" id="title-form-ongkir">Tambah / Edit Ongkir</h3>
                     <input type="hidden" id="ongkir-id-edit">
@@ -482,7 +489,6 @@
                     </div>
                 </div>
             
-                <!-- Popup Mode Ongkir -->
                 <div id="admin-ongkir-popup" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
                     <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative">
                         <button onclick="closeAdminOngkirPopup()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
@@ -545,7 +551,6 @@
                     </div>
                 </div>
             
-                <!-- Daftar Ongkir -->
                 <div class="space-y-2">
                     <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Daftar Wilayah Ongkir</h4>
                     <div id="container-admin-ongkir" class="space-y-2"></div>
@@ -595,6 +600,15 @@
                             Batal
                         </button>
                     </div>
+                </div>
+            </div>
+            <div id="screen-admin-testimonial" class="screen p-4 space-y-4">
+                <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">
+                        Data Testimoni Customer
+                    </h3>
+            
+                    <div id="container-admin-testimonial" class="space-y-2"></div>
                 </div>
             </div>
 
@@ -983,6 +997,7 @@
         let laporanBulanAktif = '';
         let cloudOngkirList = {};
         let adminOngkirMode = 'normal';
+        let cloudTestimonialList = {};
         let liveLocations = {};
         let liveMap = null;
         let liveMarkers = {};
@@ -1252,25 +1267,20 @@
             };
         }
         window.addEventListener('DOMContentLoaded', () => {
-            // 1. Inisialisasi Tema dan Ikon (Lucide)
             if (typeof lucide !== 'undefined') lucide.createIcons();
             if (typeof initTheme === 'function') initTheme();
             if (typeof sembunyikanRiwayatMitraAdmin === 'function') {
                 sembunyikanRiwayatMitraAdmin();
             }
-        
-            // 2. Sembunyikan Elemen Navigasi Tertentu (dari Bagian 2)
+            
             ['nav-dashboard-btn', 'nav-nota-btn', 'nav-sistem-btn'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     el.classList.add('hidden', 'opacity-0', 'pointer-events-none');
                 }
             });
-        
-            // 3. Pengisian Nilai Default Tanggal & Bulan (WIB)
+
             const tglSkrgWib = getWibRawDate();
-            
-            // Gabungan ID input dari Bagian 1 & Bagian 2 (tanpa duplikat)
             const daftarInputTgl = [
                 'an-filter-tgl',        // Admin Nota
                 'am-log-tgl',           // Admin Log Mitra
@@ -1344,8 +1354,13 @@
                 cloudOngkirList = snapshot.val() || {};
                 if (typeof renderAdminOngkirList === 'function') renderAdminOngkirList();
             });
-        
-            // 5. Pemeriksaan Sesi Otomatis (Auto-Login)
+            onValue(ref(db, 'testimonials'), (snapshot) => {
+                cloudTestimonialList = snapshot.val() || {};
+                if (typeof renderAdminTestimonial === 'function') {
+                    renderAdminTestimonial();
+                }
+            });
+
             const savedSession = localStorage.getItem('sahabatku_session');
             if (savedSession) {
                 userSession = JSON.parse(savedSession);
@@ -1569,6 +1584,12 @@
                     if (selectedKurirTracking) renderTrackingMap(selectedKurirTracking);
                 }, 100);
             }
+            if (screenId === 'screen-admin-testimonial') {
+                setTimeout(() => {
+                    renderAdminTestimonial();
+                }, 100);
+            }
+            
             if (screenId === currentScreen) return;
             
             const currentEl = document.getElementById(currentScreen);
@@ -2231,7 +2252,90 @@
                 nomorUrut++;
             }
         };
-
+        window.toggleTestimonialPublish = function(key) {
+            const item = cloudTestimonialList[key];
+            if (!item) return;
+        
+            update(ref(db, `testimonials/${key}`), {
+                isPublished: !item.isPublished
+            }).then(() => {
+                alert(item.isPublished ? 'Testimoni disembunyikan.' : 'Testimoni ditampilkan.');
+            }).catch(err => {
+                alert('Gagal update testimoni: ' + err.message);
+            });
+        };
+        
+        window.hapusTestimonial = function(key) {
+            if (confirm('Hapus testimoni ini secara permanen?')) {
+                remove(ref(db, `testimonials/${key}`))
+                    .then(() => alert('Testimoni berhasil dihapus.'))
+                    .catch(err => alert('Gagal menghapus testimoni: ' + err.message));
+            }
+        };
+        
+        window.renderAdminTestimonial = function() {
+            const container = document.getElementById('container-admin-testimonial');
+            if (!container) return;
+        
+            container.innerHTML = '';
+        
+            const keys = Object.keys(cloudTestimonialList || {});
+            if (keys.length === 0) {
+                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data testimoni.</div>';
+                return;
+            }
+        
+            keys.forEach(key => {
+                const t = cloudTestimonialList[key];
+        
+                const statusText = t.isPublished ? 'TAMPIL' : 'SEMBUNYI';
+                const statusClass = t.isPublished
+                    ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300'
+                    : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300';
+        
+                container.innerHTML += `
+                    <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700 text-xs space-y-2">
+                        <div class="flex justify-between items-start gap-2">
+                            <div>
+                                <div class="font-bold text-sm text-slate-800 dark:text-white">${t.fullname || '-'}</div>
+                                <div class="text-[10px] text-slate-400">Kurir: ${t.courierName || '-'}</div>
+                            </div>
+                            <span class="px-2 py-1 rounded-full text-[10px] font-bold ${statusClass}">
+                                ${statusText}
+                            </span>
+                        </div>
+        
+                        <div class="grid grid-cols-3 gap-2 text-[10px]">
+                            <div class="bg-white dark:bg-darkCard p-2 rounded-lg">
+                                <div class="text-slate-400">Rating</div>
+                                <div class="font-bold">${t.rating || 0}</div>
+                            </div>
+                            <div class="bg-white dark:bg-darkCard p-2 rounded-lg">
+                                <div class="text-slate-400">Attitude</div>
+                                <div class="font-bold">${t.attitude || '-'}</div>
+                            </div>
+                            <div class="bg-white dark:bg-darkCard p-2 rounded-lg">
+                                <div class="text-slate-400">Speed</div>
+                                <div class="font-bold">${t.speed || '-'}</div>
+                            </div>
+                        </div>
+        
+                        <div class="bg-white dark:bg-darkCard p-2 rounded-lg text-[11px] text-slate-600 dark:text-slate-300">
+                            ${t.comments || '-'}
+                        </div>
+        
+                        <div class="flex gap-2">
+                            <button onclick="toggleTestimonialPublish('${key}')" class="flex-1 py-2 rounded-lg text-[10px] font-bold uppercase bg-blue-50 text-blue-600 dark:bg-blue-950/40">
+                                Tampilkan / Sembunyikan
+                            </button>
+                            <button onclick="hapusTestimonial('${key}')" class="px-3 py-2 rounded-lg text-[10px] font-bold uppercase bg-rose-50 text-rose-600 dark:bg-rose-950/40">
+                                Hapus
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        };
         // ==================================================
         // FITUR LOGIC MODUL: SISI INTERFACE KURIR 
         // ==================================================
@@ -2822,16 +2926,6 @@
                     console.error("Fungsi renderKurirLogMitra tidak ditemukan!");
                 }
             }, 50);
-        };
-        
-        window.bukaInputTransaksiMitra = function(namaMitra) {
-            const selectMitra = document.getElementById('m-input-pilih');
-            const inputTrx = document.getElementById('m-input-trx');
-            if (selectMitra) selectMitra.value = namaMitra;
-            if (inputTrx) {
-                inputTrx.value = '';
-                inputTrx.focus();
-            }
         };
         window.renderKurirLogMitra = function(filterNamaMitraKhusus = '') {
             const container = document.getElementById('container-kurir-log-mitra');
