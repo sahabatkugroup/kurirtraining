@@ -416,12 +416,10 @@
                 <!-- Popup Mode Ongkir -->
                 <div id="admin-ongkir-popup" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
                     <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative">
-                        
                         <button onclick="closeAdminOngkirPopup()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
                             ✕
                         </button>
             
-                        <!-- Normal -->
                         <div id="admin-ongkir-normal" class="hidden space-y-3">
                             <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Cek Ongkir</h3>
                             <div class="relative">
@@ -482,6 +480,52 @@
                 <div class="space-y-2">
                     <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Daftar Wilayah Ongkir</h4>
                     <div id="container-admin-ongkir" class="space-y-2"></div>
+                </div>
+            </div>
+            <div id="modal-edit-ongkir" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative">
+                    <button onclick="closeEditOngkirModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
+                        ✕
+                    </button>
+            
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400" id="title-edit-ongkir">
+                        Edit Data Ongkir
+                    </h3>
+            
+                    <input type="hidden" id="edit-ongkir-id">
+                    <input type="text" id="edit-ongkir-wilayah" placeholder="Nama wilayah" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                    <input type="text" id="edit-ongkir-tarif" oninput="autoformatRupiah(this)" placeholder="Tarif ongkir, contoh: 10.000" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+            
+                    <div class="flex gap-2">
+                        <button onclick="saveEditOngkir()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl uppercase">
+                            Simpan Perubahan
+                        </button>
+                        <button onclick="closeEditOngkirModal()" class="px-3 py-2 bg-slate-100 text-slate-500 dark:bg-slate-800 text-xs rounded-xl">
+                            Batal
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="modal-edit-mitra" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+                <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative">
+                    <button onclick="closeEditMitraModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
+                        ✕
+                    </button>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400" id="title-edit-mitra">Edit Data Mitra</h3>
+                    <input type="hidden" id="edit-mitra-id">
+                    <input type="text" id="edit-mitra-nama" placeholder="Nama mitra" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                    <input type="text" id="edit-mitra-alamat" placeholder="Alamat lengkap" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                    <input type="text" id="edit-mitra-hp" placeholder="No HP WhatsApp" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                    <input type="number" id="edit-mitra-target" placeholder="Target transaksi bulanan" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+            
+                    <div class="flex gap-2">
+                        <button onclick="saveEditMitra()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl uppercase">
+                            Simpan Perubahan
+                        </button>
+                        <button onclick="closeEditMitraModal()" class="px-3 py-2 bg-slate-100 text-slate-500 dark:bg-slate-800 text-xs rounded-xl">
+                            Batal
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -1925,17 +1969,48 @@
                 push(ref(db, 'mitra'), payload).then(() => { alert("Mitra baru sukses ditambahkan!"); resetFormMitra(); });
             }
         }
-
         window.editDataMitra = function(key) {
             const d = cloudMitraList[key];
-            document.getElementById('am-id-edit').value = key;
-            document.getElementById('am-nama').value = d.nama;
-            document.getElementById('am-alamat').value = d.alamat;
-            document.getElementById('am-hp').value = d.hp;
-            document.getElementById('am-target').value = d.target;
-            document.getElementById('title-form-mitra').innerText = "Edit Data Mitra: " + d.nama;
-        }
-
+            if (!d) return;
+        
+            document.getElementById('edit-mitra-id').value = key;
+            document.getElementById('edit-mitra-nama').value = d.nama || '';
+            document.getElementById('edit-mitra-alamat').value = d.alamat || '';
+            document.getElementById('edit-mitra-hp').value = d.hp || '';
+            document.getElementById('edit-mitra-target').value = d.target || '';
+        
+            document.getElementById('modal-edit-mitra').classList.remove('hidden');
+        };
+        window.saveEditMitra = function() {
+            const id = document.getElementById('edit-mitra-id').value;
+            const nama = document.getElementById('edit-mitra-nama').value.trim();
+            const alamat = document.getElementById('edit-mitra-alamat').value.trim();
+            const hp = document.getElementById('edit-mitra-hp').value.trim();
+            const target = parseInt(document.getElementById('edit-mitra-target').value) || 0;
+        
+            if (!id) return alert('Data mitra tidak ditemukan!');
+            if (!nama || !alamat || !hp || target <= 0) return alert('Lengkapi semua data mitra!');
+        
+            update(ref(db, `mitra/${id}`), {
+                nama,
+                alamat,
+                hp,
+                target
+            }).then(() => {
+                alert('Data mitra berhasil diperbarui!');
+                closeEditMitraModal();
+            }).catch(err => {
+                alert('Gagal update mitra: ' + err.message);
+            });
+        };
+        window.closeEditMitraModal = function() {
+            document.getElementById('modal-edit-mitra').classList.add('hidden');
+            document.getElementById('edit-mitra-id').value = '';
+            document.getElementById('edit-mitra-nama').value = '';
+            document.getElementById('edit-mitra-alamat').value = '';
+            document.getElementById('edit-mitra-hp').value = '';
+            document.getElementById('edit-mitra-target').value = '';
+        };
         window.hapusMitra = function(key) {
             if(confirm("Hapus mitra ini beserta seluruh data record?")) {
                 remove(ref(db, `mitra/${key}`));
@@ -3401,12 +3476,37 @@
         window.editDataOngkir = function(key) {
             const d = cloudOngkirList[key];
             if (!d) return;
-            document.getElementById('ongkir-id-edit').value = key;
-            document.getElementById('ongkir-wilayah').value = d.wilayah || '';
-            document.getElementById('ongkir-tarif').value = (d.tarif || 0).toLocaleString('id-ID');
-            document.getElementById('title-form-ongkir').innerText = 'Edit Ongkir';
-        };
         
+            document.getElementById('edit-ongkir-id').value = key;
+            document.getElementById('edit-ongkir-wilayah').value = d.wilayah || '';
+            document.getElementById('edit-ongkir-tarif').value = (d.tarif || 0).toLocaleString('id-ID');
+        
+            document.getElementById('modal-edit-ongkir').classList.remove('hidden');
+        };
+        window.saveEditOngkir = function() {
+            const id = document.getElementById('edit-ongkir-id').value;
+            const wilayah = document.getElementById('edit-ongkir-wilayah').value.trim();
+            const tarif = bersihkanAngka(document.getElementById('edit-ongkir-tarif').value);
+        
+            if (!id) return alert('Data ongkir tidak ditemukan!');
+            if (!wilayah || tarif <= 0) return alert('Lengkapi nama wilayah dan tarif ongkir!');
+        
+            update(ref(db, `ongkir_wilayah/${id}`), {
+                wilayah,
+                tarif
+            }).then(() => {
+                alert('Data ongkir berhasil diperbarui!');
+                closeEditOngkirModal();
+            }).catch(err => {
+                alert('Gagal update ongkir: ' + err.message);
+            });
+        };
+        window.closeEditOngkirModal = function() {
+            document.getElementById('modal-edit-ongkir').classList.add('hidden');
+            document.getElementById('edit-ongkir-id').value = '';
+            document.getElementById('edit-ongkir-wilayah').value = '';
+            document.getElementById('edit-ongkir-tarif').value = '';
+        };
         window.resetFormOngkir = function() {
             document.getElementById('ongkir-id-edit').value = '';
             document.getElementById('ongkir-wilayah').value = '';
@@ -3714,6 +3814,7 @@
                     alert('Password ongkir salah!');
                     return;
                 }
+        
                 update(ref(db, `users/${userSession.id}`), {
                     ongkirLocked: false
                 });
