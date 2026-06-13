@@ -2721,7 +2721,7 @@
             tbody.innerHTML = '';
             
             if (notaState.items.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center italic text-slate-400 py-2">- Tidak ada rincian barang (Hanya Ongkir) -</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center italic text-slate-400 py-2">- Tidak ada rincian barang-</td></tr>`;
             } else {
                 notaState.items.forEach(it => {
                     tbody.innerHTML += `<tr><td>${it.nama}</td><td class="text-center">${it.qty}</td><td class="text-right">${it.harga.toLocaleString('id-ID')}</td><td class="text-right">${it.subtotal.toLocaleString('id-ID')}</td></tr>`;
