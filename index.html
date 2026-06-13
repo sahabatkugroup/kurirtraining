@@ -559,7 +559,7 @@
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400" id="title-form-ongkir">Tambah / Edit Ongkir</h3>
                     <input type="hidden" id="ongkir-id-edit">
                     <input type="text" id="ongkir-wilayah" placeholder="Nama wilayah" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-                    <input type="text" id="ongkir-tarif" oninput="autoformatRupiah(this)" placeholder="Tarif ongkir, contoh: 10.000" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                    <input type="text" id="ongkir-tarif" oninput="autoformatRupiah(this)" placeholder="Tarif ongkir, contoh: 10.000" inputmode="numeric" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
                     <div class="flex gap-2">
                         <button onclick="saveDataOngkir()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl uppercase">Simpan</button>
                         <button onclick="resetFormOngkir()" class="px-3 py-2 bg-slate-100 text-slate-500 dark:bg-slate-800 text-xs rounded-xl">Batal</button>
@@ -639,8 +639,7 @@
             
                     <input type="hidden" id="edit-ongkir-id">
                     <input type="text" id="edit-ongkir-wilayah" placeholder="Nama wilayah" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-                    <input type="text" id="edit-ongkir-tarif" oninput="autoformatRupiah(this)" placeholder="Tarif ongkir, contoh: 10.000" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-            
+                    <input type="text" id="edit-ongkir-tarif" oninput="autoformatRupiah(this)" placeholder="Tarif ongkir, contoh: 10.000" inputmode="numeric" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
                     <div class="flex gap-2">
                         <button onclick="saveEditOngkir()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl uppercase">
                             Simpan Perubahan
@@ -701,7 +700,7 @@
                     </div>
                     <div>
                         <label class="block text-xs mb-1 font-medium opacity-70">Ongkir (Rp)</label>
-                        <input type="text" id="nota-ongkir" oninput="autoformatRupiah(this); calculateNotaTotal();" value="6.000" class="w-full px-3 py-2 border rounded-xl bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-sm font-semibold text-primary">
+                        <input type="text" id="nota-ongkir" oninput="autoformatRupiah(this); calculateNotaTotal();" value="6.000" inputmode="numeric" class="w-full px-3 py-2 border rounded-xl bg-slate-50 dark:bg-slate-800 dark:border-slate-700 text-sm font-semibold text-primary">
                     </div>
                 </div>
 
@@ -714,7 +713,7 @@
                     <input type="text" id="item-nama" oninput="autocapitalText(this)" placeholder="Nama barang..." class="w-full px-3 py-2 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
                         <div class="grid grid-cols-3 gap-2">
                             <input type="number" id="item-qty" placeholder="Qty" value="1" class="w-full px-3 py-2 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
-                            <input type="text" id="item-harga" oninput="autoformatRupiah(this)" placeholder="Contoh: 10.000" class="col-span-2 w-full px-3 py-2 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
+                            <input type="text" id="item-harga" oninput="autoformatRupiah(this)" placeholder="Contoh: 10.000" inputmode="numeric" class="col-span-2 w-full px-3 py-2 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
                         </div>
                         <button type="button" onclick="addNotaItem()" class="w-full py-2 bg-primary text-white font-medium rounded-lg text-[11px] uppercase">Simpan Item</button>
                     </div>
@@ -742,7 +741,7 @@
                         </select>
                         <div class="grid grid-cols-1 gap-2">
                             <input type="text" id="biaya-nama-manual" oninput="autocapitalText(this)" placeholder="Misal: Parkir Pasar" class="w-full px-3 py-2 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700 hidden">
-                            <input type="text" id="biaya-nominal" oninput="autoformatRupiah(this)" placeholder="Contoh: 10.000" class="w-full px-3 py-2 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
+                            <input type="text" id="biaya-nominal" oninput="autoformatRupiah(this)" placeholder="Contoh: 10.000" inputmode="numeric" class="w-full px-3 py-2 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
                         </div>
                         <button type="button" onclick="addBiayaItem()" class="w-full py-2 bg-primary text-white font-medium rounded-lg text-[11px] uppercase">Simpan Biaya</button>
                     </div>
@@ -941,12 +940,27 @@
 
             <div id="screen-pengaturan" class="screen p-4 space-y-3">
                 <div id="security-account-box" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm mt-4 hidden">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Keamanan Akun</h3>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Keamanan Akun Kurir</h3>
                     <div class="space-y-3">
+                        <input type="text" id="new-username" placeholder="Username Baru" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
                         <input type="password" id="new-password" placeholder="Password Baru" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-                        <button onclick="changePassword()" class="w-full py-2 bg-primary text-white font-bold rounded-xl text-xs uppercase">Simpan Password Baru</button>
+                        <button onclick="changeKurirLogin()" class="w-full py-2 bg-primary text-white font-bold rounded-xl text-xs uppercase">
+                            Simpan Username & Password
+                        </button>
                     </div>
                 </div>
+            
+                <div id="admin-security-account-box" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm mt-4 hidden">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Keamanan Akun Admin</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="admin-username" placeholder="Username Admin Baru" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                        <input type="password" id="admin-password" placeholder="Password Admin Baru" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                        <button onclick="changeAdminLogin()" class="w-full py-2 bg-primary text-white font-bold rounded-xl text-xs uppercase">
+                            Simpan Username & Password
+                        </button>
+                    </div>
+                </div>
+
                 <div class="bg-white dark:bg-darkCard rounded-2xl border overflow-hidden shadow-sm">
                     <div class="flex items-center justify-between p-4 border-b dark:border-slate-700">
                         <div class="flex items-center space-x-3"><i data-lucide="moon" class="w-5 h-5 text-slate-400"></i><span class="text-xs font-medium">Dark Mode Tampilan</span></div>
@@ -1622,6 +1636,79 @@
                 });
             }
         };
+        window.changeAdminLogin = async function() {
+            const newUsername = document.getElementById('admin-username').value.trim().toLowerCase();
+            const newPassword = document.getElementById('admin-password').value.trim();
+        
+            if (!newUsername || !newPassword) {
+                alert("Mohon isi username dan password baru!");
+                return;
+            }
+        
+            if (!confirm("Yakin ingin mengubah username dan password admin?")) return;
+        
+            try {
+                const snap = await get(ref(db, 'loginadmin'));
+                const current = snap.val() || {};
+        
+                await set(ref(db, 'loginadmin'), {
+                    username: newUsername,
+                    password: newPassword
+                });
+        
+                alert("Username dan password admin berhasil diubah!");
+                document.getElementById('admin-username').value = '';
+                document.getElementById('admin-password').value = '';
+            } catch (err) {
+                alert("Gagal mengubah login admin: " + err.message);
+            }
+        };
+        window.changeKurirLogin = function() {
+            const newUsername = document.getElementById('new-username').value.trim().toLowerCase();
+            const newPassword = document.getElementById('new-password').value.trim();
+        
+            if (!newUsername || !newPassword) {
+                alert("Mohon isi username dan password baru!");
+                return;
+            }
+        
+            if (!userSession || !userSession.id || userSession.role !== 'kurir') {
+                alert("Sesi kurir tidak ditemukan!");
+                return;
+            }
+        
+            const currentUser = cloudKurirList[userSession.id];
+            if (!currentUser) {
+                alert("Data kurir tidak ditemukan!");
+                return;
+            }
+        
+            const duplicate = Object.entries(cloudKurirList).some(([key, user]) => {
+                return key !== userSession.id && (user.username || '').trim().toLowerCase() === newUsername;
+            });
+        
+            if (duplicate) {
+                alert("Username sudah dipakai kurir lain!");
+                return;
+            }
+        
+            if (!confirm("Yakin ingin mengubah username dan password kurir?")) return;
+        
+            update(ref(db, `users/${userSession.id}`), {
+                username: newUsername,
+                password: newPassword
+            })
+            .then(() => {
+                alert("Username dan password kurir berhasil diubah!");
+                userSession.username = newUsername;
+                localStorage.setItem('sahabatku_session', JSON.stringify(userSession));
+                document.getElementById('new-username').value = '';
+                document.getElementById('new-password').value = '';
+            })
+            .catch((error) => {
+                alert("Gagal mengubah login kurir: " + error.message);
+            });
+        };
         window.launchApplicationSession = function(targetDashboard) {
             document.getElementById('screen-login').classList.remove('active');
             const mainLayout = document.getElementById('main-layout');
@@ -1644,16 +1731,20 @@
                 } else {
                     btn.classList.add('hidden', 'opacity-0', 'pointer-events-none');
                 }
-                const securityBox = document.getElementById('security-account-box');
-                if (securityBox) {
-                    if (userSession && userSession.role === 'kurir') {
-                        securityBox.classList.remove('hidden');
-                    } else {
-                        securityBox.classList.add('hidden');
-                    }
-                }
-
             });
+        
+            const kurirBox = document.getElementById('security-account-box');
+            const adminBox = document.getElementById('admin-security-account-box');
+        
+            if (kurirBox) {
+                if (userSession && userSession.role === 'kurir') kurirBox.classList.remove('hidden');
+                else kurirBox.classList.add('hidden');
+            }
+        
+            if (adminBox) {
+                if (userSession && userSession.role === 'admin') adminBox.classList.remove('hidden');
+                else adminBox.classList.add('hidden');
+            }
         
             navigateTo(targetDashboard);
         };
@@ -2469,6 +2560,11 @@
             rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
             el.value = rupiah;
         }
+        function setRupiahInput(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.value = (value || 0).toLocaleString('id-ID');
+        }
+        
         function bersihkanAngka(teks) {
             return parseInt((teks || '').toString().replace(/\./g, '')) || 0;
         }
@@ -3789,10 +3885,9 @@
         window.editDataOngkir = function(key) {
             const d = cloudOngkirList[key];
             if (!d) return;
-        
             document.getElementById('edit-ongkir-id').value = key;
             document.getElementById('edit-ongkir-wilayah').value = d.wilayah || '';
-            document.getElementById('edit-ongkir-tarif').value = (d.tarif || 0).toLocaleString('id-ID');
+            setRupiahInput('edit-ongkir-tarif', d.tarif || 0);
         
             document.getElementById('modal-edit-ongkir').classList.remove('hidden');
         };
