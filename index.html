@@ -279,13 +279,22 @@
                             <span class="text-[10px] text-slate-400">Wilayah & tarif</span>
                         </div>
                     </button>
-                    <button onclick="navigateTo('screen-admin-absensi')" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
+                    <button onclick="window.location.href='absensi-admin-sahabatku.html'" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
                         <div class="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl text-emerald-500">
                             <i data-lucide="calendar-days" class="w-5 h-5"></i>
                         </div>
                         <div>
                             <span class="text-xs font-bold block">Absensi Harian Kurir</span>
                             <span class="text-[10px] text-slate-400">Rekap hadir, pulang, dan statistik</span>
+                        </div>
+                    </button>
+                    <button onclick="navigateTo('screen-admin-kpi')" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
+                        <div class="p-2.5 bg-violet-50 dark:bg-violet-950/40 rounded-xl text-violet-500">
+                            <i data-lucide="trophy" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold block">KPI Kurir</span>
+                            <span class="text-[10px] text-slate-400">Ranking, penghargaan & performa</span>
                         </div>
                     </button>
                     <button onclick="navigateTo('screen-admin-testimonial')" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
@@ -412,23 +421,31 @@
                 </div>
 
                 <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Riwayat Transaksi Inputan</h3>
-                    <div class="space-y-2">
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="date" id="am-log-tgl" class="w-full px-2 py-1.5 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
-                            <input type="text" id="am-log-search" placeholder="Cari nama mitra..." class="w-full px-2 py-1.5 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
-                        </div>
-                        <div>
-                            <select id="am-log-filter-kurir" class="w-full px-2 py-1.5 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
-                                <option value="semua">-- Semua Kurir --</option>
-                            </select>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="renderAdminLogMitra()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-lg">Cari</button>
-                            <button onclick="sembunyikanRiwayatMitraAdmin()" class="px-3 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-lg">Sembunyikan</button>
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Riwayat Trx Inputan</h3>
+                        <button onclick="toggleRiwayatTrxInputan()" class="px-3 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
+                            Riwayat Trx Inputan
+                        </button>
+                    </div>
+                
+                    <div id="box-riwayat-trx-inputan" class="hidden space-y-2">
+                        <div class="space-y-2">
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="date" id="am-log-tgl" class="w-full px-2 py-1.5 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
+                                <input type="text" id="am-log-search" placeholder="Cari nama mitra..." class="w-full px-2 py-1.5 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
+                            </div>
+                            <div>
+                                <select id="am-log-filter-kurir" class="w-full px-2 py-1.5 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
+                                    <option value="semua">-- Semua Kurir --</option>
+                                </select>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="renderAdminLogMitra()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-lg">Cari</button>
+                                <button onclick="sembunyikanRiwayatMitraAdmin()" class="px-3 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-lg">Sembunyikan</button>
+                            </div>
+                            <div id="container-admin-log-mitra" class="max-h-40 overflow-y-auto space-y-1.5 pt-1"></div>
                         </div>
                     </div>
-                    <div id="container-admin-log-mitra" class="max-h-40 overflow-y-auto space-y-1.5 pt-1"></div>
                 </div>
 
                 <div class="space-y-2">
@@ -486,6 +503,26 @@
                     <div id="tracking-map" style="height: 360px; border-radius: 16px; overflow: hidden;"></div>
                 </div>
             </div>
+            <div id="screen-admin-kpi" class="screen p-4 space-y-4">
+                <div class="bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-600 text-white p-5 rounded-3xl shadow-xl space-y-2">
+                    <h3 class="text-lg font-black">KPI Kurir Sahabatku</h3>
+                    <p class="text-xs text-white/80">Penghargaan, top 5, ranking, dan analisa performa bulanan</p>
+                </div>
+            
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="renderKPISection('penghargaan')" class="py-2 rounded-xl bg-violet-600 text-white text-[10px] font-bold uppercase">Penghargaan</button>
+                    <button onclick="renderKPISection('top5')" class="py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-[10px] font-bold uppercase">Top 5</button>
+                    <button onclick="renderKPISection('ranking')" class="py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-[10px] font-bold uppercase">Ranking</button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="month" id="kpi-filter-bulan" onchange="renderKPISection(currentKPISection)" class="flex-1 px-3 py-3 rounded-2xl border text-xs font-semibold bg-slate-50 dark:bg-darkBg dark:border-slate-700">
+                    <button onclick="renderKPISection(currentKPISection)" class="px-4 py-3 rounded-2xl bg-violet-600 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
+                        Terapkan
+                    </button>
+                </div>
+                <div id="container-kpi-kurir" class="space-y-3"></div>
+            </div>
+
             <div id="screen-admin-absensi" class="screen p-4 space-y-4">
                 <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
                     <div class="flex items-center justify-between">
@@ -896,14 +933,23 @@
                 </div>
                 
                 <div class="bg-white dark:bg-darkCard p-3 rounded-xl border shadow-sm space-y-2">
-                    <h4 class="font-bold text-xs uppercase text-slate-400">Riwayat Transaksi Mitra Saya</h4>
-                    <div class="flex gap-2">
-                        <input type="date" id="m-filter-tgl-kurir" class="w-full px-2 py-1 border rounded-lg text-xs dark:bg-darkBg">
-                        <button onclick="sembunyikanRiwayatMitra()" class="px-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-lg">Sembunyikan</button>
-                        <button onclick="renderKurirLogMitra()" class="px-3 bg-slate-800 text-white text-xs rounded-lg">Cari</button>
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-bold text-xs uppercase text-slate-400">Riwayat Transaksi Mitra Saya</h4>
+                        <button onclick="toggleRiwayatMitraKurir()" class="px-3 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
+                            Riwayat Trx Inputan
+                        </button>
                     </div>
-                    <div id="container-kurir-log-mitra" class="space-y-1 max-h-32 overflow-y-auto text-xs"></div>
+                
+                    <div id="box-riwayat-mitra-kurir" class="hidden space-y-2">
+                        <div class="flex gap-2">
+                            <input type="date" id="m-filter-tgl-kurir" class="w-full px-2 py-1 border rounded-lg text-xs dark:bg-darkBg">
+                            <button onclick="renderKurirLogMitra()" class="px-3 bg-slate-800 text-white text-xs rounded-lg">Cari</button>
+                            <button onclick="sembunyikanRiwayatMitraKurir()" class="px-3 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs rounded-lg">Sembunyikan</button>
+                        </div>
+                        <div id="container-kurir-log-mitra" class="space-y-1 max-h-32 overflow-y-auto text-xs"></div>
+                    </div>
                 </div>
+
                 <div class="px-4 py-2">
                     <input type="text" id="input-cari-mitra" onkeyup="cariMitra()" 
                            placeholder="Cari nama mitra..." 
@@ -1039,36 +1085,7 @@
             </div>
         </div>
     </div>
-    <div id="modal-riwayat-absensi" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative">
-            <button onclick="closeRiwayatAbsensiModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
-                ✕
-            </button>
-    
-            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Riwayat Absensi Kurir</h3>
-            <div id="riwayat-absensi-content" class="space-y-2 max-h-[60vh] overflow-y-auto"></div>
-        </div>
-    </div>
-    <div id="modal-absensi-manual" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative">
-            <button onclick="closeAbsensiManualModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
-                ✕
-            </button>
-    
-            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Input Absensi Manual</h3>
-    
-            <input type="date" id="manual-absensi-tanggal" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-            <select id="manual-absensi-kurir" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700"></select>
-            <input type="time" id="manual-absensi-masuk" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-            <input type="time" id="manual-absensi-pulang" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-    
-            <div class="flex gap-2">
-                <button onclick="simpanAbsensiManual()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl uppercase">Simpan</button>
-                <button onclick="closeAbsensiManualModal()" class="px-3 py-2 bg-slate-100 text-slate-500 dark:bg-slate-800 text-xs rounded-xl">Batal</button>
-            </div>
-        </div>
-    </div>
-    
+
     <div id="modal-sop" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
         <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-700">
             <h3 class="text-lg font-bold text-slate-800 dark:text-white">Panduan SOP Kurir</h3>
@@ -1117,6 +1134,8 @@
         let trackingMap = null;
         let trackingMarker = null;
         let selectedKurirTracking = null;
+        let cloudAbsensiList = {};
+        let cloudJadwalOff = {};
         let selectedTrackingUser = null;
         let pendingAutoLoginCheck = false;
         
@@ -1461,18 +1480,19 @@
                 if (typeof renderAdminDaftarMitra === 'function') renderAdminDaftarMitra();
                 if (typeof sembunyikanRiwayatMitraAdmin === 'function') sembunyikanRiwayatMitraAdmin();
                 if (typeof calculateMitraStats === 'function') calculateMitraStats();
+                if (typeof calculateDashboardStats === 'function') calculateDashboardStats();
             });
         
             onValue(ref(db, 'ongkir_wilayah'), (snapshot) => {
                 cloudOngkirList = snapshot.val() || {};
                 if (typeof renderAdminOngkirList === 'function') renderAdminOngkirList();
             });
-            window.cloudAbsensiList = {};
             onValue(ref(db, 'absensi_sahabatku'), (snapshot) => {
-                window.cloudAbsensiList = snapshot.val() || {};
-                if (currentScreen === 'screen-admin-absensi') {
-                    renderAdminAbsensi();
-                }
+                cloudAbsensiList = snapshot.val() || {};
+            });
+            
+            onValue(ref(db, 'jadwal_off'), (snapshot) => {
+                cloudJadwalOff = snapshot.val() || {};
             });
             
             onValue(ref(db, 'testimonials'), (snapshot) => {
@@ -1793,19 +1813,13 @@
                     renderAdminTestimonial();
                 }, 100);
             }
-            if (screenId === 'screen-admin-absensi') {
+            if (screenId === 'screen-admin-kpi') {
                 setTimeout(() => {
-                    const tgl = getWibRawDate();
-                    const tglEl = document.getElementById('absensi-filter-tgl');
-                    const blnEl = document.getElementById('absensi-filter-bulan');
-            
-                    if (tglEl && !tglEl.value) tglEl.value = tgl;
-                    if (blnEl && !blnEl.value) blnEl.value = tgl.substring(0, 7);
-            
-                    renderAdminAbsensi();
-                }, 50);
+                    const bulanEl = document.getElementById('kpi-filter-bulan');
+                    if (bulanEl && !bulanEl.value) bulanEl.value = getWibRawDate().slice(0, 7);
+                    renderKPISection(currentKPISection);
+                }, 100);
             }
-            
             if (screenId === currentScreen) return;
             
             const currentEl = document.getElementById(currentScreen);
@@ -1902,12 +1916,14 @@
             for (let k in cloudLogMitra) {
                 const log = cloudLogMitra[k];
                 if (!log) continue;
-        
-                if (log.tglRaw === tglSkrg) {
+                if (!log.tglRaw) continue;
+            
+                const tglLog = log.tglRaw.toString().slice(0, 10);
+                if (tglLog === tglSkrg) {
                     totalTrxMitraToday += (parseInt(log.trxInput) || 0);
                 }
             }
-        
+
             const elTotalNota = document.getElementById('adm-dash-total-nota');
             const elTotalOmset = document.getElementById('adm-dash-total-omset');
             const elTotalMitra = document.getElementById('adm-dash-total-mitra');
@@ -1972,7 +1988,7 @@
 
             set(targetRef, userData)
             .then(() => {
-                alert('Akun kurir berhasil disimpan ke Firebase!');
+                alert('Akun kurir berhasil disimpan!');
                 resetFormKurir();
             })
             .catch((error) => {
@@ -3210,6 +3226,20 @@
                 nomorUrut++;
             }
         };
+        window.toggleRiwayatTrxInputan = function() {
+            const box = document.getElementById('box-riwayat-trx-inputan');
+            if (!box) return;
+            box.classList.toggle('hidden');
+            if (!box.classList.contains('hidden')) {
+                renderAdminLogMitra();
+            }
+        };
+        window.sembunyikanRiwayatMitraAdmin = function() {
+            const box = document.getElementById('box-riwayat-trx-inputan');
+            const container = document.getElementById('container-admin-log-mitra');
+            if (container) container.innerHTML = '';
+            if (box) box.classList.add('hidden');
+        };
 
         window.bukaInputTransaksiMitra = function(namaMitra) {
             sembunyikanRiwayatMitra(); 
@@ -3244,6 +3274,21 @@
                 loadNotaDraft();
             }
         });
+        window.toggleRiwayatMitraKurir = function() {
+            const box = document.getElementById('box-riwayat-mitra-kurir');
+            if (!box) return;
+            box.classList.toggle('hidden');
+            if (!box.classList.contains('hidden')) {
+                renderKurirLogMitra();
+            }
+        };
+        window.sembunyikanRiwayatMitraKurir = function() {
+            const box = document.getElementById('box-riwayat-mitra-kurir');
+            const container = document.getElementById('container-kurir-log-mitra');
+            if (container) container.innerHTML = '';
+            if (box) box.classList.add('hidden');
+        };
+        
         window.hitungTarifOngkir = function() {
             const asal = document.getElementById('ongkir-asal').value.trim();
             const tujuan = document.getElementById('ongkir-tujuan').value.trim();
@@ -3295,11 +3340,18 @@
         };
         window.toggleSection = function(id) { document.getElementById(id).classList.toggle('hidden'); }
 
-        // Theme Engine Manager
         function initTheme() {
-            if (localStorage.getItem('theme') === 'dark') {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
                 document.documentElement.classList.add('dark');
-                document.getElementById('dark-mode-toggle').checked = true;
+                const toggle = document.getElementById('dark-mode-toggle');
+                if (toggle) toggle.checked = true;
+            } else {
+                document.documentElement.classList.remove('dark');
+                const toggle = document.getElementById('dark-mode-toggle');
+                if (toggle) toggle.checked = false;
             }
         }
 
@@ -4223,279 +4275,351 @@
             }
             navigateTo('screen-ongkir');
         };
+
+        let currentKPISection = 'penghargaan';
         
-        function hitungSelisihJam(jamMasuk, jamPulang) {
-            if (!jamMasuk || !jamPulang) return '-';
-        
-            const [hm, mm] = jamMasuk.split('.').map(Number);
-            const [hp, mp] = jamPulang.split('.').map(Number);
-        
-            const masuk = hm * 60 + mm;
-            const pulang = hp * 60 + mp;
-            if (pulang < masuk) return '-';
-            const selisih = pulang - masuk;
-            const jam = Math.floor(selisih / 60);
-            const menit = selisih % 60;        
-            return `${jam}j ${menit}m`;
+        function getDaysInMonth(ym) {
+            const [y, m] = ym.split('-').map(Number);
+            return new Date(y, m, 0).getDate();
         }
-        window.bukaModalAbsensiManual = function() {
-            const modal = document.getElementById('modal-absensi-manual');
-            if (!modal) return;        
-            const tgl = getWibRawDate();
-            document.getElementById('manual-absensi-tanggal').value = tgl;
-            document.getElementById('manual-absensi-kurir').innerHTML = Object.entries(cloudKurirList || {})
-                .filter(([id, u]) => u && u.role === 'kurir')
-                .map(([id, u]) => `<option value="${id}">${u.nama || u.username} - ${u.leader || '-'}</option>`)
-                .join('');
-            modal.classList.remove('hidden');
-        };
         
-        window.closeAbsensiManualModal = function() {
-            document.getElementById('modal-absensi-manual').classList.add('hidden');
-        };
+        function getKpiMonth() {
+            const el = document.getElementById('kpi-filter-bulan');
+            return el && el.value ? el.value : getWibRawDate().slice(0, 7);
+        }
         
-        window.closeRiwayatAbsensiModal = function() {
-            document.getElementById('modal-riwayat-absensi').classList.add('hidden');
-        };
+        function getKpiAvatarName(name) {
+            if (!name) return '?';
+            const parts = name.trim().split(' ');
+            if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+            return parts[0][0].toUpperCase();
+        }
         
-        window.renderAdminAbsensi = function() {
-            const tableBody = document.getElementById('container-admin-absensi');
-            const statBox = document.getElementById('container-statistik-absensi');
-            if (!tableBody || !statBox) return;
-            const inputTglEl = document.getElementById('absensi-filter-tgl');
-            const inputBulanEl = document.getElementById('absensi-filter-bulan');
-            const filterNama = (document.getElementById('absensi-filter-nama')?.value || '').toLowerCase().trim();
-            const todayRaw = getWibRawDate();
+        function getRatingBadge(rating) {
+            if (rating >= 95) return { emoji: '🟣', label: 'Legend', color: 'text-purple-600', ring: 'ring-purple-500/20', bg: 'from-purple-500 to-fuchsia-500' };
+            if (rating >= 90) return { emoji: '🟡', label: 'Elite', color: 'text-yellow-500', ring: 'ring-yellow-500/20', bg: 'from-yellow-400 to-amber-500' };
+            if (rating >= 85) return { emoji: '🥇', label: 'Gold', color: 'text-emerald-600', ring: 'ring-emerald-500/20', bg: 'from-emerald-400 to-emerald-600' };
+            if (rating >= 80) return { emoji: '🔵', label: 'Silver', color: 'text-blue-600', ring: 'ring-blue-500/20', bg: 'from-blue-400 to-blue-600' };
+            if (rating >= 70) return { emoji: '🟠', label: 'Bronze', color: 'text-orange-500', ring: 'ring-orange-500/20', bg: 'from-orange-400 to-orange-600' };
+            return { emoji: '🔴', label: 'Perlu Pembinaan', color: 'text-rose-500', ring: 'ring-rose-500/20', bg: 'from-rose-400 to-rose-600' };
+        }
         
-            if (inputTglEl && !inputTglEl.value) inputTglEl.value = todayRaw;
-            if (inputBulanEl && !inputBulanEl.value) inputBulanEl.value = todayRaw.substring(0, 7);
-            const filterTgl = inputTglEl?.value || '';
-            const filterBulan = inputBulanEl?.value ||'';
-            const dataAbsensi = Object.entries(window.cloudAbsensiList || {}).map(([key, a]) => ({ key, ...a }));
-            const kurirList = Object.entries(cloudKurirList || {}).filter(([id, u]) => u && u.role === 'kurir');
-            let targetDates = [];
-            if (filterTgl) {
-                targetDates = [filterTgl];
-            } else if (filterBulan) {
-                targetDates = dataAbsensi
-                    .map(a => a.tanggal)
-                    .filter(t => t && t.substring(0, 7) === filterBulan);
-            }
-            const ringkasanTanggal = filterTgl || todayRaw;
-            let hadirHariIni = 0;
-            let belumMasuk = 0;
-            let belumPulang = 0;
-            const statistik = {};
-            kurirList.forEach(([id, u]) => {
-                statistik[id] = {
-                    nama: u.nama || '-',
-                    leader: u.leader || '-',
-                    tanggal: filterTgl || filterBulan || todayRaw,
-                    masuk: 0,
-                    pulang: 0
-                };
+        function getPodiumClass(rank) {
+            if (rank === 1) return 'from-yellow-300 via-yellow-400 to-yellow-500 text-yellow-950';
+            if (rank === 2) return 'from-slate-300 via-slate-400 to-slate-500 text-slate-950';
+            if (rank === 3) return 'from-orange-300 via-orange-400 to-orange-500 text-orange-950';
+            return 'from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700';
+        }
+        
+        function progressColor(rating) {
+            if (rating >= 95) return 'bg-purple-600';
+            if (rating >= 90) return 'bg-yellow-500';
+            if (rating >= 85) return 'bg-emerald-500';
+            if (rating >= 80) return 'bg-blue-500';
+            if (rating >= 70) return 'bg-orange-500';
+            return 'bg-rose-500';
+        }
+        
+        function calcKpiForKurir(namaKurir, bulan) {
+            const daysInMonth = getDaysInMonth(bulan);
+        
+            let hadir = 0;
+            let masukTepat = 0;
+            let off = 0;
+            let totalNota = 0;
+            let trxMitra = 0;
+            let totalPenghasilan = 0;
+        
+            Object.values(cloudAbsensiList || {}).forEach(a => {
+                if (!a || a.namaKurir !== namaKurir) return;
+                if (!a.tanggal || a.tanggal.slice(0, 7) !== bulan) return;
+        
+                if (a.jamMasuk && a.jamPulang) hadir++;
+                if (a.jamMasuk && a.jamMasuk <= '08.00') masukTepat++;
             });
-            kurirList.forEach(([id, u]) => {
-                const dataHariIni = dataAbsensi.find(a => a.idKurir === id && a.tanggal === ringkasanTanggal);
-                if (dataHariIni) {
-                    hadirHariIni++;
-                    if (dataHariIni.jamMasuk && !dataHariIni.jamPulang) belumPulang++;
-                } else {
-                    belumMasuk++;
-                }
+        
+            Object.values(cloudNotaList || {}).forEach(n => {
+                if (!n || n.kurirNama !== namaKurir) return;
+                if (!n.tanggalRaw || n.tanggalRaw.slice(0, 7) !== bulan) return;
+        
+                totalNota++;
+                const ongkir = parseInt(n.ongkir) || 0;
+                const biaya = (n.biayaTambahan || []).reduce((a, b) => a + (parseInt(b.nominal) || 0), 0);
+                totalPenghasilan += (ongkir + biaya);
             });
-            dataAbsensi.forEach(a => {
-                if (!a || !a.idKurir || !a.tanggal) return;
-                if (filterBulan && a.tanggal.substring(0, 7) !== filterBulan) return;
-                if (filterNama) {
-                    const nama = (a.namaKurir || '').toLowerCase();
-                    const leader = (a.leader || '').toLowerCase();
-                    if (!nama.includes(filterNama) && !leader.includes(filterNama)) return;
-                }
-                const k = statistik[a.idKurir];
-                if (!k) return;
-                if (a.jamMasuk) k.masuk++;
-                if (a.jamPulang) k.pulang++;
+        
+            Object.values(cloudLogMitra || {}).forEach(log => {
+                if (!log || log.kurirNama !== namaKurir) return;
+                if (!log.tglRaw || log.tglRaw.slice(0, 7) !== bulan) return;
+                trxMitra += parseInt(log.trxInput) || 0;
             });
-            document.getElementById('absensi-total-kurir').innerText = kurirList.length;
-            document.getElementById('absensi-hadir-hari-ini').innerText = hadirHariIni;
-            document.getElementById('absensi-belum-masuk').innerText = belumMasuk;
-            document.getElementById('absensi-belum-pulang').innerText = belumPulang;
-            const filtered = dataAbsensi
-                .filter(a => {
-                    if (!a.tanggal) return false;
         
-                    if (filterTgl) {
-                        if (a.tanggal !== filterTgl) return false;
-                    } else if (filterBulan) {
-                        if (a.tanggal.substring(0, 7) !== filterBulan) return false;
-                    }
-        
-                    if (filterNama) {
-                        const nama = (a.namaKurir || '').toLowerCase();
-                        const leader = (a.leader || '').toLowerCase();
-                        if (!nama.includes(filterNama) && !leader.includes(filterNama)) return false;
-                    }
-                    return true;
-                })
-                .sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
-            tableBody.innerHTML = '';
-            if (filtered.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="py-4 text-center text-xs text-slate-400">Belum ada data absensi.</td></tr>`;
-            } else {
-                filtered.forEach((a, index) => {
-                    const totalJam = hitungSelisihJam(a.jamMasuk, a.jamPulang);
-                    let status = 'Belum Absen';
-                    if (a.jamMasuk && !a.jamPulang) status = 'Belum Pulang';
-                    if (a.jamMasuk && a.jamPulang) status = 'Hadir';
-        
-                    tableBody.innerHTML += `
-                        <tr class="text-[11px]">
-                            <td class="py-2">${index + 1}</td>
-                            <td class="py-2 font-semibold">${a.namaKurir || '-'}</td>
-                            <td class="py-2">${a.leader || '-'}</td>
-                            <td class="py-2">${a.jamMasuk || '-'}</td>
-                            <td class="py-2">${a.jamPulang || '-'}</td>
-                            <td class="py-2">${totalJam}</td>
-                            <td class="py-2">
-                                <span class="px-2 py-1 rounded-full text-[9px] font-bold ${
-                                    status === 'Hadir' ? 'bg-emerald-50 text-emerald-600' :
-                                    status === 'Belum Pulang' ? 'bg-amber-50 text-amber-600' :
-                                    'bg-slate-100 text-slate-500'
-                                }">${status}</span>
-                            </td>
-                            <td class="py-2">
-                                <button onclick="lihatRiwayatAbsensi('${a.idKurir || ''}')" class="px-2 py-1 rounded-md bg-blue-50 text-blue-600 font-bold text-[10px]">
-                                    Lihat
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
-            statBox.innerHTML = Object.entries(statistik).map(([id, s]) => `
-                <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl text-xs space-y-1">
-                    <div class="font-bold">${s.nama}</div>
-                    <div class="text-[10px] text-slate-400">Leader: ${s.leader}</div>
-                    <div class="text-[10px] text-slate-400">Tanggal: ${s.tanggal}</div>
-                    <div class="text-[10px] text-slate-400">Total Masuk: ${s.masuk} | Total Pulang: ${s.pulang}</div>
-                </div>
-            `).join('');
-        };
-        
-        window.lihatRiwayatAbsensi = function(idKurir) {
-            const data = Object.entries(window.cloudAbsensiList || {})
-                .filter(([key, a]) => a && a.idKurir === idKurir)
-                .map(([key, a]) => a)
-                .sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
-            const kurir = cloudKurirList[idKurir];
-            const modal = document.getElementById('modal-riwayat-absensi');
-            const content = document.getElementById('riwayat-absensi-content');
-            if (!modal || !content) return;
-        
-            if (data.length === 0) {
-                content.innerHTML = `<div class="text-center text-xs text-slate-400 py-4">Riwayat absensi tidak ditemukan.</div>`;
-                modal.classList.remove('hidden');
-                return;
-            }
-            content.innerHTML = `
-                <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
-                    <div class="font-bold text-sm">${kurir?.nama || '-'}</div>
-                    <div class="text-[10px] text-slate-400">Leader: ${kurir?.leader || '-'}</div>
-                </div>
-                ${data.map(a => `
-                    <div class="bg-white dark:bg-darkBg border dark:border-slate-700 p-3 rounded-xl text-xs">
-                        <div class="flex justify-between">
-                            <span class="font-bold">${a.tanggal || '-'}</span>
-                            <span class="text-primary font-bold">${hitungSelisihJam(a.jamMasuk, a.jamPulang)}</span>
-                        </div>
-                        <div class="mt-1 text-[10px] text-slate-500">
-                            Masuk: ${a.jamMasuk || '-'} | Pulang: ${a.jamPulang || '-'}
-                        </div>
-                    </div>
-                `).join('')}
-            `;
-        
-            modal.classList.remove('hidden');
-        };
-        
-        window.simpanAbsensiManual = function() {
-            const tanggal = document.getElementById('manual-absensi-tanggal').value;
-            const idKurir = document.getElementById('manual-absensi-kurir').value;
-            const jamMasuk = document.getElementById('manual-absensi-masuk').value.replace(':', '.');
-            const jamPulang = document.getElementById('manual-absensi-pulang').value.replace(':', '.');
-        
-            if (!tanggal || !idKurir || !jamMasuk) {
-                alert('Lengkapi data absensi manual!');
-                return;
-            }
-            const kurir = cloudKurirList[idKurir];
-            if (!kurir) return alert('Kurir tidak ditemukan!');
-            const nodeKey = `${tanggal}_${idKurir}`;
-            set(ref(db, `absensi_sahabatku/${nodeKey}`), {
-                idKurir: idKurir,
-                leader: kurir.leader || '-',
-                namaKurir: kurir.nama || '-',
-                tanggal: tanggal,
-                jamMasuk: jamMasuk,
-                jamPulang: jamPulang || '',
-                fotoMasuk: '',
-                fotoPulang: ''
-            }).then(() => {
-                alert('Absensi manual berhasil disimpan!');
-                closeAbsensiManualModal();
-                renderAdminAbsensi();
-            }).catch(err => {
-                alert('Gagal simpan absensi manual: ' + err.message);
+            Object.values(cloudJadwalOff || {}).forEach(j => {
+                if (!j || j.nama !== namaKurir) return;
+                if (!j.tanggalMulai || j.tanggalMulai.slice(0, 7) !== bulan) return;
+                off++;
             });
-        };
         
-        window.updateAbsensiKurirSuggestions = function() {
-            const input = document.getElementById('absensi-filter-nama');
-            const box = document.getElementById('suggest-absensi-kurir');
-            if (!input || !box) return;
-            const q = normalizeNama(input.value);
-            if (!q) {
-                box.classList.add('hidden');
-                box.innerHTML = '';
-                renderAdminAbsensi();
-                return;
-            }
+            const kehadiranScore = (hadir / daysInMonth) * 30;
+            const totalPenghasilanScore = Math.min((totalPenghasilan / (daysInMonth * 100000)) * 10, 10);
+            const targetNotaScore = Math.min((totalNota / (daysInMonth * 15)) * 30, 30);
+            const ketepatanAbsenScore = (masukTepat / daysInMonth) * 20;
+            const offScore = off <= 3 ? 10 : Math.max(0, 10 - ((off - 3) * 2));
         
-            const matches = [];
+            const rating = Math.min(100, Math.round(
+                kehadiranScore +
+                totalPenghasilanScore +
+                targetNotaScore +
+                ketepatanAbsenScore +
+                offScore
+            ));
+        
+            return {
+                hadir,
+                masukTepat,
+                off,
+                trxMitra,
+                totalNota,
+                totalPenghasilan,
+                rating
+            };
+        }
+        
+        function buildKPIData(bulan) {
+            const data = [];
             Object.entries(cloudKurirList || {}).forEach(([id, u]) => {
                 if (!u || u.role !== 'kurir') return;
-                const nama = normalizeNama(u.nama || '');
-                if (nama.includes(q)) matches.push(u.nama);
-            });
+                if (u.status && u.status !== 'aktif') return;
         
-            if (!matches.length) {
-                box.classList.add('hidden');
-                box.innerHTML = '';
-                renderAdminAbsensi();
+                const nama = u.nama || u.username || '-';
+                const row = calcKpiForKurir(nama, bulan);
+        
+                data.push({
+                    id,
+                    nama,
+                    leader: u.leader || '-',
+                    ...row
+                });
+            });
+            return data.sort((a, b) => b.rating - a.rating);
+        }
+        
+        window.renderKPISection = function(section = 'penghargaan') {
+            const container = document.getElementById('container-kpi-kurir');
+            if (!container) return;
+        
+            currentKPISection = section;
+            const bulan = getKpiMonth();
+            const data = buildKPIData(bulan);
+        
+            const top1 = data[0];
+            const top2 = data[1];
+            const top3 = data[2];
+        
+            const topKurirTerbaik = [...data].sort((a, b) => b.rating - a.rating)[0];
+            const topTrxMitra = [...data].sort((a, b) => b.trxMitra - a.trxMitra)[0];
+            const topAktif = [...data].sort((a, b) => b.rating - a.rating)[0];
+        
+            if (section === 'penghargaan') {
+                container.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="rounded-3xl p-5 bg-gradient-to-br from-yellow-100 to-yellow-300 dark:from-yellow-900/40 dark:to-yellow-800/20 border border-yellow-200 dark:border-yellow-900 shadow-xl">
+                            <div class="text-[10px] uppercase tracking-wider text-yellow-700 dark:text-yellow-200 font-black">🏆 Kurir Terbaik</div>
+                            <div class="flex items-center justify-between mt-2">
+                                <div>
+                                    <div class="text-2xl font-black">${topKurirTerbaik?.nama || '-'}</div>
+                                    <div class="text-xs font-bold mt-1">${topKurirTerbaik ? `${getRatingBadge(topKurirTerbaik.rating).emoji} ${topKurirTerbaik.rating}% ${getRatingBadge(topKurirTerbaik.rating).label}` : '-'}</div>
+                                </div>
+                                <div class="w-16 h-16 rounded-full bg-white/70 flex items-center justify-center font-black text-xl text-yellow-900 shadow-lg">
+                                    ${getKpiAvatarName(topKurirTerbaik?.nama || '')}
+                                </div>
+                            </div>
+                        </div>
+        
+                        <div class="rounded-3xl p-5 bg-gradient-to-br from-slate-200 to-slate-400 dark:from-slate-700 dark:to-slate-800 border shadow-xl">
+                            <div class="text-[10px] uppercase tracking-wider text-slate-700 dark:text-slate-200 font-black">🥇 Trx Mitra Terbanyak</div>
+                            <div class="flex items-center justify-between mt-2">
+                                <div>
+                                    <div class="text-2xl font-black text-slate-900 dark:text-white">${topTrxMitra?.nama || '-'}</div>
+                                    <div class="text-xs font-bold mt-1 text-slate-700 dark:text-slate-200">${topTrxMitra?.trxMitra || 0} trx</div>
+                                </div>
+                                <div class="w-16 h-16 rounded-full bg-white/70 flex items-center justify-center font-black text-xl text-slate-900 shadow-lg">
+                                    ${getKpiAvatarName(topTrxMitra?.nama || '')}
+                                </div>
+                            </div>
+                        </div>
+        
+                        <div class="rounded-3xl p-5 bg-gradient-to-br from-orange-100 to-orange-300 dark:from-orange-900/40 dark:to-orange-800/20 border border-orange-200 dark:border-orange-900 shadow-xl">
+                            <div class="text-[10px] uppercase tracking-wider text-orange-700 dark:text-orange-200 font-black">🔥 Kurir Paling Aktif</div>
+                            <div class="flex items-center justify-between mt-2">
+                                <div>
+                                    <div class="text-2xl font-black">${topAktif?.nama || '-'}</div>
+                                    <div class="text-xs font-bold mt-1 text-orange-700 dark:text-orange-200">Rating ${topAktif?.rating || 0}%</div>
+                                </div>
+                                <div class="w-16 h-16 rounded-full bg-white/70 flex items-center justify-center font-black text-xl text-orange-900 shadow-lg">
+                                    ${getKpiAvatarName(topAktif?.nama || '')}
+                                </div>
+                            </div>
+                        </div>
+        
+                        <div class="grid grid-cols-3 gap-2">
+                            ${[top1, top2, top3].map((x, idx) => {
+                                if (!x) return `<div class="rounded-2xl bg-slate-100 dark:bg-slate-800 p-3 text-center text-xs">-</div>`;
+                                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
+                                const bg = idx === 0 ? 'from-yellow-300 to-yellow-500' : idx === 1 ? 'from-slate-300 to-slate-500' : 'from-orange-300 to-orange-500';
+                                return `
+                                    <div class="rounded-2xl bg-gradient-to-br ${bg} p-3 text-center shadow-lg">
+                                        <div class="text-2xl">${medal}</div>
+                                        <div class="font-black text-sm mt-1">${x.nama}</div>
+                                        <div class="text-[10px] font-bold">${x.rating}%</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
                 return;
             }
         
-            box.innerHTML = matches.slice(0, 6).map(nama => `
-                <div onclick="pilihAbsensiKurirSuggestion('${nama.replace(/'/g, "\\'")}')" class="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
-                    ${nama}
-                </div>
-            `).join('');
+            if (section === 'top5') {
+                const topNota = [...data].sort((a, b) => b.totalNota - a.totalNota).slice(0, 5);
+                const topPenghasilan = [...data].sort((a, b) => b.totalPenghasilan - a.totalPenghasilan).slice(0, 5);
+                const topKonsisten = [...data].sort((a, b) => b.rating - a.rating).slice(0, 5);
         
-            box.classList.remove('hidden');
-        };
-        window.pilihAbsensiKurirSuggestion = function(nama) {
-            const input = document.getElementById('absensi-filter-nama');
-            const box = document.getElementById('suggest-absensi-kurir');
+                container.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="p-4 rounded-3xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-xl">
+                            <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Total Nota (${bulan})</h4>
+                            ${topNota.map((x, i) => `
+                                <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
+                                    <div>
+                                        <div class="font-bold">${i+1}. ${x.nama}</div>
+                                        <div class="text-[10px] opacity-80">${getRatingBadge(x.rating).emoji} ${x.rating}% ${getRatingBadge(x.rating).label}</div>
+                                    </div>
+                                    <div class="font-black">${x.totalNota}</div>
+                                </div>
+                            `).join('')}
+                        </div>
         
-            if (input) input.value = nama;
-            if (box) {
-                box.classList.add('hidden');
-                box.innerHTML = '';
+                        <div class="p-4 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xl">
+                            <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Penghasilan (${bulan})</h4>
+                            ${topPenghasilan.map((x, i) => `
+                                <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
+                                    <div>
+                                        <div class="font-bold">${i+1}. ${x.nama}</div>
+                                        <div class="text-[10px] opacity-80">${getRatingBadge(x.rating).emoji} ${x.rating}% ${getRatingBadge(x.rating).label}</div>
+                                    </div>
+                                    <div class="font-black">Rp ${x.totalPenghasilan.toLocaleString('id-ID')}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+        
+                        <div class="p-4 rounded-3xl bg-gradient-to-br from-orange-500 to-rose-500 text-white shadow-xl">
+                            <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Ranking (${bulan})</h4>
+                            ${topKonsisten.map((x, i) => `
+                                <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
+                                    <div>
+                                        <div class="font-bold">${i+1}. ${x.nama}</div>
+                                        <div class="text-[10px] opacity-80">${getRatingBadge(x.rating).emoji} ${x.rating}% ${getRatingBadge(x.rating).label}</div>
+                                    </div>
+                                    <div class="font-black">${x.rating}%</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                return;
             }
         
-            renderAdminAbsensi();
+            container.innerHTML = `
+                <div class="space-y-4">
+                    ${data.map((x, i) => {
+                        const badge = getRatingBadge(x.rating);
+                        const podium = getPodiumClass(i + 1);
+                        const progress = progressColor(x.rating);
+                        const isTop3 = i < 3;
+            
+                        return `
+                            <div class="relative overflow-hidden rounded-[28px] border border-white/60 dark:border-slate-700 bg-white/90 dark:bg-darkCard shadow-[0_10px_30px_rgba(15,23,42,0.12)] backdrop-blur-md">
+                                <div class="absolute inset-0 opacity-60 bg-gradient-to-br ${isTop3 ? 'from-white via-white to-violet-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800' : 'from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800'}"></div>
+                                <div class="relative p-4">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <div class="relative w-16 h-16 shrink-0 rounded-[22px] bg-gradient-to-br ${isTop3 ? podium : 'from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800'} p-[2px] shadow-lg">
+                                                <div class="w-full h-full rounded-[20px] bg-white dark:bg-darkCard flex items-center justify-center ring-4 ${badge.ring}">
+                                                    <div class="text-center leading-none">
+                                                        <div class="text-lg font-black">${getKpiAvatarName(x.nama)}</div>
+                                                        <div class="text-[9px] font-black uppercase text-slate-400 mt-1">#${i + 1}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+            
+                                            <div class="min-w-0">
+                                                <div class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${isTop3 ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}">
+                                                    ${isTop3 ? 'TOP RANK' : 'RANK'} ${i + 1}
+                                                </div>
+                                                <div class="text-lg font-black mt-2 truncate">${x.nama}</div>
+                                                <div class="text-xs text-slate-500 dark:text-slate-400">Leader: ${x.leader || '-'}</div>
+                                            </div>
+                                        </div>
+            
+                                        <div class="text-right shrink-0">
+                                            <div class="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r ${badge.bg || 'from-slate-100 to-slate-200'} text-white text-[10px] font-black shadow-md">
+                                                <span>${badge.emoji}</span>
+                                                <span>${badge.label}</span>
+                                            </div>
+                                            <div class="mt-2 text-3xl font-black ${badge.color || 'text-slate-900 dark:text-white'}">${x.rating}%</div>
+                                        </div>
+                                    </div>
+            
+                                    <div class="mt-4 grid grid-cols-2 gap-2">
+                                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                                            <div class="text-[10px] text-slate-400 uppercase font-bold">Trx Mitra</div>
+                                            <div class="text-base font-black mt-1">${x.trxMitra}</div>
+                                        </div>
+                                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                                            <div class="text-[10px] text-slate-400 uppercase font-bold">Total Nota</div>
+                                            <div class="text-base font-black mt-1">${x.totalNota}</div>
+                                        </div>
+                                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                                            <div class="text-[10px] text-slate-400 uppercase font-bold">Penghasilan</div>
+                                            <div class="text-base font-black mt-1 text-emerald-600 dark:text-emerald-400">Rp ${x.totalPenghasilan.toLocaleString('id-ID')}</div>
+                                        </div>
+                                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                                            <div class="text-[10px] text-slate-400 uppercase font-bold">Rating</div>
+                                            <div class="text-base font-black mt-1">${x.rating}%</div>
+                                        </div>
+                                    </div>
+            
+                                    <div class="mt-4 space-y-1.5">
+                                        <div class="flex justify-between text-[10px] font-bold uppercase text-slate-400">
+                                            <span>Progress Ranking</span>
+                                            <span>${x.rating}%</span>
+                                        </div>
+                                        <div class="h-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                                            <div class="h-full ${progress} rounded-full shadow-inner transition-all duration-500" style="width:${x.rating}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            
+                <div class="mt-4 p-4 rounded-3xl bg-white/90 dark:bg-darkCard border border-slate-100 dark:border-slate-800 shadow-lg">
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Keterangan Perhitungan Rating</h4>
+                    <div class="text-[11px] text-slate-600 dark:text-slate-300 space-y-2 leading-relaxed">
+                        <p><b>1. Kehadiran (30%)</b> = Hadir berdasarkan absen masuk + pulang.</p>
+                        <p><b>2. Total Penghasilan (10%)</b> = Nilai penghasilan bulanan kurir.</p>
+                        <p><b>3. Target Nota (30%)</b> = Performa jumlah nota bulanan.</p>
+                        <p><b>4. Ketepatan Absen (20%)</b> = Rajin absen masuk tepat waktu.</p>
+                        <p><b>5. Off Berlebihan (10%)</b> = Jumlah off normal vs berlebih.</p>
+                    </div>
+                </div>
+            `;
         };
+
+
     </script>
 </body>
 </html>
