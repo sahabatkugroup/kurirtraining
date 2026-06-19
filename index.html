@@ -109,7 +109,15 @@
                     </div>
                     <span class="text-[10px] bg-blue-50 text-primary dark:bg-blue-950 font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">KURIR</span>
                 </div>
-
+                <div id="kurir-notif-box" class="hidden max-w-md mx-auto bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-amber-900 dark:text-amber-100 p-2 rounded-xl shadow-sm">
+                    <div class="flex items-start gap-2">
+                        <i data-lucide="bell-ring" class="w-4 h-4 mt-0.5"></i>
+                        <div class="text-xs">
+                            <div class="font-bold">Notifikasi</div>
+                            <div id="kurir-notif-text" class="mt-1 leading-relaxed"></div>
+                        </div>
+                    </div>
+                </div>
                 <div class="custom-gradient text-white p-5 rounded-2xl shadow-xl space-y-4">
                     <div class="flex justify-between items-start border-b border-white/20 pb-3">
                         <div>
@@ -188,7 +196,7 @@
                             <p class="text-[10px] text-slate-400">Pusat Kendali Sahabatku Group</p>
                         </div>
                     </div>
-                    <span class="text-[10px] bg-amber-500/20 text-amber-400 font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Super Admin</span>
+                    <span id="badge-admin-role" class="text-[10px] bg-amber-500/20 text-amber-400 font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Super Admin</span>
                 </div>
                 <div class="bg-gradient-to-br from-amber-100 via-yellow-100 to-amber-200 text-slate-900 p-4 rounded-2xl shadow-2xl border border-amber-300/60 space-y-4 dark:from-[#2a2118] dark:via-[#1f1811] dark:to-[#15110c] dark:text-amber-50 dark:border-amber-900/40">
                     <div class="flex items-start justify-between gap-3">
@@ -235,6 +243,16 @@
                             <span class="text-[10px] text-slate-400">Kelola kurir, password & status</span>
                         </div>
                     </button>
+                    <button onclick="navigateTo('screen-admin-manajemen')"
+                        class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
+                        <div class="p-2.5 bg-fuchsia-50 dark:bg-fuchsia-950/40 rounded-xl text-fuchsia-500">
+                            <i data-lucide="users-round" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold block">Manajemen Sahabatku</span>
+                            <span class="text-[10px] text-slate-400">Kelola nama, username, password, status</span>
+                        </div>
+                    </button>
                     
                     <button onclick="navigateTo('screen-admin-nota')" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
                         <div class="p-2.5 bg-indigo-50 dark:bg-indigo-950/40 rounded-xl text-indigo-500"><i data-lucide="file-spreadsheet" class="w-5 h-5"></i></div>
@@ -247,7 +265,7 @@
                     <button onclick="navigateTo('screen-admin-mitra')" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
                         <div class="p-2.5 bg-amber-50 dark:bg-amber-950/40 rounded-xl text-amber-500"><i data-lucide="store" class="w-5 h-5"></i></div>
                         <div>
-                            <span class="text-xs font-bold block">Manajemen Mitra</span>
+                            <span class="text-xs font-bold block">Kelola Mitra</span>
                             <span class="text-[10px] text-slate-400">Tambah, edit data & trx mitra</span>
                         </div>
                     </button>
@@ -306,6 +324,15 @@
                             <span class="text-[10px] text-slate-400">Lihat, tampilkan, sembunyikan & hapus</span>
                         </div>
                     </button>
+                    <button onclick="navigateTo('screen-admin-notifikasi')" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
+                        <div class="p-2.5 bg-rose-50 dark:bg-rose-950/40 rounded-xl text-rose-500">
+                            <i data-lucide="bell-ring" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold block">Kirim Notifikasi</span>
+                            <span class="text-[10px] text-slate-400">Ke semua / kurir tertentu</span>
+                        </div>
+                    </button>
                     <button onclick="navigateTo('screen-pengaturan')" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex flex-col items-start space-y-2 shadow-sm text-left">
                         <div class="p-2.5 bg-rose-50 dark:bg-rose-950/40 rounded-xl text-rose-500"><i data-lucide="settings" class="w-5 h-5"></i></div>
                         <div>
@@ -314,7 +341,7 @@
                         </div>
                     </button>
                 </div>
-            </div>
+            </div>            
             <div id="screen-admin-kurir" class="screen p-4 space-y-4">
                 <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400" id="title-form-kurir">Registrasi / Edit Akun Kurir</h3>
@@ -327,7 +354,9 @@
                     
                         <div>
                             <label class="block text-[10px] text-slate-400 mb-1">Leader</label>
-                            <input type="text" id="ak-leader" placeholder="Contoh: Agus" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                            <select id="ak-leader" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                                <option value="">-- Pilih Leader --</option>
+                            </select>
                         </div>
                     
                         <div>
@@ -361,6 +390,72 @@
                     <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Daftar Kurir Terdata</h4>
                     <div id="container-admin-kurir" class="space-y-2.5">
                         </div>
+                </div>
+            </div>
+            <div id="screen-admin-manajemen" class="screen p-4 space-y-4">
+                <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400" id="title-form-manajemen">
+                        Tambah / Edit Data Manajemen
+                    </h3>
+            
+                    <input type="hidden" id="manajemen-id-edit">
+            
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="col-span-2">
+                            <label class="block text-[10px] text-slate-400 mb-1">Kategori</label>
+                            <select id="manajemen-kategori" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                                <option value="Owner">Owner</option>
+                                <option value="Head Operasional">Head Operasional</option>
+                                <option value="HRD">HRD</option>
+                            </select>
+                        </div>
+            
+                        <div class="col-span-2">
+                            <label class="block text-[10px] text-slate-400 mb-1">Nama</label>
+                            <input type="text" id="manajemen-nama" placeholder="Nama lengkap" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                        </div>
+            
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Username</label>
+                            <input type="text" id="manajemen-username" placeholder="Username" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                        </div>
+            
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Password</label>
+                            <input type="text" id="manajemen-password" placeholder="Password" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                        </div>
+            
+                        <div class="col-span-2">
+                            <label class="block text-[10px] text-slate-400 mb-1">Status</label>
+                            <select id="manajemen-status" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                                <option value="aktif">AKTIF</option>
+                                <option value="nonaktif">NONAKTIF</option>
+                            </select>
+                        </div>
+                    </div>
+            
+                    <div class="flex gap-2">
+                        <button onclick="saveDataManajemen()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl uppercase">
+                            Simpan
+                        </button>
+                        <button onclick="resetFormManajemen()" class="px-3 py-2 bg-slate-100 text-slate-500 dark:bg-slate-800 text-xs rounded-xl">
+                            Batal
+                        </button>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Data yang Sudah Disimpan</h4>
+                        <div class="flex gap-2">
+                            <button onclick="openLeaderModal()" class="px-3 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-bold uppercase">
+                                Daftar Leader
+                            </button>
+                            <button onclick="openPopupPenilaianLeader()" class="px-3 py-2 rounded-xl bg-blue-600 text-white text-[10px] font-bold uppercase">
+                                Penilaian Leader
+                            </button>
+                        </div>
+                    </div>
+                    <div id="container-admin-manajemen" class="space-y-2.5"></div>
                 </div>
             </div>
 
@@ -432,6 +527,9 @@
                         <div class="space-y-2">
                             <div class="grid grid-cols-2 gap-2">
                                 <input type="date" id="am-log-tgl" class="w-full px-2 py-1.5 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
+                                <input type="month" id="am-log-bulan" class="w-full px-2 py-1.5 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
+                            </div>
+                            <div class="grid grid-cols-1 gap-2">
                                 <input type="text" id="am-log-search" placeholder="Cari nama mitra..." class="w-full px-2 py-1.5 border rounded-lg text-xs dark:bg-darkBg dark:border-slate-700">
                             </div>
                             <div>
@@ -449,12 +547,14 @@
                 </div>
 
                 <div class="space-y-2">
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-col gap-2">
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Daftar Semua Mitra</h4>
-                        <input type="text" id="am-search-mitra" placeholder="Cari nama mitra..." oninput="renderAdminDaftarMitra()" class="w-1/2 px-2 py-1 border rounded-lg text-xs dark:bg-darkCard dark:border-slate-700">
-                    </div>
-                    <div id="container-admin-daftar-mitra" class="space-y-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="month" id="am-filter-bulan" onchange="renderAdminDaftarMitra()" class="w-full px-2 py-2 border rounded-lg text-xs dark:bg-darkCard dark:border-slate-700">
+                            <input type="text" id="am-search-mitra" placeholder="Cari nama mitra..." oninput="renderAdminDaftarMitra()" class="w-full px-2 py-2 border rounded-lg text-xs dark:bg-darkCard dark:border-slate-700">
                         </div>
+                    </div>
+                    <div id="container-admin-daftar-mitra" class="space-y-2"></div>
                 </div>
             </div>
             <div id="screen-admin-laporan" class="screen p-4 space-y-4">
@@ -716,6 +816,55 @@
                     </h3>
             
                     <div id="container-admin-testimonial" class="space-y-2"></div>
+                </div>
+            </div>
+            <div id="screen-admin-notifikasi" class="screen p-4 space-y-4">
+                <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Kirim Notifikasi ke Kurir</h3>
+            
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Target Penerima</label>
+                        <select id="notif-target" onchange="toggleNotifTarget()" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                            <option value="all">Semua Kurir</option>
+                            <option value="selected">Pilih Kurir Tertentu</option>
+                        </select>
+                    </div>
+            
+                    <div id="notif-selected-box" class="hidden">
+                        <label class="block text-[10px] text-slate-400 mb-1">Pilih Kurir</label>
+                        <select id="notif-target-list" multiple class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700 min-h-32"></select>
+                        <p class="text-[10px] text-slate-400 mt-1">Bisa pilih lebih dari 1 kurir.</p>
+                    </div>
+            
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Template Pesan</label>
+                        <select id="notif-template" onchange="fillNotifTemplate()" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                            <option value="">-- Pilih Template --</option>
+                            <option value="trx">Kurir belum input trx mitra hari ini</option>
+                            <option value="nota">Nota hari ini masih sedikit</option>
+                            <option value="absen_masuk">Belum absen masuk</option>
+                            <option value="absen_pulang">Belum absen pulang</option>
+                            <option value="kpi">Peringkat KPI menurun</option>
+                            <option value="custom">Pesan manual</option>
+                        </select>
+                    </div>
+            
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Isi Pesan</label>
+                        <textarea id="notif-message" rows="4" placeholder="Tulis pesan notifikasi..." class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700"></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <button onclick="saveNotification()" class="w-full py-3 bg-primary text-white text-xs font-bold rounded-xl uppercase shadow-md">
+                            Kirim Notifikasi
+                        </button>
+                        <button onclick="resetNotifForm()" class="w-full py-3 bg-slate-100 text-slate-600 dark:bg-slate-800 text-xs font-bold rounded-xl uppercase shadow-md">
+                            Reset
+                        </button>
+                    </div>
+                    <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Riwayat Notifikasi</h3>
+                        <div id="container-admin-notification-history" class="space-y-2"></div>
+                    </div>
                 </div>
             </div>
 
@@ -997,10 +1146,20 @@
                 </div>
             
                 <div id="admin-security-account-box" class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm mt-4 hidden">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Keamanan Akun Admin</h3>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Keamanan Akun Admin / Manajemen</h3>
                     <div class="space-y-3">
-                        <input type="text" id="admin-username" placeholder="Username Admin Baru" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-                        <input type="password" id="admin-password" placeholder="Password Admin Baru" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Username Saat Ini</label>
+                            <input type="text" id="admin-current-username" readonly class="w-full px-3 py-2 border rounded-xl text-xs bg-slate-50 dark:bg-slate-800 dark:border-slate-700">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Username Baru</label>
+                            <input type="text" id="admin-username" placeholder="Username Baru" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Password Baru</label>
+                            <input type="password" id="admin-password" placeholder="Password Baru" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                        </div>
                         <button onclick="changeAdminLogin()" class="w-full py-2 bg-primary text-white font-bold rounded-xl text-xs uppercase">
                             Simpan Username & Password
                         </button>
@@ -1020,7 +1179,7 @@
                         <span class="text-xs text-slate-400 font-bold">v3.0.0-PRO</span>
                     </div>
                 </div>
-                <button onclick="handleLogout()" class="w-full py-3 bg-rose-50 text-danger border border-rose-100 dark:bg-rose-950/20 dark:border-rose-900 rounded-xl font-bold text-xs uppercase tracking-wide ripple">Keluar Dari Akun</button>
+                <button onclick="handleLogout()" class="w-full py-3 bg-rose-50 text-danger border border-rose-100 dark:bg-rose-950/20 dark:border-rose-900 rounded-xl font-bold text-xs uppercase tracking-wide ripple">Logout / Keluar</button>
             </div>
 
         </main>
@@ -1054,6 +1213,7 @@
             </div>
         </div>
     </div>
+    
     <div id="modal-edit-kurir" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative">
             <button onclick="closeEditKurirModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
@@ -1066,6 +1226,11 @@
     
             <input type="hidden" id="edit-kurir-id">
             <input type="text" id="edit-kurir-nama" placeholder="Nama lengkap" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+            
+            <select id="edit-kurir-leader" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                <option value="">-- Pilih Leader --</option>
+            </select>
+            
             <input type="text" id="edit-kurir-username" placeholder="Username" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
             <input type="text" id="edit-kurir-password" placeholder="Password" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
             <input type="date" id="edit-kurir-tgl-gabung" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
@@ -1074,7 +1239,6 @@
                 <option value="aktif">AKTIF</option>
                 <option value="nonaktif">BLOKIR</option>
             </select>
-    
             <div class="flex gap-2">
                 <button onclick="saveEditKurir()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl uppercase">
                     Simpan Perubahan
@@ -1098,6 +1262,71 @@
             </div>
         </div>
     </div>
+    <div id="modal-input-trx-mitra" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative">
+            <button onclick="closeInputTrxMitraModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
+                ✕
+            </button>
+    
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Input Transaksi Mitra</h3>
+    
+            <input type="hidden" id="trx-mitra-name">
+            <input type="text" id="trx-mitra-display" readonly class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+            <input type="month" id="trx-mitra-bulan" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+            <input type="number" id="trx-mitra-jumlah" placeholder="Jumlah transaksi" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+    
+            <div class="flex gap-2">
+                <button onclick="saveInputTrxMitra()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl uppercase">
+                    Simpan
+                </button>
+                <button onclick="closeInputTrxMitraModal()" class="px-3 py-2 bg-slate-100 text-slate-500 dark:bg-slate-800 text-xs rounded-xl">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="modal-penilaian-leader" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative">
+            <button onclick="closePopupPenilaianLeader()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
+                ✕
+            </button>
+    
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Penilaian Leader</h3>
+    
+            <div class="grid grid-cols-2 gap-2">
+                <input type="month" id="leader-penilaian-bulan" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                <button onclick="renderPenilaianLeader()" class="px-3 py-2 rounded-xl bg-primary text-white text-[10px] font-bold uppercase">
+                    Tampilkan
+                </button>
+            </div>
+    
+            <div id="container-penilaian-leader" class="space-y-2 max-h-[60vh] overflow-y-auto"></div>
+        </div>
+    </div>
+    <div id="modal-leader" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative">
+            <button onclick="closeLeaderModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">✕</button>
+    
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Data Leader</h3>
+    
+            <input type="hidden" id="leader-id-edit">
+            <input type="text" id="leader-nama" placeholder="Nama Leader" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+            <select id="leader-anggota" multiple class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700 min-h-32">
+            </select>
+            <p class="text-[10px] text-slate-400">Pilih lebih dari 1 anggota, tahan Ctrl / tap beberapa nama.</p>
+    
+            <div class="flex gap-2">
+                <button onclick="saveLeaderData()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl uppercase">Simpan</button>
+                <button onclick="resetLeaderForm()" class="px-3 py-2 bg-slate-100 text-slate-500 dark:bg-slate-800 text-xs rounded-xl">Reset</button>
+            </div>
+    
+            <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <h4 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Daftar Leader Tersimpan</h4>
+                <div id="container-leader-list" class="space-y-2 max-h-60 overflow-y-auto"></div>
+            </div>
+        </div>
+    </div>
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, remove, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -1125,6 +1354,8 @@
         let cloudOngkirList = {};
         let adminOngkirMode = 'normal';
         let cloudTestimonialList = {};
+        let cloudManajemenList = {}
+        let cloudLeaderList = {};;
         let liveLocations = {};
         let liveMap = null;
         let liveMarkers = {};
@@ -1190,9 +1421,11 @@
                     wilayah: locInfo.wilayah,
                     alamatLengkap: locInfo.alamatLengkap,
                     tanggalTracking: waktu.tanggal,
+                    tanggalTrackingRaw: getWibRawDate(),
                     jamTracking: waktu.jam,
                     updatedAt: new Date().toISOString()
                 };
+
         
                 lastSentLocation = { lat, lng };
                 lastSentTime = Date.now();
@@ -1402,54 +1635,63 @@
             if (typeof sembunyikanRiwayatMitraAdmin === 'function') {
                 sembunyikanRiwayatMitraAdmin();
             }
-            
+        
             ['nav-dashboard-btn', 'nav-nota-btn', 'nav-sistem-btn'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) {
-                    el.classList.add('hidden', 'opacity-0', 'pointer-events-none');
-                }
+                if (el) el.classList.add('hidden', 'opacity-0', 'pointer-events-none');
             });
-
+        
             const tglSkrgWib = getWibRawDate();
             const daftarInputTgl = [
-                'an-filter-tgl',        // Admin Nota
-                'am-log-tgl',           // Admin Log Mitra
-                'filter-date-riwayat',  // Kurir Riwayat (Bagian 1)
-                'riwayat-filter-tgl',   // Riwayat Kurir (Bagian 2)
-                'm-filter-tgl-kurir'    // Kurir Transaksi Mitra
+                'an-filter-tgl',
+                'am-log-tgl',
+                'filter-date-riwayat',
+                'riwayat-filter-tgl',
+                'm-filter-tgl-kurir'
             ];
         
             daftarInputTgl.forEach(id => {
                 const el = document.getElementById(id);
-                if (el && !el.value) {
-                    el.value = tglSkrgWib;
-                }
+                if (el && !el.value) el.value = tglSkrgWib;
             });
         
-            const bulanEl = document.getElementById('an-filter-bulan');
-            if (bulanEl && !bulanEl.value) {
-                bulanEl.value = tglSkrgWib.substring(0, 7);
+            const amFilterBulanEl = document.getElementById('am-filter-bulan');
+            if (amFilterBulanEl && !amFilterBulanEl.value) {
+                amFilterBulanEl.value = tglSkrgWib.substring(0, 7);
+            }
+            
+            const amLogBulanEl = document.getElementById('am-log-bulan');
+            if (amLogBulanEl && !amLogBulanEl.value) {
+                amLogBulanEl.value = tglSkrgWib.substring(0, 7);
             }
             onValue(ref(db, 'users'), (snapshot) => {
                 cloudKurirList = snapshot.val() || {};
                 renderAdminKurirList();
                 populateKurirDropdownFilter();
                 populateMitraLogKurirDropdown();
+                populateLeaderDropdown();
+                populateAnggotaDropdownLeader();
                 renderAdminLogMitra();
-            
+        
                 if (pendingAutoLoginCheck && userSession && userSession.role === 'kurir') {
                     const currentKurir = cloudKurirList[userSession.id];
                     if (currentKurir && currentKurir.status === 'aktif') {
                         launchApplicationSession("screen-dashboard");
-                        startLiveLocationTracking();
+                        if (typeof startLiveLocationTracking === "function") startLiveLocationTracking();
+                        setTimeout(() => {
+                            renderKurirNotifications();
+                        }, 300);
                     } else if (currentKurir && currentKurir.status !== 'aktif') {
                         alert("Sesi berakhir. Akun Anda telah dinonaktifkan oleh Admin.");
                         handleLogout();
                     }
                     pendingAutoLoginCheck = false;
                 }
+                setTimeout(() => {
+                    renderKurirNotifications();
+                }, 300);
             });
-
+        
             onValue(ref(db, 'nota'), (snapshot) => {
                 cloudNotaList = snapshot.val() || {};
                 if (typeof renderAdminNota === 'function') renderAdminNota();
@@ -1464,6 +1706,18 @@
                 if (typeof renderAdminDaftarMitra === 'function') renderAdminDaftarMitra();
                 if (typeof renderKurirMitraView === 'function') renderKurirMitraView();
                 if (typeof populateMitraSelectionDropdown === 'function') populateMitraSelectionDropdown();
+            
+                const amFilterBulanEl = document.getElementById('am-filter-bulan');
+                if (amFilterBulanEl && !amFilterBulanEl.value) {
+                    amFilterBulanEl.value = getWibRawDate().substring(0, 7);
+                }
+            
+                const amLogBulanEl = document.getElementById('am-log-bulan');
+                if (amLogBulanEl && !amLogBulanEl.value) {
+                    amLogBulanEl.value = getWibRawDate().substring(0, 7);
+                }
+            
+                if (typeof renderAdminDaftarMitra === 'function') renderAdminDaftarMitra();
             });
         
             onValue(ref(db, 'live_locations'), (snapshot) => {
@@ -1487,145 +1741,209 @@
                 cloudOngkirList = snapshot.val() || {};
                 if (typeof renderAdminOngkirList === 'function') renderAdminOngkirList();
             });
+        
             onValue(ref(db, 'absensi_sahabatku'), (snapshot) => {
                 cloudAbsensiList = snapshot.val() || {};
             });
-            
+            onValue(ref(db, 'leader_list'), (snapshot) => {
+                cloudLeaderList = snapshot.val() || {};
+                populateLeaderDropdown();
+                renderLeaderList();
+            });
+
             onValue(ref(db, 'jadwal_off'), (snapshot) => {
                 cloudJadwalOff = snapshot.val() || {};
             });
-            
+        
             onValue(ref(db, 'testimonials'), (snapshot) => {
                 cloudTestimonialList = snapshot.val() || {};
-                if (typeof renderAdminTestimonial === 'function') {
-                    renderAdminTestimonial();
-                }
+                if (typeof renderAdminTestimonial === 'function') renderAdminTestimonial();
             });
+        
+            onValue(ref(db, 'manajemen_sahabatku'), (snapshot) => {
+                cloudManajemenList = snapshot.val() || {};
+                if (typeof renderAdminManajemen === 'function') renderAdminManajemen();
+            });
+        
             const savedSession = localStorage.getItem('sahabatku_session');
             if (savedSession) {
                 userSession = JSON.parse(savedSession);
-                
+        
                 document.querySelectorAll('.session-fullname').forEach(el => el.innerText = userSession.nama);
                 if (document.getElementById('nota-kurir') && userSession.nama) {
                     document.getElementById('nota-kurir').value = userSession.nama;
                 }
-            
-                if (userSession.role === 'admin') {
+        
+                if (userSession.role === 'owner') {
                     launchApplicationSession("screen-admin-dashboard");
+                } else if (userSession.role === 'manajemen') {
+                    launchApplicationSession("screen-admin-dashboard");
+                    setTimeout(() => {
+                        applyManajemenAccess(userSession.kategori || '-');
+                    }, 100);
                 } else {
                     pendingAutoLoginCheck = true;
                 }
             }
+        
             document.addEventListener('click', function(e) {
                 const box = document.getElementById('suggest-absensi-kurir');
                 const input = document.getElementById('absensi-filter-nama');
                 if (!box || !input) return;
-            
+        
                 if (!box.contains(e.target) && e.target !== input) {
                     box.classList.add('hidden');
                 }
-            });          
+            });cleanupDailyLiveLocations();
         });
+        
         window.handleLogin = function(e) {
-            if(e) e.preventDefault();
-            const userIn = document.getElementById('login-username').value.trim().toLowerCase(); 
+            if (e) e.preventDefault();
+        
+            const userIn = document.getElementById('login-username').value.trim().toLowerCase();
             const passIn = document.getElementById('login-password').value.trim();
             const btnSubmit = document.getElementById('btn-login-submit');
-            
+        
             if (!userIn || !passIn) {
                 alert("Mohon masukkan username dan password Anda.");
                 return;
             }
         
-            if(btnSubmit) {
+            if (btnSubmit) {
                 btnSubmit.disabled = true;
                 btnSubmit.innerText = "MEMVERIFIKASI...";
             }
         
-            // 1. Ambil data kredensial admin dari path 'loginadmin' di Firebase Realtime Database
-            get(ref(db, 'loginadmin')).then((snapshot) => {
-                if (snapshot.exists()) {
-                    const adminData = snapshot.val();
-                    const adminUser = (adminData.username || "").trim().toLowerCase();
-                    const adminPass = (adminData.password || "").trim();
+            // 1) Cek login admin utama
+            get(ref(db, 'loginadmin'))
+                .then((snapshotAdmin) => {
+                    if (snapshotAdmin.exists()) {
+                        const adminData = snapshotAdmin.val();
+                        const adminUser = (adminData.username || "").trim().toLowerCase();
+                        const adminPass = (adminData.password || "").trim();
+                        if (userIn === adminUser && passIn === adminPass) {
+                            userSession = { username: "admin", nama: "Super Admin", role: "owner" };
+                            localStorage.setItem('sahabatku_session', JSON.stringify(userSession));
+                        
+                            document.querySelectorAll('.session-fullname').forEach(el => el.innerText = userSession.nama);
+                        
+                            launchApplicationSession("screen-admin-dashboard");
+                            applyManajemenAccess("Owner");
+                        
+                            if (btnSubmit) {
+                                btnSubmit.disabled = false;
+                                btnSubmit.innerText = "Masuk Sistem";
+                            }
+                            return true;
+                        }
+                    }
+                    return false;
+                })
+                .then((adminLogged) => {
+                    if (adminLogged) return null;
         
-                    // 2. Validasi apakah input cocok dengan data Admin di Firebase
-                    if (userIn === adminUser && passIn === adminPass) {
-                        userSession = { username: "admin", nama: "Super Admin", role: "admin" };
+                    // 2) Cek login manajemen sahabatku
+                    return get(ref(db, 'manajemen_sahabatku'));
+                })
+                .then((snapshotManajemen) => {
+                    if (snapshotManajemen && snapshotManajemen.exists()) {
+                        const dataManajemen = snapshotManajemen.val();
+        
+                        for (let key in dataManajemen) {
+                            const m = dataManajemen[key];
+                            const manUser = (m.username || "").trim().toLowerCase();
+                            const manPass = (m.password || "").trim();
+        
+                            if (manUser === userIn && manPass === passIn) {
+                                userSession = {
+                                    id: key,
+                                    username: m.username,
+                                    nama: m.nama,
+                                    role: "manajemen",
+                                    kategori: m.kategori || "-"
+                                };
+        
+                                localStorage.setItem('sahabatku_session', JSON.stringify(userSession));
+                                document.querySelectorAll('.session-fullname').forEach(el => el.innerText = userSession.nama);
+        
+                                launchApplicationSession("screen-admin-dashboard");
+                                applyManajemenAccess(m.kategori || "-");
+        
+                                if (btnSubmit) {
+                                    btnSubmit.disabled = false;
+                                    btnSubmit.innerText = "Masuk Sistem";
+                                }
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                })
+                .then((manajemenLogged) => {
+                    if (manajemenLogged) return null;
+        
+                    // 3) Cek login kurir
+                    return get(ref(db, 'users'));
+                })
+                .then((snapshotUsers) => {
+                    if (!snapshotUsers) return;
+        
+                    let foundKey = null;
+                    let foundUser = null;
+        
+                    if (snapshotUsers.exists()) {
+                        const dataKurir = snapshotUsers.val();
+                        for (let key in dataKurir) {
+                            const kurirUser = (dataKurir[key].username || "").trim().toLowerCase();
+                            const kurirPass = (dataKurir[key].password || "").trim();
+        
+                            if (kurirUser === userIn && kurirPass === passIn) {
+                                foundKey = key;
+                                foundUser = dataKurir[key];
+                                break;
+                            }
+                        }
+                    }
+        
+                    if (btnSubmit) {
+                        btnSubmit.disabled = false;
+                        btnSubmit.innerText = "Masuk Sistem";
+                    }
+        
+                    if (foundUser) {
+                        if (foundUser.status !== "aktif") {
+                            alert("Gagal masuk! Status akun Anda dinonaktifkan atau diblokir oleh Admin.");
+                            return;
+                        }
+        
+                        userSession = {
+                            id: foundKey,
+                            username: foundUser.username,
+                            nama: foundUser.nama,
+                            role: "kurir"
+                        };
+        
                         localStorage.setItem('sahabatku_session', JSON.stringify(userSession));
-                        
                         document.querySelectorAll('.session-fullname').forEach(el => el.innerText = userSession.nama);
-                        
-                        launchApplicationSession("screen-admin-dashboard");
-                        setTimeout(() => {
-                            if (typeof renderLiveMap === "function") renderLiveMap();
-                        }, 200);
         
-                        if(btnSubmit) { 
-                            btnSubmit.disabled = false; 
-                            btnSubmit.innerText = "Masuk Sistem"; 
+                        if (document.getElementById('nota-kurir')) {
+                            document.getElementById('nota-kurir').value = foundUser.nama;
                         }
-                        return; // Berhenti di sini karena login sukses sebagai admin
+        
+                        launchApplicationSession("screen-dashboard");
+                        if (typeof startLiveLocationTracking === "function") startLiveLocationTracking();
+                    } else {
+                        alert("Username & Password tidak terdaftar atau salah!");
                     }
-                }
-        
-                // 3. Jika bukan admin atau path 'loginadmin' tidak cocok, lanjutkan periksa database 'users' (Kurir)
-                return get(ref(db, 'users'));
-            })
-            .then((snapshotUsers) => {
-                // Jika proses di atas sudah return karena sukses login admin, snapshotUsers akan bernilai undefined
-                if (!snapshotUsers) return;
-        
-                let foundKey = null;
-                let foundUser = null;
-        
-                if (snapshotUsers.exists()) {
-                    const dataKurir = snapshotUsers.val();
-                    for (let key in dataKurir) {
-                        const kurirUser = (dataKurir[key].username || "").trim().toLowerCase();
-                        const kurirPass = (dataKurir[key].password || "").trim();
-                        
-                        if (kurirUser === userIn && kurirPass === passIn) {
-                            foundKey = key;
-                            foundUser = dataKurir[key];
-                            break;
-                        }
+                })
+                .catch((error) => {
+                    console.error("Login Error: ", error);
+                    alert("Terjadi gangguan koneksi ke server: " + error.message);
+                    if (btnSubmit) {
+                        btnSubmit.disabled = false;
+                        btnSubmit.innerText = "Masuk Sistem";
                     }
-                }
-        
-                if(btnSubmit) {
-                    btnSubmit.disabled = false;
-                    btnSubmit.innerText = "Masuk Sistem";
-                }
-        
-                if (foundUser) {
-                    if (foundUser.status !== "aktif") {
-                        alert("Gagal masuk! Status akun Anda dinonaktifkan atau diblokir oleh Admin.");
-                        return;
-                    }
-                    
-                    userSession = { id: foundKey, username: foundUser.username, nama: foundUser.nama, role: "kurir" };
-                    localStorage.setItem('sahabatku_session', JSON.stringify(userSession));
-                    
-                    document.querySelectorAll('.session-fullname').forEach(el => el.innerText = userSession.nama);
-                    if(document.getElementById('nota-kurir')) {
-                        document.getElementById('nota-kurir').value = foundUser.nama;
-                    }
-                    
-                    launchApplicationSession("screen-dashboard");
-                    if (typeof startLiveLocationTracking === "function") startLiveLocationTracking();
-                } else {
-                    alert("Username & Password tidak terdaftar atau salah!");
-                }
-            })
-            .catch((error) => {
-                console.error("Login Error: ", error);
-                alert("Terjadi gangguan koneksi ke server: " + error.message);
-                if(btnSubmit) {
-                    btnSubmit.disabled = false;
-                    btnSubmit.innerText = "Masuk Sistem";
-                }
-            });
+                });
         };
         window.changePassword = function() {
             const newPassword = document.getElementById('new-password').value.trim();
@@ -1665,22 +1983,32 @@
                 return;
             }
         
-            if (!confirm("Yakin ingin mengubah username dan password admin?")) return;
+            if (!confirm("Yakin ingin mengubah username dan password akun ini?")) return;
         
             try {
-                const snap = await get(ref(db, 'loginadmin'));
-                const current = snap.val() || {};
+                if (userSession && userSession.role === 'owner') {
+                    await set(ref(db, 'loginadmin'), {
+                        username: newUsername,
+                        password: newPassword
+                    });
+                } else if (userSession && userSession.role === 'manajemen') {
+                    await update(ref(db, `manajemen_sahabatku/${userSession.id}`), {
+                        username: newUsername,
+                        password: newPassword
+                    });
+                } else {
+                    alert("Akun tidak dikenali.");
+                    return;
+                }
         
-                await set(ref(db, 'loginadmin'), {
-                    username: newUsername,
-                    password: newPassword
-                });
-        
-                alert("Username dan password admin berhasil diubah!");
+                alert("Username dan password berhasil diubah!");
                 document.getElementById('admin-username').value = '';
                 document.getElementById('admin-password').value = '';
+                document.getElementById('admin-current-username').value = newUsername;
+                userSession.username = newUsername;
+                localStorage.setItem('sahabatku_session', JSON.stringify(userSession));
             } catch (err) {
-                alert("Gagal mengubah login admin: " + err.message);
+                alert("Gagal mengubah login: " + err.message);
             }
         };
         window.changeKurirLogin = function() {
@@ -1731,22 +2059,24 @@
         };
         window.launchApplicationSession = function(targetDashboard) {
             document.getElementById('screen-login').classList.remove('active');
+        
             const mainLayout = document.getElementById('main-layout');
             if (mainLayout) mainLayout.classList.remove('hidden');
-            
+        
             const nameContainers = document.querySelectorAll('.session-fullname');
             nameContainers.forEach(el => el.innerText = userSession.nama);
-            
+        
             localStorage.setItem('sahabatku_session', JSON.stringify(userSession));
         
             const navDashboardBtn = document.getElementById('nav-dashboard-btn');
             const navNotaBtn = document.getElementById('nav-nota-btn');
             const navSistemBtn = document.getElementById('nav-sistem-btn');
             const showKurirNav = userSession && userSession.role === 'kurir';
-        
+            const showOwnerNav = userSession && userSession.role === 'owner';
+            
             [navDashboardBtn, navNotaBtn, navSistemBtn].forEach(btn => {
                 if (!btn) return;
-                if (showKurirNav) {
+                if (showKurirNav || showOwnerNav) {
                     btn.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
                 } else {
                     btn.classList.add('hidden', 'opacity-0', 'pointer-events-none');
@@ -1760,10 +2090,143 @@
                 if (userSession && userSession.role === 'kurir') kurirBox.classList.remove('hidden');
                 else kurirBox.classList.add('hidden');
             }
-        
             if (adminBox) {
-                if (userSession && userSession.role === 'admin') adminBox.classList.remove('hidden');
-                else adminBox.classList.add('hidden');
+                if (userSession && (userSession.role === 'admin' || userSession.role === 'manajemen')) {
+                    adminBox.classList.remove('hidden');
+            
+                    if (userSession.role === 'admin') {
+                        get(ref(db, 'loginadmin')).then((snap) => {
+                            if (snap.exists()) {
+                                const data = snap.val() || {};
+                                const el = document.getElementById('admin-current-username');
+                                if (el) el.value = data.username || '';
+                                const inputUser = document.getElementById('admin-username');
+                                if (inputUser) inputUser.value = data.username || '';
+                            }
+                        });
+                    }
+            
+                    if (userSession.role === 'manajemen') {
+                        get(ref(db, `manajemen_sahabatku/${userSession.id}`)).then((snap) => {
+                            if (snap.exists()) {
+                                const data = snap.val() || {};
+                                const el = document.getElementById('admin-current-username');
+                                if (el) el.value = data.username || '';
+                                const inputUser = document.getElementById('admin-username');
+                                if (inputUser) inputUser.value = data.username || '';
+                            }
+                        });
+                    }
+                } else {
+                    adminBox.classList.add('hidden');
+                }
+            }
+
+            // Sembunyikan / tampilkan menu admin sesuai kategori manajemen
+            const adminMenus = [
+                'screen-admin-kurir',
+                'screen-admin-manajemen',
+                'screen-admin-nota',
+                'screen-admin-mitra',
+                'screen-admin-laporan',
+                'screen-admin-tracking',
+                'screen-admin-kpi',
+                'screen-admin-testimonial',
+                'screen-admin-notifikasi',
+                'screen-admin-absensi',
+                'screen-admin-ongkir',
+                'screen-pengaturan'
+            ];
+        
+            adminMenus.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.querySelectorAll('button').forEach(btn => {
+                        btn.classList.remove('hidden');
+                    });
+                }
+            });
+        
+            // Default: sembunyikan semua menu admin kalau login manajemen
+            if (userSession && userSession.role === 'manajemen') {
+                const hideAllMenus = () => {
+                    adminMenus.forEach(id => {
+                        const screen = document.getElementById(id);
+                        if (!screen) return;
+                        screen.querySelectorAll('button').forEach(btn => {
+                            btn.classList.add('hidden');
+                        });
+                    });
+                };
+        
+                const showMenuByText = (text) => {
+                    document.querySelectorAll('button').forEach(btn => {
+                        const t = (btn.innerText || '').trim();
+                        if (t.includes(text)) {
+                            btn.classList.remove('hidden');
+                        }
+                    });
+                };
+        
+                hideAllMenus();
+        
+                const kategori = (userSession.kategori || '').trim();
+        
+                // wajib tetap tampil
+                showMenuByText('Sistem Global');
+        
+                if (kategori === 'Head Operasional') {
+                    showMenuByText('Monitoring Omset Hari Ini');
+                    showMenuByText('Data Akun Kurir');
+                    showMenuByText('Semua Nota Kurir');
+                    showMenuByText('Manajemen Mitra');
+                    showMenuByText('Laporan Data');
+                    showMenuByText('Tracking Kurir');
+                    showMenuByText('KPI Kurir');
+                    showMenuByText('Testimoni Customer');
+                    showMenuByText('Absensi Harian Kurir');
+                }
+        
+                if (kategori === 'HRD') {
+                    showMenuByText('Data Akun Kurir');
+                    showMenuByText('Tracking Kurir');
+                    showMenuByText('KPI Kurir');
+                    showMenuByText('Absensi Harian Kurir');
+                    showMenuByText('Testimoni Customer');
+                }
+        
+                if (kategori === 'Korlap') {
+                    showMenuByText('Semua Nota Kurir');
+                    showMenuByText('KPI Kurir');
+                    showMenuByText('Testimoni Customer');
+                }
+        
+                if (kategori === 'Leader') {
+                    showMenuByText('Data Akun Kurir');
+                    showMenuByText('Semua Nota Kurir');
+                    showMenuByText('Manajemen Mitra');
+                    showMenuByText('Laporan Data');
+                    showMenuByText('Tracking Kurir');
+                    showMenuByText('KPI Kurir');
+                    showMenuByText('Testimoni Customer');
+                    showMenuByText('Absensi Harian Kurir');
+                }
+        
+                // sembunyikan form registrasi kurir untuk semua manajemen
+                const formKurir = document.querySelector('#screen-admin-kurir .bg-white');
+                if (formKurir) formKurir.classList.add('hidden');
+            }
+        
+            // kalau login admin utama, semua tombol admin tetap tampil
+                if (userSession && userSession.role === 'owner') {
+                const formKurir = document.querySelector('#screen-admin-kurir .bg-white');
+                if (formKurir) formKurir.classList.remove('hidden');
+                adminMenus.forEach(id => {
+                    const screen = document.getElementById(id);
+                    if (!screen) return;
+                    screen.classList.remove('hidden');
+                    screen.querySelectorAll('button').forEach(btn => btn.classList.remove('hidden'));
+                });
             }
         
             navigateTo(targetDashboard);
@@ -1813,6 +2276,12 @@
                     renderAdminTestimonial();
                 }, 100);
             }
+            if (screenId === 'screen-admin-notifikasi') {
+                setTimeout(() => {
+                    populateNotifKurirList();
+                }, 100);
+            }
+            
             if (screenId === 'screen-admin-kpi') {
                 setTimeout(() => {
                     const bulanEl = document.getElementById('kpi-filter-bulan');
@@ -1851,6 +2320,7 @@
             if (screenId === 'screen-dashboard') {
                 setTimeout(() => {
                     if (typeof updateKurirDashboard === 'function') updateKurirDashboard();
+                    if (typeof renderKurirNotifications === 'function') renderKurirNotifications();
                 }, 50);
             }
             if (screenId === 'screen-rekap') {
@@ -1881,7 +2351,7 @@
         };
 
         window.backToDashboardRole = function() {
-            if (userSession && userSession.role === 'admin') navigateTo('screen-admin-dashboard');
+            if (userSession && userSession.role === 'owner') navigateTo('screen-admin-dashboard');
             else navigateTo('screen-dashboard');
         };
 
@@ -1954,7 +2424,7 @@
             const idEdit = document.getElementById('ak-id-edit').value;
             const nama = document.getElementById('ak-nama').value.trim();
             const leader = document.getElementById('ak-leader').value.trim();
-            const username = document.getElementById('ak-username').value.trim().toLowerCase(); 
+            const username = document.getElementById('ak-username').value.trim().toLowerCase();
             const password = document.getElementById('ak-password').value.trim();
             const tglGabung = document.getElementById('ak-tgl-gabung').value;
             const status = document.getElementById('ak-status').value;
@@ -1963,38 +2433,49 @@
                 alert('Mohon lengkapi seluruh form akun kurir!');
                 return;
             }
+        
+            if (leader && !isLeaderExist(leader)) {
+                alert('Leader yang dipilih belum ada di data leader!');
+                return;
+            }
+        
             const userData = {
-                nama: nama,
-                leader: leader,
-                username: username,
-                password: password,
-                tglGabung: tglGabung,
-                status: status,
+                nama,
+                leader,
+                username,
+                password,
+                tglGabung,
+                status,
                 role: "kurir",
                 ongkirLocked: true,
                 ongkirPassword: ""
             };
+        
             let targetRef;
             if (idEdit) {
                 targetRef = ref(db, `users/${idEdit}`);
             } else {
-                const isDuplicated = Object.values(cloudKurirList).some(kurir => kurir.username === username);
+                const isDuplicated = Object.values(cloudKurirList).some(kurir =>
+                    (kurir.username || '').trim().toLowerCase() === username
+                );
+        
                 if (isDuplicated) {
                     alert(`Username "${username}" sudah terdaftar! Gunakan username yang berbeda.`);
                     return;
                 }
+        
                 targetRef = push(ref(db, 'users'));
             }
-
+        
             set(targetRef, userData)
-            .then(() => {
-                alert('Akun kurir berhasil disimpan!');
-                resetFormKurir();
-            })
-            .catch((error) => {
-                console.error("Error saving to Firebase:", error);
-                alert('Gagal menyimpan data: ' + error.message);
-            });
+                .then(() => {
+                    alert('Akun kurir berhasil disimpan!');
+                    resetFormKurir();
+                })
+                .catch((error) => {
+                    console.error("Error saving to Firebase:", error);
+                    alert('Gagal menyimpan data: ' + error.message);
+                });
         };
         window.resetFormKurir = function() {
             document.getElementById('ak-id-edit').value = '';
@@ -2011,20 +2492,26 @@
             const item = cloudKurirList[key];
             if (!item) return;
         
-            document.getElementById('ak-id-edit').value = key;
-            document.getElementById('ak-nama').value = item.nama || '';
-            document.getElementById('ak-leader').value = item.leader || '';
-            document.getElementById('ak-username').value = item.username || '';
-            document.getElementById('ak-password').value = item.password || '';
-            document.getElementById('ak-tgl-gabung').value = item.tglGabung || '';
-            document.getElementById('ak-status').value = item.status || 'aktif';
+            document.getElementById('edit-kurir-id').value = key;
+            document.getElementById('edit-kurir-nama').value = item.nama || '';
+            document.getElementById('edit-kurir-username').value = item.username || '';
+            document.getElementById('edit-kurir-password').value = item.password || '';
+            document.getElementById('edit-kurir-leader').value = item.leader || '';
+            document.getElementById('edit-kurir-tgl-gabung').value = item.tglGabung || '';
+            document.getElementById('edit-kurir-status').value = item.status || 'aktif';
         
-            document.getElementById('title-edit-kurir').innerText = 'Edit Akun: ' + (item.nama || '');
+            document.getElementById('title-edit-kurir').innerText = 'Edit Data Kurir';
             document.getElementById('modal-edit-kurir').classList.remove('hidden');
         };
 
         window.closeEditKurirModal = function() {
             document.getElementById('modal-edit-kurir').classList.add('hidden');
+            document.getElementById('edit-kurir-id').value = '';
+            document.getElementById('edit-kurir-nama').value = '';
+            document.getElementById('edit-kurir-username').value = '';
+            document.getElementById('edit-kurir-password').value = '';
+            document.getElementById('edit-kurir-tgl-gabung').value = '';
+            document.getElementById('edit-kurir-status').value = 'aktif';
         };
         
         window.saveEditKurir = function() {
@@ -2032,16 +2519,23 @@
             const nama = document.getElementById('edit-kurir-nama').value.trim();
             const username = document.getElementById('edit-kurir-username').value.trim().toLowerCase();
             const password = document.getElementById('edit-kurir-password').value.trim();
+            const leader = document.getElementById('edit-kurir-leader').value.trim();
             const tglGabung = document.getElementById('edit-kurir-tgl-gabung').value;
             const status = document.getElementById('edit-kurir-status').value;
         
             if (!id) return alert('Data kurir tidak ditemukan!');
             if (!nama || !username || !password || !tglGabung) return alert('Lengkapi semua data kurir!');
         
+            if (leader && !isLeaderExist(leader)) {
+                alert('Leader yang dipilih belum ada di data leader!');
+                return;
+            }
+        
             update(ref(db, `users/${id}`), {
                 nama,
                 username,
                 password,
+                leader,
                 tglGabung,
                 status
             }).then(() => {
@@ -2084,13 +2578,13 @@
                             </div>
                             <span class="text-[10px] text-slate-400">Gabung: ${item.tglGabung}</span>
                         </div>
-                
-                        <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg grid grid-cols-1 gap-1 font-mono text-[11px]">
-                            <div class="dark:text-slate-300">Leader: <span class="text-emerald-600 font-bold">${item.leader || '-'}</span></div>
-                            <div class="dark:text-slate-300">User: <span class="text-primary font-bold">@${item.username}</span></div>
-                            <div class="dark:text-slate-300">Pass: <span class="text-amber-500 font-bold">${item.password}</span></div>
+                        <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg grid grid-cols-2 gap-2 font-mono text-[11px]">
+                            <div class="dark:text-slate-300">Leader: <span class="text-emerald-600 font-bold block truncate">${item.leader || '-'}</span></div>
+                            <div class="dark:text-slate-300">User: <span class="text-primary font-bold block truncate">@${item.username}</span></div>
+                            <div class="dark:text-slate-300">Pass: <span class="text-amber-500 font-bold block truncate">${item.password}</span></div>
+                            <div class="dark:text-slate-300">Ongkir Pass: <span class="text-fuchsia-500 font-bold block truncate">${item.ongkirPassword || '-'}</span></div>
                         </div>
-                
+
                         <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg space-y-2">
                             <div class="flex items-center justify-between">
                                 <span class="text-[10px] text-slate-500">Akses Cek Ongkir</span>
@@ -2108,10 +2602,11 @@
                         </div>
                 
                         <div class="flex justify-end space-x-2 pt-1">
-                            <button onclick="editAkunKurir('${key}')" class="px-2.5 py-1 bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-white rounded-md font-semibold">Edit</button>
-                            <button onclick="hapusAkunKurir('${key}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 rounded-md font-semibold">Hapus</button>
+                            ${userSession && (userSession.role === 'admin' || userSession.role === 'manajemen') ? `
+                                <button onclick="editAkunKurir('${key}')" class="px-2.5 py-1 bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-white rounded-md font-semibold">Edit</button>
+                                <button onclick="hapusAkunKurir('${key}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 rounded-md font-semibold">Hapus</button>
+                            ` : ''}
                         </div>
-                    </div>
                 `;
             }
             if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -2338,31 +2833,44 @@
 
         window.renderAdminLogMitra = function() {
             const container = document.getElementById('container-admin-log-mitra');
-            const logTgl = document.getElementById('am-log-tgl').value;
-            const logSearch = document.getElementById('am-log-search').value.toLowerCase();
+            if (!container) return;
+        
+            const logTgl = document.getElementById('am-log-tgl')?.value || '';
+            const logBulan = document.getElementById('am-log-bulan')?.value || '';
+            const logSearch = document.getElementById('am-log-search')?.value.toLowerCase();
             const elFilterKurir = document.getElementById('am-log-filter-kurir');
             const logFilterKurir = elFilterKurir ? elFilterKurir.value : 'semua';
-            
+        
             container.innerHTML = '';
-            
-            for(let k in cloudLogMitra) {
+        
+            let adaData = false;
+        
+            for (let k in cloudLogMitra) {
                 const log = cloudLogMitra[k];
-                
-                if(logTgl && log.tglRaw !== logTgl) continue;
-                if(logFilterKurir !== 'semua' && log.kurirNama !== logFilterKurir) continue;
-                if(logSearch && !log.mitraNama.toLowerCase().includes(logSearch)) continue;
-
+                if (!log) continue;
+        
+                if (logFilterKurir !== 'semua' && log.kurirNama !== logFilterKurir) continue;
+                if (logSearch && !(log.mitraNama || '').toLowerCase().includes(logSearch)) continue;
+                if (logTgl && log.tglRaw !== logTgl) continue;
+                if (logBulan && (!log.tglRaw || log.tglRaw.substring(0, 7) !== logBulan)) continue;
+        
+                adaData = true;
+        
                 container.innerHTML += `
                     <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-2 rounded-lg text-[11px]">
                         <div>
                             <span class="font-bold text-slate-800 dark:text-white">${log.mitraNama}</span> (${log.trxInput} Trx)
-                            <p class="text-[9px] text-slate-400">Input: ${log.kurirNama} - ${log.waktu}</p>
+                            <p class="text-[9px] text-slate-400">Input: ${log.kurirNama} - ${log.tglRaw} ${log.waktu}</p>
                         </div>
                         <button onclick="hapusLogMitra('${k}')" class="text-danger font-bold px-1">X</button>
                     </div>
                 `;
             }
-        }
+        
+            if (!adaData) {
+                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Tidak ada data ditemukan.</div>';
+            }
+        };
 
         window.populateMitraLogKurirDropdown = function() {
             const dropdown = document.getElementById('am-log-filter-kurir');
@@ -2390,9 +2898,20 @@
             if (!container) return;
         
             const searchKey = normalizeNama(document.getElementById('am-search-mitra')?.value || '');
+            const filterBulanEl = document.getElementById('am-filter-bulan');
+            const bulanSekarang = getWibRawDate().substring(0, 7);
+        
+            if (filterBulanEl && !filterBulanEl.value) {
+                filterBulanEl.value = bulanSekarang;
+            }
+        
+            const filterBulan = filterBulanEl?.value || bulanSekarang;
+            const isOwner = userSession && userSession.role === 'owner';
+        
             container.innerHTML = '';
         
             let nomorUrut = 1;
+            let adaData = false;
         
             for (let key in cloudMitraList) {
                 const m = cloudMitraList[key];
@@ -2402,14 +2921,23 @@
                 if (searchKey && !namaMitra.includes(searchKey)) continue;
         
                 let totalTrxMenyeluruh = 0;
+                let totalTrxFilterBulan = 0;
+        
                 for (let logKey in cloudLogMitra) {
                     const log = cloudLogMitra[logKey];
                     if (!log || !log.mitraNama) continue;
         
                     if (normalizeNama(log.mitraNama) === namaMitra) {
-                        totalTrxMenyeluruh += (parseInt(log.trxInput) || 0);
+                        const trx = parseInt(log.trxInput) || 0;
+                        totalTrxMenyeluruh += trx;
+        
+                        if (log.tglRaw && log.tglRaw.substring(0, 7) === filterBulan) {
+                            totalTrxFilterBulan += trx;
+                        }
                     }
                 }
+        
+                adaData = true;
         
                 const targetMitra = m.target || 0;
                 let cleanPhone = (m.hp || '').toString().trim().replace(/[^0-9+]/g, '');
@@ -2434,7 +2962,9 @@
                         <div class="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg text-[11px] border border-slate-100 dark:border-slate-800">
                             <div>
                                 <span class="text-slate-400 block text-[9px] uppercase">Total Transaksi</span>
-                                <span class="font-extrabold text-slate-700 dark:text-slate-200">${totalTrxMenyeluruh} Trx</span>
+                                <span class="font-extrabold text-slate-700 dark:text-slate-200">
+                                    ${filterBulan ? totalTrxFilterBulan : totalTrxMenyeluruh} Trx
+                                </span>
                             </div>
                             <div>
                                 <span class="text-slate-400 block text-[9px] uppercase">Target Bulanan</span>
@@ -2443,14 +2973,45 @@
                         </div>
         
                         <div class="flex gap-1.5 pt-0.5">
-                            <button onclick="editDataMitra('${key}')" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[10px] uppercase">Edit</button>
-                            <button onclick="hapusMitra('${key}')" class="px-3 py-1.5 bg-rose-50 text-danger font-bold rounded-lg text-[10px] uppercase border border-rose-100">Hapus</button>
+                            <button onclick="bukaInputTransaksiMitra('${m.nama}')" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[10px] uppercase">Input Trx</button>
+                            <button onclick="lihatRiwayatMitraOtomatis('${m.nama}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-lg text-[10px] uppercase border border-slate-200/50">Lihat</button>
                         </div>
+        
+                        ${isOwner ? `
+                        <div class="flex justify-end gap-2 pt-1">
+                            <button onclick="editDataMitra('${key}')" class="px-2.5 py-1 bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-white rounded-md font-semibold">Edit</button>
+                            <button onclick="hapusMitra('${key}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 rounded-md font-semibold">Hapus</button>
+                        </div>` : ''}
                     </div>
                 `;
                 nomorUrut++;
             }
+        
+            if (!adaData) {
+                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data mitra.</div>';
+            }
         };
+        window.cleanupDailyLiveLocations = async function() {
+            try {
+                const snap = await get(ref(db, 'live_locations'));
+                if (!snap.exists()) return;
+        
+                const data = snap.val() || {};
+                const today = getWibRawDate();
+        
+                for (let key in data) {
+                    const item = data[key];
+                    const tgl = item?.tanggalTrackingRaw || item?.tanggalRaw || item?.tanggalTrackingDate || '';
+        
+                    if (tgl && tgl !== today) {
+                        await remove(ref(db, `live_locations/${key}`));
+                    }
+                }
+            } catch (err) {
+                console.log('cleanupDailyLiveLocations error:', err.message);
+            }
+        };
+        
         window.toggleTestimonialPublish = function(key) {
             const item = cloudTestimonialList[key];
             if (!item) return;
@@ -2486,11 +3047,22 @@
         
             keys.forEach(key => {
                 const t = cloudTestimonialList[key];
+                if (!t) return;
         
                 const statusText = t.isPublished ? 'TAMPIL' : 'SEMBUNYI';
                 const statusClass = t.isPublished
                     ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300'
                     : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300';
+        
+                const createdText = t.createdAt
+                    ? new Date(t.createdAt).toLocaleString('id-ID', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })
+                    : '-';
         
                 container.innerHTML += `
                     <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700 text-xs space-y-2">
@@ -2498,6 +3070,7 @@
                             <div>
                                 <div class="font-bold text-sm text-slate-800 dark:text-white">${t.fullname || '-'}</div>
                                 <div class="text-[10px] text-slate-400">Kurir: ${t.courierName || '-'}</div>
+                                <div class="text-[10px] text-slate-400">Tanggal/Jam: ${createdText}</div>
                             </div>
                             <span class="px-2 py-1 rounded-full text-[10px] font-bold ${statusClass}">
                                 ${statusText}
@@ -3081,48 +3654,79 @@
             }
         };
         window.lihatRiwayatMitraOtomatis = function(namaMitra) {
-            sembunyikanRiwayatMitra();
-            const now = new Date();
-            const wib = new Date(now.getTime() + (7 * 60 * 60 * 1000));
-            const tglSkrgWib = wib.toISOString().split('T')[0];
+            const mitra = Object.values(cloudMitraList || {}).find(m => normalizeNama(m.nama) === normalizeNama(namaMitra));
+            if (!mitra) {
+                alert('Data mitra tidak ditemukan!');
+                return;
+            }
         
-            setTimeout(function() {
-                const filterTgl = document.getElementById('m-filter-tgl-kurir');
-                
-                if (filterTgl) {
-                    filterTgl.value = tglSkrgWib; 
-                }
-                if (typeof renderKurirLogMitra === 'function') {
-                    renderKurirLogMitra(namaMitra);
-                } else {
-                    console.error("Fungsi renderKurirLogMitra tidak ditemukan!");
-                }
-            }, 50);
+            const html = `
+                <div class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" id="popup-detail-mitra">
+                    <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl p-4 space-y-4 shadow-2xl">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-sm">Detail Mitra</h3>
+                            <button onclick="document.getElementById('popup-detail-mitra').remove()" class="text-slate-400">✕</button>
+                        </div>
+        
+                        <div class="space-y-2 text-xs">
+                            <div><b>Nama:</b> ${mitra.nama || '-'}</div>
+                            <div><b>Alamat:</b> ${mitra.alamat || '-'}</div>
+                            <div><b>No HP:</b> ${mitra.hp || '-'}</div>
+                            <div><b>Target:</b> ${mitra.target || 0} trx</div>
+                        </div>
+        
+                        <div class="flex gap-2">
+                            <button onclick="editDataMitraByPopup('${Object.keys(cloudMitraList).find(k => normalizeNama(cloudMitraList[k].nama) === normalizeNama(namaMitra))}'); document.getElementById('popup-detail-mitra').remove();" class="flex-1 py-2 rounded-xl bg-primary text-white text-xs font-bold">
+                                Edit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        
+            document.body.insertAdjacentHTML('beforeend', html);
         };
-        window.renderKurirLogMitra = function(filterNamaMitraKhusus = '') {
+        window.editDataMitraByPopup = function(key) {
+            const d = cloudMitraList[key];
+            if (!d) return;
+        
+            document.getElementById('edit-mitra-id').value = key;
+            document.getElementById('edit-mitra-nama').value = d.nama || '';
+            document.getElementById('edit-mitra-alamat').value = d.alamat || '';
+            document.getElementById('edit-mitra-hp').value = d.hp || '';
+            document.getElementById('edit-mitra-target').value = d.target || '';
+            document.getElementById('modal-edit-mitra').classList.remove('hidden');
+        };
+        
+        window.renderKurirLogMitra = function(filterNamaMitraKhusus = '', filterBulanKhusus = '') {
             const container = document.getElementById('container-kurir-log-mitra');
-            const fTgl = document.getElementById('m-filter-tgl-kurir').value;
-            
-            if(!filterNamaMitraKhusus && !fTgl) {
+            const fTgl = document.getElementById('m-filter-tgl-kurir')?.value || '';
+        
+            if (!filterNamaMitraKhusus && !fTgl) {
                 alert("Pilih tanggal atau klik Lihat pada mitra!");
                 return;
             }
         
-            if(!container) return;
+            if (!container) return;
             container.innerHTML = '';
-            
+        
+            const bulanSkrg = getWibRawDate().substring(0, 7);
+            const bulanFilter = filterBulanKhusus || bulanSkrg;
+        
             let adaDataLog = false;
             let logKeysSorted = Object.keys(cloudLogMitra || {}).sort((a, b) => b.localeCompare(a));
         
             logKeysSorted.forEach(k => {
                 const log = cloudLogMitra[k];
-                
-                if(userSession && log.kurirUsername !== userSession.username) return;
-                if(filterNamaMitraKhusus && log.mitraNama !== filterNamaMitraKhusus) return;
-                if(!filterNamaMitraKhusus && fTgl && log.tglRaw !== fTgl) return;
+                if (!log) return;
+        
+                if (userSession && log.kurirUsername !== userSession.username) return;
+                if (filterNamaMitraKhusus && log.mitraNama !== filterNamaMitraKhusus) return;
+                if (!filterNamaMitraKhusus && fTgl && log.tglRaw !== fTgl) return;
+                if (log.tglRaw && log.tglRaw.substring(0, 7) !== bulanFilter) return;
         
                 adaDataLog = true;
-                const waktuTampil = log.waktu ? log.waktu.substring(0, 5) : '00:00'; 
+                const waktuTampil = log.waktu ? log.waktu.substring(0, 5) : '00:00';
         
                 container.innerHTML += `
                     <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded flex justify-between items-center text-[11px] border border-slate-100 dark:border-slate-700/50 mb-1">
@@ -3229,6 +3833,14 @@
         window.toggleRiwayatTrxInputan = function() {
             const box = document.getElementById('box-riwayat-trx-inputan');
             if (!box) return;
+        
+            const today = getWibRawDate();
+            const tglEl = document.getElementById('am-log-tgl');
+            if (tglEl && !tglEl.value) tglEl.value = today;
+        
+            const bulanEl = document.getElementById('am-log-bulan');
+            if (bulanEl && !bulanEl.value) bulanEl.value = today.substring(0, 7);
+        
             box.classList.toggle('hidden');
             if (!box.classList.contains('hidden')) {
                 renderAdminLogMitra();
@@ -3242,17 +3854,57 @@
         };
 
         window.bukaInputTransaksiMitra = function(namaMitra) {
-            sembunyikanRiwayatMitra(); 
-            
-            const selectMitra = document.getElementById('m-input-pilih');
-            const inputTrx = document.getElementById('m-input-trx');
-            if (selectMitra) selectMitra.value = namaMitra;
-            if (inputTrx) {
-                inputTrx.value = '';
-                inputTrx.focus();
-            }
-        }
+            const modal = document.getElementById('modal-input-trx-mitra');
+            const inputNama = document.getElementById('trx-mitra-name');
+            const display = document.getElementById('trx-mitra-display');
+            const bulan = document.getElementById('trx-mitra-bulan');
+            const jumlah = document.getElementById('trx-mitra-jumlah');
+        
+            if (!modal || !inputNama || !display || !bulan || !jumlah) return;
+        
+            inputNama.value = namaMitra;
+            display.value = namaMitra;
+            bulan.value = getWibRawDate().substring(0, 7);
+            jumlah.value = '';
+        
+            modal.classList.remove('hidden');
+        };
+        window.closeInputTrxMitraModal = function() {
+            const modal = document.getElementById('modal-input-trx-mitra');
+            if (modal) modal.classList.add('hidden');
+        };
+        
+        window.saveInputTrxMitra = function() {
+            const namaMitra = document.getElementById('trx-mitra-name').value;
+            const bulan = document.getElementById('trx-mitra-bulan').value;
+            const trxInput = parseInt(document.getElementById('trx-mitra-jumlah').value) || 0;
+        
+            if (!namaMitra) return alert('Mitra belum dipilih!');
+            if (!bulan) return alert('Pilih bulan!');
+            if (trxInput <= 0) return alert('Jumlah transaksi harus lebih dari 0!');
+        
+            const wib = getWibDate();
+            const payload = {
+                mitraNama: namaMitra,
+                trxInput: trxInput,
+                kurirNama: userSession.nama,
+                kurirUsername: userSession.username,
+                waktu: wib.toTimeString().split(' ')[0],
+                tglRaw: getWibRawDate(),
+                bulan: bulan
+            };
+        
+            push(ref(db, 'log_mitra'), payload).then(() => {
+                alert('Transaksi mitra berhasil disimpan!');
+                closeInputTrxMitraModal();
+            });
+        };
+        
         document.addEventListener('DOMContentLoaded', () => {
+            const anBulanEl = document.getElementById('an-filter-bulan');
+            if (anBulanEl && !anBulanEl.value) {
+                anBulanEl.value = getWibRawDate().substring(0, 7);
+            }
             const tglSkrgWib = getWibRawDate();
             const daftarInputTgl = ['an-filter-tgl', 'riwayat-filter-tgl', 'am-log-tgl', 'm-filter-tgl-kurir'];
             daftarInputTgl.forEach(id => {
@@ -3665,6 +4317,11 @@
         window.toggleAdminNotaList = function(show) {
             const container = document.getElementById('container-admin-nota');
             if (!container) return;
+        
+            const bulanEl = document.getElementById('an-filter-bulan');
+            const bulanIni = getWibRawDate().substring(0, 7);
+            if (bulanEl && !bulanEl.value) bulanEl.value = bulanIni;
+        
             if (show) {
                 container.classList.remove('hidden');
                 renderAdminNota();
@@ -4618,6 +5275,862 @@
                 </div>
             `;
         };
+        window.saveDataManajemen = function() {
+            const idEdit = document.getElementById('manajemen-id-edit').value;
+            const kategori = document.getElementById('manajemen-kategori').value;
+            const nama = document.getElementById('manajemen-nama').value.trim();
+            const username = document.getElementById('manajemen-username').value.trim().toLowerCase();
+            const password = document.getElementById('manajemen-password').value.trim();
+            const status = document.getElementById('manajemen-status').value;
+        
+            if (!kategori || !nama || !username || !password) {
+                alert('Lengkapi semua data!');
+                return;
+            }
+        
+            const payload = { kategori, nama, username, password, status };
+        
+            if (idEdit) {
+                update(ref(db, `manajemen_sahabatku/${idEdit}`), payload)
+                    .then(() => {
+                        alert('Data berhasil diperbarui!');
+                        resetFormManajemen();
+                        setTimeout(() => {
+                            if (typeof renderAdminManajemen === 'function') renderAdminManajemen();
+                        }, 300);
+                    })
+                    .catch(err => alert('Gagal update: ' + err.message));
+            } else {
+                push(ref(db, 'manajemen_sahabatku'), payload)
+                    .then(() => {
+                        alert('Data berhasil disimpan!');
+                        resetFormManajemen();
+                        setTimeout(() => {
+                            if (typeof renderAdminManajemen === 'function') renderAdminManajemen();
+                        }, 300);
+                    })
+                    .catch(err => alert('Gagal simpan: ' + err.message));
+            }
+
+        };
+        
+        window.editDataManajemen = function(key) {
+            const d = cloudManajemenList[key];
+            if (!d) return;
+        
+            document.getElementById('manajemen-id-edit').value = key;
+            document.getElementById('manajemen-kategori').value = d.kategori || 'Head Operasional';
+            document.getElementById('manajemen-nama').value = d.nama || '';
+            document.getElementById('manajemen-username').value = d.username || '';
+            document.getElementById('manajemen-password').value = d.password || '';
+            document.getElementById('manajemen-status').value = d.status || 'aktif';
+            document.getElementById('title-form-manajemen').innerText = 'Edit Data Manajemen';
+        
+            const screen = document.getElementById('screen-admin-manajemen');
+            if (screen) {
+                screen.classList.remove('hidden');
+                screen.classList.add('active');
+            }
+        };
+        
+        window.resetFormManajemen = function() {
+            document.getElementById('manajemen-id-edit').value = '';
+            document.getElementById('manajemen-kategori').value = 'Head Operasional';
+            document.getElementById('manajemen-nama').value = '';
+            document.getElementById('manajemen-username').value = '';
+            document.getElementById('manajemen-password').value = '';
+            document.getElementById('manajemen-status').value = 'aktif';
+            document.getElementById('title-form-manajemen').innerText = 'Tambah / Edit Data Manajemen';
+        };
+        
+        window.hapusDataManajemen = function(key) {
+            if (confirm('Hapus data ini?')) {
+                remove(ref(db, `manajemen_sahabatku/${key}`))
+                    .then(() => alert('Data berhasil dihapus!'))
+                    .catch(err => alert('Gagal hapus: ' + err.message));
+            }
+        };
+        
+      window.renderAdminManajemen = function() {
+          const container = document.getElementById('container-admin-manajemen');
+          if (!container) return;
+      
+          container.innerHTML = '';
+      
+          const keys = Object.keys(cloudManajemenList || {});
+          if (keys.length === 0) {
+              container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data.</div>';
+              return;
+          }
+      
+          keys.forEach(key => {
+              const d = cloudManajemenList[key];
+              const statusColor = d.status === 'aktif' ? 'bg-emerald-500' : 'bg-rose-500';
+      
+              container.innerHTML += `
+                  <div class="bg-white dark:bg-darkCard p-3.5 rounded-xl border dark:border-slate-800 shadow-sm space-y-2 text-xs">
+                      <div class="flex justify-between items-center">
+                          <div class="flex items-center gap-2">
+                              <span class="w-2.5 h-2.5 rounded-full ${statusColor}"></span>
+                              <span class="font-bold text-sm dark:text-white">${d.nama || '-'}</span>
+                          </div>
+                          <span class="text-[10px] text-slate-400">${d.kategori || '-'}</span>
+                      </div>
+      
+                      <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg grid grid-cols-1 gap-1 font-mono text-[11px]">
+                          <div class="dark:text-slate-300">User: <span class="text-primary font-bold">${d.username || '-'}</span></div>
+                          <div class="dark:text-slate-300">Pass: <span class="text-amber-500 font-bold">${d.password || '-'}</span></div>
+                          <div class="dark:text-slate-300">Status: <span class="font-bold ${d.status === 'aktif' ? 'text-emerald-500' : 'text-rose-500'}">${d.status || '-'}</span></div>
+                      </div>
+      
+                      <div class="flex justify-end space-x-2 pt-1">
+                          <button onclick="editDataManajemen('${key}')" class="px-2.5 py-1 bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-white rounded-md font-semibold">Edit</button>
+                          <button onclick="hapusDataManajemen('${key}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 rounded-md font-semibold">Hapus</button>
+                      </div>
+                  </div>
+              `;
+          });
+      
+          if (typeof lucide !== 'undefined') lucide.createIcons();
+      };
+      window.applyManajemenAccess = function(kategori) {
+          const kategoriFixed = (kategori || '').trim();
+          const badge = document.getElementById('badge-admin-role');
+          const kurirForm = document.querySelector('#screen-admin-kurir > .bg-white');
+          const navDashboardBtn = document.getElementById('nav-dashboard-btn');
+          const navNotaBtn = document.getElementById('nav-nota-btn');
+          const navSistemBtn = document.getElementById('nav-sistem-btn');
+      
+          const allMenuScreens = [
+              'screen-admin-kurir',
+              'screen-admin-manajemen',
+              'screen-admin-nota',
+              'screen-admin-mitra',
+              'screen-admin-laporan',
+              'screen-admin-tracking',
+              'screen-admin-kpi',
+              'screen-admin-testimonial',
+              'screen-admin-absensi',
+              'screen-admin-ongkir',
+              'screen-pengaturan',
+              'screen-admin-dashboard'
+          ];
+      
+          const showAllButtonsInScreen = (screenId) => {
+              const screen = document.getElementById(screenId);
+              if (!screen) return;
+              screen.classList.remove('hidden');
+              screen.querySelectorAll('button').forEach(btn => btn.classList.remove('hidden'));
+          };
+      
+          const hideButtonsByText = (text) => {
+              document.querySelectorAll('button').forEach(btn => {
+                  const t = (btn.innerText || '').trim();
+                  if (t.includes(text)) btn.classList.add('hidden');
+              });
+          };
+      
+          const showButtonsByText = (text) => {
+              document.querySelectorAll('button').forEach(btn => {
+                  const t = (btn.innerText || '').trim();
+                  if (t.includes(text)) btn.classList.remove('hidden');
+              });
+          };
+      
+          // default: sembunyikan semua menu admin dulu
+          allMenuScreens.forEach(screenId => {
+              const screen = document.getElementById(screenId);
+              if (!screen) return;
+              screen.querySelectorAll('button').forEach(btn => btn.classList.add('hidden'));
+          });
+      
+          if (kurirForm) kurirForm.classList.add('hidden');
+      
+          [navDashboardBtn, navNotaBtn, navSistemBtn].forEach(btn => {
+              if (btn) btn.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+          });
+      
+          // badge role
+          if (badge) {
+              if (kategoriFixed === 'Owner') badge.innerText = 'Owner';
+              else if (kategoriFixed === 'Head Operasional') badge.innerText = 'Head Operasional';
+              else if (kategoriFixed === 'HRD') badge.innerText = 'HRD';
+              else badge.innerText = kategoriFixed || 'Manajemen';
+          }
+      
+          // selalu tampil
+          showButtonsByText('Sistem Global');
+          showButtonsByText('Kirim Notifikasi');
+          showButtonsByText('Logout / Keluar');
+          showButtonsByText('Keluar Dari Akun');
+          if (kategoriFixed === 'Owner') {
+              allMenuScreens.forEach(screenId => {
+                  const screen = document.getElementById(screenId);
+                  if (!screen) return;
+                  screen.classList.remove('hidden');
+                  screen.querySelectorAll('button').forEach(btn => {
+                      btn.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+                  });
+              });
+          
+              if (kurirForm) kurirForm.classList.remove('hidden');
+          
+              // paksa tampilkan tombol notifikasi
+              showButtonsByText('Kirim Notifikasi');
+          
+              [navDashboardBtn, navNotaBtn, navSistemBtn].forEach(btn => {
+                  if (btn) btn.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+              });
+          
+              return;
+          }
+
+          // Head Operasional
+          if (kategoriFixed === 'Head Operasional') {
+              showButtonsByText('Monitoring Omset Hari Ini');
+              showButtonsByText('Data Akun Kurir');
+              showButtonsByText('Semua Nota Kurir');
+              showButtonsByText('Pantau & hapus seluruh nota');            
+              showButtonsByText('Manajemen Mitra');
+              showButtonsByText('Laporan Data');
+              showButtonsByText('Tracking Kurir');
+              showButtonsByText('Absensi Harian Kurir');
+              showButtonsByText('KPI Kurir');
+              showButtonsByText('Testimoni Customer');
+              showButtonsByText('Sistem Global');
+              showButtonsByText('Logout / Keluar');
+              return;
+          }
+      
+          // HRD
+          if (kategoriFixed === 'HRD') {
+              showButtonsByText('Data Akun Kurir');
+              showButtonsByText('Tracking Kurir');
+              showButtonsByText('Absensi Harian Kurir');
+              showButtonsByText('KPI Kurir');
+              showButtonsByText('Testimoni Customer');
+              showButtonsByText('Sistem Global');
+              showButtonsByText('Logout / Keluar');
+              return;
+          }
+      
+          // fallback: tampilkan minimal
+          showButtonsByText('Sistem Global');
+          showButtonsByText('Logout / Keluar');
+      };
+      window.openPopupPenilaianLeader = function() {
+          const modal = document.getElementById('modal-penilaian-leader');
+          const bulan = document.getElementById('leader-penilaian-bulan');
+          if (!modal || !bulan) return;
+      
+          bulan.value = getWibRawDate().substring(0, 7);
+          modal.classList.remove('hidden');
+          renderPenilaianLeader();
+      };
+
+      window.closePopupPenilaianLeader = function() {
+          const modal = document.getElementById('modal-penilaian-leader');
+          if (modal) modal.classList.add('hidden');
+      };
+      function getLeaderScore(namaLeader, bulan) {
+          const leaderName = (namaLeader || '').trim();
+          if (!leaderName) return null;
+      
+          const leaderItem = Object.values(cloudKurirList || {}).find(u =>
+              u && (u.nama || '').trim() === leaderName && u.status === 'aktif'
+          );
+      
+          const anggotaData = Object.values(cloudKurirList || {}).filter(u => {
+              return u &&
+                  u.role === 'kurir' &&
+                  u.status === 'aktif' &&
+                  (u.leader || '').trim() === leaderName;
+          });
+      
+          const leaderRatingObj = calcKpiForKurir(leaderName, bulan) || {
+              rating: 0,
+              totalNota: 0,
+              trxMitra: 0,
+              totalPenghasilan: 0
+          };
+      
+          let totalRatingAnggota = 0;
+          let totalNotaAnggota = 0;
+          let totalTrxMitraAnggota = 0;
+          let totalPenghasilanAnggota = 0;
+      
+          const anggotaRanking = anggotaData.map(u => {
+              const namaAnggota = (u.nama || u.username || '-').trim();
+              const stat = calcKpiForKurir(namaAnggota, bulan) || {
+                  rating: 0,
+                  totalNota: 0,
+                  trxMitra: 0,
+                  totalPenghasilan: 0
+              };
+      
+              totalRatingAnggota += stat.rating || 0;
+              totalNotaAnggota += stat.totalNota || 0;
+              totalTrxMitraAnggota += stat.trxMitra || 0;
+              totalPenghasilanAnggota += stat.totalPenghasilan || 0;
+      
+              return {
+                  nama: namaAnggota,
+                  rating: stat.rating || 0,
+                  totalNota: stat.totalNota || 0,
+                  trxMitra: stat.trxMitra || 0,
+                  totalPenghasilan: stat.totalPenghasilan || 0
+              };
+          }).sort((a, b) => b.rating - a.rating);
+      
+          const avgRatingAnggota = anggotaRanking.length
+              ? Math.round(totalRatingAnggota / anggotaRanking.length)
+              : 0;
+      
+          const skorAkhir = Math.min(100, Math.round(
+              (leaderRatingObj.rating * 0.4) +
+              (avgRatingAnggota * 0.6)
+          ));
+      
+          const terbaik = anggotaRanking[0] || null;
+          const sedang = anggotaRanking.length ? anggotaRanking[Math.floor(anggotaRanking.length / 2)] : null;
+          const beban = anggotaRanking.length ? anggotaRanking[anggotaRanking.length - 1] : null;
+      
+          return {
+              namaLeader: leaderName,
+              leaderUsername: leaderItem?.username || '-',
+              anggotaCount: anggotaRanking.length,
+              leaderRating: leaderRatingObj.rating || 0,
+              avgRatingAnggota,
+              skorAkhir,
+              totalNotaAnggota,
+              totalTrxMitraAnggota,
+              totalPenghasilanAnggota,
+              anggotaRanking,
+              terbaik,
+              sedang,
+              beban
+          };
+      }
+      window.renderPenilaianLeader = function() {
+          const container = document.getElementById('container-penilaian-leader');
+          const bulan = document.getElementById('leader-penilaian-bulan')?.value || getWibRawDate().substring(0, 7);
+          if (!container) return;
+      
+          const leaderNames = new Set();
+      
+          Object.values(cloudLeaderList || {}).forEach(item => {
+              if (item && item.nama) leaderNames.add(item.nama.trim());
+          });
+      
+          Object.values(cloudKurirList || {}).forEach(u => {
+              if (u && u.leader) leaderNames.add(u.leader.trim());
+          });
+      
+          const data = Array.from(leaderNames)
+              .filter(Boolean)
+              .map(namaLeader => getLeaderScore(namaLeader, bulan))
+              .filter(Boolean)
+              .sort((a, b) => b.skorAkhir - a.skorAkhir);
+      
+          if (!data.length) {
+              container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data leader.</div>';
+              return;
+          }
+      
+          container.innerHTML = data.map((d, i) => {
+              const badge = getRatingBadge(d.skorAkhir);
+              const anggotaList = d.anggotaRanking || [];
+      
+              return `
+                  <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border text-xs space-y-3">
+                      <div class="flex justify-between items-start">
+                          <div class="min-w-0">
+                              <div class="font-bold text-sm">${i + 1}. ${d.namaLeader}</div>
+                              <div class="text-[10px] text-slate-400">Anggota: ${d.anggotaCount}</div>
+                              <div class="text-[10px] text-slate-400">Username: ${d.leaderUsername}</div>
+                          </div>
+                          <div class="text-right">
+                              <div class="text-lg font-black text-primary">${d.skorAkhir}%</div>
+                              <div class="text-[10px] font-bold ${badge.color || 'text-slate-500'}">
+                                  ${badge.emoji} ${badge.label}
+                              </div>
+                          </div>
+                      </div>
+      
+                      <div class="grid grid-cols-2 gap-2">
+                          <div class="p-2 bg-white dark:bg-darkCard rounded-xl">
+                              <div class="text-[10px] text-slate-400">Rating Leader</div>
+                              <div class="font-bold">${d.leaderRating}%</div>
+                          </div>
+                          <div class="p-2 bg-white dark:bg-darkCard rounded-xl">
+                              <div class="text-[10px] text-slate-400">Rata-rata Anggota</div>
+                              <div class="font-bold">${d.avgRatingAnggota}%</div>
+                          </div>
+                          <div class="p-2 bg-white dark:bg-darkCard rounded-xl">
+                              <div class="text-[10px] text-slate-400">Total Nota Anggota</div>
+                              <div class="font-bold">${d.totalNotaAnggota}</div>
+                          </div>
+                          <div class="p-2 bg-white dark:bg-darkCard rounded-xl">
+                              <div class="text-[10px] text-slate-400">Trx Mitra Anggota</div>
+                              <div class="font-bold">${d.totalTrxMitraAnggota}</div>
+                          </div>
+                      </div>
+      
+                      <div class="space-y-2">
+                          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                              Daftar Anggota
+                          </div>
+                          <div class="flex flex-wrap gap-1.5">
+                              ${anggotaList.length
+                                  ? anggotaList.map(a => `
+                                      <span class="px-2 py-1 rounded-full bg-white dark:bg-darkBg border text-[10px]">
+                                          ${a.nama} • ${a.rating}%
+                                      </span>
+                                  `).join('')
+                                  : '<span class="text-[10px] text-slate-400">Belum ada anggota.</span>'
+                              }
+                          </div>
+                      </div>
+                  </div>
+              `;
+          }).join('');
+      };
+      window.openLeaderModal = function() {
+          resetLeaderForm();
+          document.getElementById('modal-leader').classList.remove('hidden');
+          renderLeaderList();
+      };
+      window.resetLeaderForm = function() {
+          document.getElementById('leader-id-edit').value = '';
+          document.getElementById('leader-nama').value = '';
+          const select = document.getElementById('leader-anggota');
+          if (select) Array.from(select.options).forEach(o => o.selected = false);
+      };
+
+      window.renderLeaderList = function() {
+          const container = document.getElementById('container-leader-list');
+          if (!container) return;
+      
+          const keys = Object.keys(cloudLeaderList || {});
+          if (!keys.length) {
+              container.innerHTML = '<div class="text-center text-xs text-slate-400 py-3">Belum ada leader tersimpan.</div>';
+              return;
+          }
+      
+          const bulan = getWibRawDate().substring(0, 7);
+      
+          container.innerHTML = keys.map(key => {
+              const item = cloudLeaderList[key];
+              const anggota = Array.isArray(item.anggota) ? item.anggota : [];
+      
+              const hasilAnggota = anggota.map(nama => {
+                  const stat = calcKpiForKurir(nama, bulan);
+                  return { nama, rating: stat.rating };
+              }).sort((a, b) => b.rating - a.rating);
+      
+              const terbaik = hasilAnggota[0] || null;
+              const sedang = hasilAnggota.length ? hasilAnggota[Math.floor(hasilAnggota.length / 2)] : null;
+              const beban = hasilAnggota[hasilAnggota.length - 1] || null;
+      
+              return `
+                  <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border text-xs space-y-2">
+                      <div class="flex justify-between items-start">
+                          <div>
+                              <div class="font-bold text-sm">${item.nama || '-'}</div>
+                              <div class="text-[10px] text-slate-400">Anggota: ${anggota.length}</div>
+                          </div>
+                          <div class="flex gap-2">
+                              <button onclick="editLeaderData('${key}')" class="px-2 py-1 rounded-md bg-blue-50 text-blue-600 text-[10px] font-bold">Edit</button>
+                              <button onclick="hapusLeaderData('${key}')" class="px-2 py-1 rounded-md bg-rose-50 text-rose-600 text-[10px] font-bold">Hapus</button>
+                          </div>
+                      </div>
+      
+                      <div class="space-y-1 text-[10px]">
+                          <div class="font-semibold text-slate-500">Daftar Anggota:</div>
+                          <div class="flex flex-wrap gap-1">
+                              ${anggota.map(a => `<span class="px-2 py-1 rounded-full bg-white dark:bg-darkBg border">${a}</span>`).join('') || '-'}
+                          </div>
+                      </div>
+      
+                      <div class="grid grid-cols-3 gap-2 text-[10px]">
+                          <div class="p-2 rounded-lg bg-emerald-50 text-emerald-700">
+                              <div class="font-bold">Terbaik</div>
+                              <div>${terbaik ? terbaik.nama : '-'}</div>
+                              <div>Rating: ${terbaik ? terbaik.rating : 0}%</div>
+                          </div>
+                          <div class="p-2 rounded-lg bg-amber-50 text-amber-700">
+                              <div class="font-bold">Sedang</div>
+                              <div>${sedang ? sedang.nama : '-'}</div>
+                              <div>Rating: ${sedang ? sedang.rating : 0}%</div>
+                          </div>
+                          <div class="p-2 rounded-lg bg-rose-50 text-rose-700">
+                              <div class="font-bold">Beban</div>
+                              <div>${beban ? beban.nama : '-'}</div>
+                              <div>Rating: ${beban ? beban.rating : 0}%</div>
+                          </div>
+                      </div>
+                  </div>
+              `;
+          }).join('');
+      };
+      window.editLeaderData = function(key) {
+          const d = cloudLeaderList[key];
+          if (!d) return;
+      
+          document.getElementById('leader-id-edit').value = key;
+          document.getElementById('leader-nama').value = d.nama || '';
+      
+          populateAnggotaDropdownLeader();
+          const select = document.getElementById('leader-anggota');
+          if (select && Array.isArray(d.anggota)) {
+              Array.from(select.options).forEach(opt => {
+                  opt.selected = d.anggota.includes(opt.value);
+              });
+          }
+      };
+
+      window.hapusLeaderData = function(key) {
+          if (confirm('Hapus data leader ini?')) {
+              remove(ref(db, `leader_list/${key}`))
+                  .then(() => alert('Leader berhasil dihapus!'))
+                  .catch(err => alert('Gagal hapus leader: ' + err.message));
+          }
+      };
+
+      window.closeLeaderModal = function() {
+          document.getElementById('modal-leader').classList.add('hidden');
+      };
+      
+      window.saveLeaderData = function() {
+          const idEdit = document.getElementById('leader-id-edit').value;
+          const nama = document.getElementById('leader-nama').value.trim();
+          const select = document.getElementById('leader-anggota');
+          const anggota = Array.from(select.selectedOptions).map(opt => opt.value.trim()).filter(Boolean);
+      
+          if (!nama) return alert('Nama leader wajib diisi!');
+          if (!anggota.length) return alert('Pilih minimal 1 anggota!');
+      
+          const payload = { nama, anggota };
+      
+          const syncKeKurir = async () => {
+              for (const [key, user] of Object.entries(cloudKurirList || {})) {
+                  if (!user) continue;
+                  if (anggota.includes(user.nama)) {
+                      await update(ref(db, `users/${key}`), { leader: nama });
+                  } else if ((user.leader || '').trim() === nama) {
+                      await update(ref(db, `users/${key}`), { leader: '' });
+                  }
+              }
+          };
+      
+          if (idEdit) {
+              update(ref(db, `leader_list/${idEdit}`), payload)
+                  .then(async () => {
+                      await syncKeKurir();
+                      alert('Data leader berhasil disimpan!');
+                      closeLeaderModal();
+                  })
+                  .catch(err => alert('Gagal update leader: ' + err.message));
+          } else {
+              push(ref(db, 'leader_list'), payload)
+                  .then(async () => {
+                      await syncKeKurir();
+                      alert('Data leader berhasil disimpan!');
+                      closeLeaderModal();
+                  })
+                  .catch(err => alert('Gagal simpan leader: ' + err.message));
+          }
+      };
+
+      function populateLeaderDropdown() {
+          const dropdown = document.getElementById('ak-leader');
+          const dropdownEdit = document.getElementById('edit-kurir-leader');
+          if (!dropdown && !dropdownEdit) return;
+      
+          const options = ['<option value="">-- Pilih Leader --</option>'];
+      
+          Object.values(cloudLeaderList || {}).forEach(item => {
+              if (item && item.nama) {
+                  options.push(`<option value="${item.nama}">${item.nama}</option>`);
+              }
+          });
+      
+          const html = options.join('');
+          if (dropdown) dropdown.innerHTML = html;
+          if (dropdownEdit) dropdownEdit.innerHTML = html;
+      }
+      function populateAnggotaDropdownLeader() {
+          const select = document.getElementById('leader-anggota');
+          if (!select) return;
+      
+          select.innerHTML = '';
+      
+          Object.values(cloudKurirList || {}).forEach(user => {
+              if (user && user.role === 'kurir' && user.status === 'aktif') {
+                  const leaderName = (user.leader || '').trim();
+                  const label = leaderName
+                      ? `🔒 ${user.nama} — Leader: ${leaderName}`
+                      : `✅ ${user.nama} — Belum punya leader`;
+      
+                  select.innerHTML += `<option value="${user.nama}">${label}</option>`;
+              }
+          });
+      }
+      window.openLeaderModal = function() {
+          resetLeaderForm();
+          document.getElementById('modal-leader').classList.remove('hidden');
+          populateAnggotaDropdownLeader();
+          renderLeaderList();
+      };
+      function isLeaderExist(namaLeader) {
+          const target = (namaLeader || '').trim().toLowerCase();
+          if (!target) return false;
+      
+          return Object.values(cloudLeaderList || {}).some(item => {
+              return item && (item.nama || '').trim().toLowerCase() === target;
+          });
+      }
+      function syncLeaderName(oldName, newName) {
+          const oldLeader = (oldName || '').trim();
+          const newLeader = (newName || '').trim();
+      
+          if (!oldLeader || !newLeader || oldLeader === newLeader) return;
+      
+          Object.entries(cloudKurirList || {}).forEach(([key, user]) => {
+              if ((user.leader || '').trim() === oldLeader) {
+                  update(ref(db, `users/${key}`), {
+                      leader: newLeader
+                  });
+              }
+          });
+      }
+      let cloudNotificationList = {};
+      
+      window.toggleNotifTarget = function() {
+          const target = document.getElementById('notif-target').value;
+          const box = document.getElementById('notif-selected-box');
+          if (!box) return;
+          if (target === 'selected') box.classList.remove('hidden');
+          else box.classList.add('hidden');
+      };
+      
+      function populateNotifKurirList() {
+          const select = document.getElementById('notif-target-list');
+          if (!select) return;
+      
+          select.innerHTML = '';
+          Object.values(cloudKurirList || {}).forEach(user => {
+              if (user && user.role === 'kurir' && user.status === 'aktif') {
+                  select.innerHTML += `<option value="${user.username}">${user.nama}</option>`;
+              }
+          });
+      }
+      
+      window.fillNotifTemplate = function() {
+          const val = document.getElementById('notif-template').value;
+          const msg = document.getElementById('notif-message');
+          if (!msg) return;
+      
+          const templates = {
+              trx: 'Kurir hari ini belum input trx mitra. Mohon segera input agar data harian lengkap.',
+              nota: 'Nota hari ini masih sedikit. Mohon tingkatkan input nota untuk target harian.',
+              absen_masuk: 'Anda belum absen masuk hari ini. Mohon segera lakukan absensi.',
+              absen_pulang: 'Anda belum absen pulang hari ini. Mohon segera lakukan absensi pulang.',
+              kpi: 'Peringkat KPI Anda perlu ditingkatkan. Mohon perhatikan performa kerja hari ini.'
+          };
+      
+          if (val === 'custom') {
+              msg.value = '';
+              msg.focus();
+              return;
+          }
+      
+          if (templates[val]) msg.value = templates[val];
+      };
+      
+      window.resetNotifForm = function() {
+          document.getElementById('notif-target').value = 'all';
+          document.getElementById('notif-template').value = '';
+          document.getElementById('notif-message').value = '';
+          const box = document.getElementById('notif-selected-box');
+          if (box) box.classList.add('hidden');
+          const select = document.getElementById('notif-target-list');
+          if (select) Array.from(select.options).forEach(o => o.selected = false);
+      };
+      
+      window.saveNotification = function() {
+          const target = document.getElementById('notif-target').value;
+          const message = document.getElementById('notif-message').value.trim();
+      
+          if (!message) {
+              alert('Isi pesan notifikasi wajib diisi!');
+              return;
+          }
+      
+          let targetList = [];
+          if (target === 'selected') {
+              const select = document.getElementById('notif-target-list');
+              targetList = Array.from(select.selectedOptions).map(opt => opt.value);
+              if (!targetList.length) {
+                  alert('Pilih minimal 1 kurir!');
+                  return;
+              }
+          }
+      
+          const payload = {
+              target,
+              targetList,
+              message,
+              type: 'warning',
+              active: true,
+              createdAt: new Date().toISOString()
+          };
+      
+          push(ref(db, 'notifications_admin'), payload)
+              .then(() => {
+                  alert('Notifikasi berhasil dikirim!');
+                  resetNotifForm();
+              })
+              .catch(err => alert('Gagal kirim notifikasi: ' + err.message));
+      };
+      function renderKurirNotifications() {
+          if (!userSession || userSession.role !== 'kurir') return;
+      
+          const box = document.getElementById('kurir-notif-box');
+          const text = document.getElementById('kurir-notif-text');
+          if (!box || !text) return;
+      
+          const username = userSession.username;
+          const hiddenIds = getHiddenNotifIds();
+      
+          const found = Object.entries(cloudNotificationList || {})
+              .sort((a, b) => (b[1]?.createdAt || '').localeCompare(a[1]?.createdAt || ''))
+              .find(([id, n]) => {
+                  if (!n || !n.active) return false;
+                  if (hiddenIds.includes(id)) return false;
+                  if (n.target === 'all') return true;
+                  if (n.target === 'selected' && Array.isArray(n.targetList)) {
+                      return n.targetList.includes(username);
+                  }
+                  return false;
+              });
+      
+          if (!found) {
+              box.classList.add('hidden');
+              text.innerHTML = '';
+              return;
+          }
+      
+          const [notifId, notif] = found;
+          text.innerHTML = `
+              <div class="relative pr-7 leading-snug text-[10px]">
+                  ${notif.message || ''}
+                  <button onclick="dismissKurirNotification('${notifId}')"
+                      class="absolute top-0 right-0 w-5 h-5 flex items-center justify-center rounded-full bg-white/90 text-rose-500 text-[10px] font-bold shadow-sm">
+                      ✕
+                  </button>
+              </div>
+          `;
+          box.classList.remove('hidden');
+      }
+      
+      onValue(ref(db, 'notifications_admin'), (snapshot) => {
+          cloudNotificationList = snapshot.val() || {};
+          renderKurirNotifications();
+          renderAdminNotificationHistory();
+      });
+      window.dismissKurirNotification = function(notifId) {
+          hideNotifForCurrentUser(notifId);
+          renderKurirNotifications();
+      };
+
+      function renderAdminNotificationHistory() {
+          const container = document.getElementById('container-admin-notification-history');
+          if (!container) return;
+      
+          const items = Object.entries(cloudNotificationList || {})
+              .sort((a, b) => {
+                  const ta = a[1]?.createdAt || '';
+                  const tb = b[1]?.createdAt || '';
+                  return tb.localeCompare(ta);
+              });
+      
+          container.innerHTML = '';
+      
+          if (!items.length) {
+              container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada notifikasi.</div>';
+              return;
+          }
+      
+          items.forEach(([key, n]) => {
+              const targetText = n.target === 'all'
+                  ? 'Semua Kurir'
+                  : `Kurir Terpilih (${(n.targetList || []).length})`;
+      
+              container.innerHTML += `
+                  <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border text-xs space-y-2">
+                      <div class="flex justify-between items-start gap-2">
+                          <div class="min-w-0">
+                              <div class="font-bold text-sm truncate">${n.message || '-'}</div>
+                              <div class="text-[10px] text-slate-400 mt-1">${targetText}</div>
+                              <div class="text-[10px] text-slate-400">${n.createdAt ? new Date(n.createdAt).toLocaleString('id-ID') : '-'}</div>
+                          </div>
+                      </div>
+                      <div class="flex gap-2">
+                          <button onclick="resendNotification('${key}')" class="flex-1 py-2 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-bold uppercase">
+                              Kirim Lagi
+                          </button>
+                          <button onclick="deleteNotification('${key}')" class="px-3 py-2 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-bold uppercase">
+                              Hapus
+                          </button>
+                      </div>
+                  </div>
+              `;
+          });
+      }
+      window.resendNotification = function(key) {
+          const n = cloudNotificationList[key];
+          if (!n) return;
+      
+          const payload = {
+              target: n.target || 'all',
+              targetList: Array.isArray(n.targetList) ? n.targetList : [],
+              message: n.message || '',
+              type: n.type || 'warning',
+              active: true,
+              createdAt: new Date().toISOString()
+          };
+      
+          set(ref(db, `notifications_admin/${key}`), payload)
+              .then(() => {
+                  const hiddenIds = getHiddenNotifIds().filter(id => id !== key);
+                  localStorage.setItem('hidden_notif_ids', JSON.stringify(hiddenIds));
+      
+                  alert('Notifikasi berhasil dikirim ulang!');
+                  renderAdminNotificationHistory();
+                  renderKurirNotifications();
+              })
+              .catch(err => alert('Gagal kirim ulang notifikasi: ' + err.message));
+      };
+      window.deleteNotification = function(key) {
+          if (!confirm('Hapus notifikasi ini?')) return;
+          remove(ref(db, `notifications_admin/${key}`))
+              .then(() => alert('Notifikasi berhasil dihapus!'))
+              .catch(err => alert('Gagal menghapus notifikasi: ' + err.message));
+      };
+      function getHiddenNotifIds() {
+          try {
+              return JSON.parse(localStorage.getItem('hidden_notif_ids') || '[]');
+          } catch (e) {
+              return [];
+          }
+      }
+      
+      function hideNotifForCurrentUser(notifId) {
+          const list = getHiddenNotifIds();
+          if (!list.includes(notifId)) list.push(notifId);
+          localStorage.setItem('hidden_notif_ids', JSON.stringify(list));
+      }
 
 
     </script>
