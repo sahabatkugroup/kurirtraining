@@ -394,6 +394,8 @@
 
             const newTestimonialRef = push(testimonialsRef);
             
+            const now = new Date();
+            
             set(newTestimonialRef, {
                 fullname: fullname,
                 courierName: courierName || "-",
@@ -402,6 +404,8 @@
                 speed: speed,
                 comments: comments,
                 timestamp: Date.now(),
+                date: now.toLocaleDateString('id-ID'),
+                time: now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
                 isPublished: false, 
                 status: "pending"
             }).then(() => {
