@@ -169,7 +169,7 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold mb-1">Tanggal Off Kurir Pengajuan</label>
+                            <label class="block text-xs font-semibold mb-1">Tanggal Pengajuan / Tanggal Off</label>
                             <select id="form-pengajuan-tanggal" class="w-full text-xs bg-slate-100 dark:bg-slate-800 rounded-xl p-3 ring-1 ring-slate-200 dark:ring-slate-700">
                                 <option value="">-- Pilih tanggal off --</option>
                             </select>
@@ -186,7 +186,7 @@
                               <label class="block text-xs font-semibold mb-1">Jenis Pengajuan</label>
                               <select id="form-pengajuan-jenis" class="w-full text-xs bg-slate-100 dark:bg-slate-800 rounded-xl p-3">
                                   <option value="">-- Pilih jenis pengajuan --</option>
-                                  <option value="Off Reguler">Pindah Off</option>
+                                  <option value="Off Reguler">Off</option>
                                   <option value="Tidak Ambil Off">Tidak Ambil Off</option>
                                   <option value="Izin">Izin</option>
                                   <option value="Sakit">Sakit</option>
@@ -370,6 +370,18 @@
     
         showToastNotif(notifText);
     }
+    function getLabelJenisPengajuan(jenis) {
+        if (!jenis) return '-';
+        if (jenis === 'Off Reguler') return 'Off';
+        if (jenis === 'Tidak Ambil Off') return 'Tidak Ambil Off';
+        if (jenis === 'Izin') return 'Izin';
+        if (jenis === 'Sakit') return 'Sakit';
+        if (jenis === 'Tukar Off') return 'Tukar Off';
+        return jenis;
+    }
+    function isOffReguler(jenis) {
+        return (jenis || '') === 'Off Reguler';
+    }
     
     // Theme Management
     function applySavedTheme() {
@@ -402,6 +414,7 @@
     document.getElementById('form-tukar-nama')?.addEventListener('change', (e) => {
         fillTanggalOffKurir(e.target.value, 'form-tukar-tanggal');
     });
+
     document.getElementById('form-pengajuan-nama')?.addEventListener('change', (e) => {
         const nama = e.target.value;
         fillTanggalOffKurir(nama, 'form-pengajuan-tanggal');
@@ -444,10 +457,28 @@
         const selectTanggal = document.getElementById(targetSelectId);
         if (!selectTanggal) return;
     
-        selectTanggal.innerHTML = '<option value="">-- Pilih tanggal off --</option>';
+        const jenis = document.getElementById('form-pengajuan-jenis')?.value || '';
+        selectTanggal.innerHTML = '<option value="">-- Pilih tanggal --</option>';
     
+        // Izin & Sakit: tampilkan semua tanggal bulan aktif
+        if (jenis === 'Izin' || jenis === 'Sakit') {
+            const tahun = currentViewDate.getFullYear();
+            const bulan = currentViewDate.getMonth();
+            const totalDays = new Date(tahun, bulan + 1, 0).getDate();
+    
+            for (let h = 1; h <= totalDays; h++) {
+                const tanggal = `${tahun}-${String(bulan + 1).padStart(2, '0')}-${String(h).padStart(2, '0')}`;
+                const opt = document.createElement('option');
+                opt.value = tanggal;
+                opt.textContent = formatTanggalIndonesia(tanggal);
+                selectTanggal.appendChild(opt);
+            }
+            return;
+        }
+    
+        // Tukar Off / Off Reguler / Tidak Ambil Off: ambil HANYA OFF REGULER
         const daftarTanggal = Object.values(DATA_JADWAL)
-            .filter(item => (item.nama || '') === namaKurir)
+            .filter(item => (item.nama || '') === namaKurir && isOffReguler(item.jenisOff))
             .map(item => item.tanggalMulai)
             .filter(Boolean)
             .sort((a, b) => a.localeCompare(b));
@@ -457,7 +488,7 @@
         if (uniqueTanggal.length === 0) {
             const opt = document.createElement('option');
             opt.value = '';
-            opt.textContent = 'Tidak ada jadwal off';
+            opt.textContent = 'Tidak ada jadwal Off Reguler';
             selectTanggal.appendChild(opt);
             return;
         }
@@ -554,59 +585,90 @@
     function renderPengajuanList() {
         const container = document.getElementById('list-pengajuan-pending');
         if (!container) return;
+    
         const search = (document.getElementById('search-pengajuan')?.value || '').toLowerCase().trim();
         container.innerHTML = '';
-        
+    
         let counter = 0;
-        const items = Object.entries(DATA_PENGAJUAN).reverse().slice(0, 5);
+        const items = Object.entries(DATA_PENGAJUAN).reverse();
     
         items.forEach(([key, item]) => {
             const nama = (item.namaKurir || item.nama || '').toLowerCase();
-            const tgl = (item.tanggalOff || item.tanggal || '');
-            const jenis = item.jenisPengajuan || 'Izin';
+            const tgl = (item.tanggalOff || item.tanggal || item.tanggalPindah || '').toLowerCase();
+            const jenis = (item.jenisPengajuan || item.jenisOff || '').toLowerCase();
+            const ket = (item.keterangan || '').toLowerCase();
     
-            if (search && !nama.includes(search) && !tgl.includes(search) && !jenis.toLowerCase().includes(search)) return;
-            
+            if (search && !nama.includes(search) && !tgl.includes(search) && !jenis.includes(search) && !ket.includes(search)) return;
+            if (item.status && item.status !== 'Pending') return;
+    
             counter++;
-            const div = document.createElement('div');
-            let badgeColor = item.status === 'Disetujui' ? 'bg-emerald-500' : (item.status === 'Ditolak' ? 'bg-red-500' : 'bg-amber-500');
-            
+    
+            const jenisPengajuan = item.jenisPengajuan || '-';
+            const isPindahOff = jenisPengajuan === 'Off Reguler';
+            const isTukarOff = jenisPengajuan === 'Tukar Off';
+            const isIzin = jenisPengajuan === 'Izin';
+            const isSakit = jenisPengajuan === 'Sakit';
+            const isTidakAmbilOff = jenisPengajuan === 'Tidak Ambil Off';
+    
             let detailJenis = '';
-            if (jenis === 'Tukar Off') {
+    
+            if (isPindahOff) {
+                detailJenis = `
+                    <p><strong>Nama Pengaju:</strong> ${item.namaKurir || item.nama || '-'}</p>
+                    <p><strong>Jenis:</strong> <span class="text-blue-500 font-bold">Off Reguler / Pindah Off</span></p>
+                    <p><strong>Tanggal Pengajuan:</strong> ${formatTanggalIndonesia(item.timestamp?.slice(0,10) || item.tanggalPengajuan || '')}</p>
+                    <p><strong>Tanggal Off Lama:</strong> ${formatTanggalIndonesia(item.tanggalOff || '')}</p>
+                    <p><strong>Tanggal Pindah Off:</strong> ${formatTanggalIndonesia(item.tanggalPindah || '')}</p>
+                    <p><strong>Keterangan:</strong> ${item.keterangan || '-'}</p>
+                `;
+            } else if (isTukarOff) {
                 detailJenis = `
                     <p><strong>Nama Pengaju:</strong> ${item.namaKurir || item.nama || '-'}</p>
                     <p><strong>Jenis:</strong> <span class="text-blue-500 font-bold">Tukar Off</span></p>
-                    <p><strong>Tanggal Kurir:</strong> ${formatTanggalIndonesia(item.tanggalOff)}</p>
-                    <p><strong>Tukar Dengan:</strong> ${item.namaKurirTukar || '-'}</p>
-                    <p><strong>Tanggal Kurir Tertukar:</strong> ${formatTanggalIndonesia(item.tanggalOffTukar)}</p>
+                    <p><strong>Tanggal Pengajuan:</strong> ${formatTanggalIndonesia(item.timestamp?.slice(0,10) || item.tanggalPengajuan || '')}</p>
+                    <p><strong>Kurir Tukar:</strong> ${item.namaKurirTukar || item.kurirTukar || '-'}</p>
+                    <p><strong>Tanggal Tukar:</strong> ${formatTanggalIndonesia(item.tanggalOffTukar || item.tanggalTukar || '')}</p>
                     <p><strong>Keterangan:</strong> ${item.keterangan || '-'}</p>
                 `;
-            } else if (jenis === 'Off Reguler') {
+            } else if (isIzin || isSakit || isTidakAmbilOff) {
                 detailJenis = `
                     <p><strong>Nama Pengaju:</strong> ${item.namaKurir || item.nama || '-'}</p>
-                    <p><strong>Jenis:</strong> <span class="text-blue-500 font-bold">Pindah Off</span></p>
-                    <p><strong>Tanggal Off Lama:</strong> ${formatTanggalIndonesia(item.tanggalOff)}</p>
-                    <p><strong>Tanggal Pindah Off:</strong> ${formatTanggalIndonesia(item.tanggalPindah)}</p>
+                    <p><strong>Jenis:</strong> <span class="text-blue-500 font-bold">${jenisPengajuan}</span></p>
+                    <p><strong>Tanggal Pengajuan:</strong> ${formatTanggalIndonesia(item.timestamp?.slice(0,10) || item.tanggalPengajuan || '')}</p>
+                    <p><strong>Tanggal:</strong> ${formatTanggalIndonesia(item.tanggalOff || item.tanggal || '')}</p>
                     <p><strong>Keterangan:</strong> ${item.keterangan || '-'}</p>
                 `;
             } else {
                 detailJenis = `
                     <p><strong>Nama Pengaju:</strong> ${item.namaKurir || item.nama || '-'}</p>
-                    <p><strong>Jenis:</strong> <span class="text-blue-500 font-bold">${jenis}</span></p>
-                    <p><strong>Tanggal:</strong> ${formatTanggalIndonesia(item.tanggalOff)}</p>
+                    <p><strong>Jenis:</strong> <span class="text-blue-500 font-bold">${jenisPengajuan}</span></p>
+                    <p><strong>Tanggal:</strong> ${formatTanggalIndonesia(item.tanggalOff || item.tanggal || '')}</p>
                     <p><strong>Keterangan:</strong> ${item.keterangan || '-'}</p>
                 `;
             }
     
+            const badgeColor = item.status === 'Disetujui'
+                ? 'bg-emerald-500'
+                : (item.status === 'Ditolak' ? 'bg-red-500' : 'bg-amber-500');
+    
+            const div = document.createElement('div');
             div.className = "glass-card p-4 rounded-2xl shadow-sm border-l-4 border-blue-500 space-y-2";
             div.innerHTML = `
                 <div class="flex justify-between items-center">
                     <div>
                         <h4 class="text-xs font-bold">${item.namaKurir || item.nama || '-'}</h4>
-                        <p class="text-[10px] text-slate-400">Jenis: <span class="text-blue-500 font-bold">${jenis === 'Off Reguler' ? 'Pindah Off' : jenis}</span></p>
+                        <p class="text-[10px] text-slate-400">
+                            Jenis:
+                            <span class="text-blue-500 font-bold">
+                            ${jenisPengajuan === 'Off Reguler' ? 'Off' : jenisPengajuan}
+                            </span>
+                        </p>
                     </div>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] text-white font-bold ${badgeColor}">${item.status || 'Pending'}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] text-white font-bold ${badgeColor}">
+                        ${item.status || 'Pending'}
+                    </span>
                 </div>
+    
                 <div class="p-2 bg-slate-100/50 dark:bg-slate-800/50 rounded-xl text-[11px] space-y-1">
                     ${detailJenis}
                 </div>
@@ -686,7 +748,7 @@
                 <div class="mt-3 flex flex-wrap gap-1.5">
                     ${dataHari.slice(0, 3).map(d => `
                         <span class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold text-white ${getColorByJenis(d.jenisOff)}">
-                            ${d.jenisOff || '-'}
+                            ${getLabelJenisPengajuan(d.jenisOff || '-')}
                         </span>
                     `).join('')}
                     ${dataHari.length > 3 ? `<span class="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold bg-slate-400 text-white">+${dataHari.length - 3}</span>` : ''}
@@ -711,7 +773,7 @@
                                     <p class="text-[11px] text-slate-500 mt-1 line-clamp-2">${d.keterangan || '-'}</p>
                                 </div>
                                 <span class="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold text-white ${getColorByJenis(d.jenisOff)}">
-                                    ${d.jenisOff || '-'}
+                                    ${getLabelJenisPengajuan(d.jenisOff || '-')}
                                 </span>
                             </div>
     
@@ -735,7 +797,6 @@
             container.appendChild(card);
         });
     
-        // auto scroll ke tanggal hari ini kalau ada di bulan aktif
         if (todayCardEl) {
             setTimeout(() => {
                 todayCardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -754,8 +815,8 @@
         let hitungBulanIni = 0;
     
         Object.values(DATA_JADWAL).forEach(j => {
-            if (j.tanggalMulai === today) hitungHariIni++;
-            if (j.tanggalMulai && j.tanggalMulai.startsWith(bulanView)) hitungBulanIni++;
+            if (j.tanggalMulai === today && j.jenisOff === 'Off Reguler') hitungHariIni++;
+            if (j.tanggalMulai && j.tanggalMulai.startsWith(bulanView) && j.jenisOff === 'Off Reguler') hitungBulanIni++;
         });
     
         const statHariIni = document.getElementById('stat-off-hari-ini');
@@ -812,7 +873,7 @@
                                     <p class="text-[11px] text-slate-500 mt-1 line-clamp-2">${d.keterangan || '-'}</p>
                                 </div>
                                 <span class="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold text-white ${getColorByJenis(d.jenisOff)}">
-                                    ${d.jenisOff || '-'}
+                                    ${getLabelJenisPengajuan(d.jenisOff || '-')}
                                 </span>
                             </div>
     
@@ -968,7 +1029,7 @@
             tanggal: tanggalOff,
             tanggalPindah: jenisPengajuan === 'Off Reguler' ? tanggalPindah : '',
             jenisPengajuan: jenisPengajuan,
-            jenisTampil: jenisPengajuan === 'Off Reguler' ? 'Pindah Off' : jenisPengajuan,
+            jenisTampil: jenisPengajuan === 'Off Reguler' ? 'Off' : jenisPengajuan,
             keterangan: keterangan,
             leader: userObj?.leader || 'Kurir',
             status: "Pending",
