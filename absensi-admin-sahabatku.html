@@ -136,7 +136,7 @@
               <select id="form-pengajuan-jenis" class="w-full text-xs bg-slate-100 dark:bg-slate-800 rounded-xl p-3">
                 <option value="">-- Pilih jenis --</option>
                 <option value="Off Reguler">Off</option>
-                <option value="Tidak Ambil Off">Tidak Ambil Off</option>
+                <option value="Tidak Ambil Off">No off</option>
                 <option value="Izin">Izin</option>
                 <option value="Sakit">Sakit</option>
                 <option value="Tukar Off">Tukar Off</option>
@@ -342,7 +342,7 @@
           <div><label class="block text-xs font-semibold mb-1">Jenis Off</label>
             <select id="jadwal-jenis" class="w-full text-xs bg-slate-100 dark:bg-slate-800 rounded-xl p-3">
               <option value="Off Reguler">Off Reguler</option>
-              <option value="Tidak Ambil Off">Tidak Ambil Off</option>
+              <option value="Tidak Ambil Off">No Off</option>
               <option value="Izin">Izin</option>
               <option value="Sakit">Sakit</option>
             </select>
@@ -957,7 +957,9 @@
           off: 0,
           tidakAmbilOff: 0,
           izin: 0,
-          sakit: 0
+          sakit: 0,
+          masuk: 0,
+          pulang: 0
         };
       });
     
@@ -970,6 +972,13 @@
         if (j.jenisOff === 'Tidak Ambil Off') data[j.nama].tidakAmbilOff++;
         if (j.jenisOff === 'Izin') data[j.nama].izin++;
         if (j.jenisOff === 'Sakit') data[j.nama].sakit++;
+      });
+    
+      Object.values(DATA_ABSENSI).forEach(a => {
+        if (!data[a.namaKurir]) return;
+        if (a.tanggal && !a.tanggal.startsWith(bulan)) return;
+        if (a.jamMasuk) data[a.namaKurir].masuk++;
+        if (a.jamPulang) data[a.namaKurir].pulang++;
       });
     
       const rows = Object.values(data).filter(r =>
@@ -993,8 +1002,8 @@
             <td class="py-3">${i + 1}</td>
             <td class="py-3 font-bold">${r.nama}</td>
             <td class="py-3 text-[10px] text-slate-400">${r.leader}</td>
-            <td class="py-3">${r.masuk || 0}</td>
-            <td class="py-3">${r.pulang || 0}</td>
+            <td class="py-3">${r.masuk}</td>
+            <td class="py-3">${r.pulang}</td>
             <td class="py-3">
               <button onclick="openAbsensiForName('${r.nama}')"
                 class="px-3 py-1.5 rounded-xl bg-sahabatku text-white text-[10px] font-bold">
@@ -1010,36 +1019,30 @@
             <th class="py-2">Nama Kurir</th>
             <th class="py-2">Leader</th>
             <th class="py-2">OFF</th>
-            <th class="py-2">Tidak Ambil Off</th>
+            <th class="py-2">No Off</th>
             <th class="py-2">Izin</th>
             <th class="py-2">Sakit</th>
             <th class="py-2">Aksi</th>
           </tr>
         `;
     
-        body.innerHTML = rows.map((r, i) => {
-          const detailJadwal = Object.entries(DATA_JADWAL)
-            .map(([key, item]) => ({ key, ...item }))
-            .filter(j => j.nama === r.nama && getTanggalItem(j).startsWith(bulan));
-    
-          return `
-            <tr class="border-b border-slate-100 dark:border-slate-800">
-              <td class="py-3">${i + 1}</td>
-              <td class="py-3 font-bold">${r.nama}</td>
-              <td class="py-3 text-[10px] text-slate-400">${r.leader}</td>
-              <td class="py-3">${r.off}</td>
-              <td class="py-3">${r.tidakAmbilOff}</td>
-              <td class="py-3">${r.izin}</td>
-              <td class="py-3">${r.sakit}</td>
-              <td class="py-3">
-                <button onclick="openAdminDetailRekapKurir('${r.nama}')"
-                  class="px-3 py-1.5 rounded-xl bg-sahabatku text-white text-[10px] font-bold">
-                  Detail
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('') || `<tr><td colspan="8" class="py-6 text-center text-xs text-slate-400">Belum ada data.</td></tr>`;
+        body.innerHTML = rows.map((r, i) => `
+          <tr class="border-b border-slate-100 dark:border-slate-800">
+            <td class="py-3">${i + 1}</td>
+            <td class="py-3 font-bold">${r.nama}</td>
+            <td class="py-3 text-[10px] text-slate-400">${r.leader}</td>
+            <td class="py-3">${r.off}</td>
+            <td class="py-3">${r.tidakAmbilOff}</td>
+            <td class="py-3">${r.izin}</td>
+            <td class="py-3">${r.sakit}</td>
+            <td class="py-3">
+              <button onclick="openAdminDetailRekapKurir('${r.nama}')"
+                class="px-3 py-1.5 rounded-xl bg-sahabatku text-white text-[10px] font-bold">
+                Detail
+              </button>
+            </td>
+          </tr>
+        `).join('') || `<tr><td colspan="8" class="py-6 text-center text-xs text-slate-400">Belum ada data.</td></tr>`;
       }
     }
     window.openAdminDetailRekapKurir = function(namaKurir) {
