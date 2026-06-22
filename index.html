@@ -5316,8 +5316,7 @@
             return 'bg-rose-500';
         }
         
-        function calcKpiForKurir(namaKurir, bulan) {
-            const daysInMonth = getDaysInMonth(bulan);
+        function calcKpiForKurir(namaKurir, bulan, stats = {}) {
             const namaTarget = (namaKurir || '').trim().toLowerCase();
         
             const kurirObj = Object.values(cloudKurirList || {}).find(u => {
@@ -5364,20 +5363,27 @@
                 trxMitra += parseInt(log.trxInput) || 0;
             });
         
-            // Bobot KPI
-            // 1. Kehadiran (20%)
-            const kehadiranScore = Math.min((rekap.totalHadirScore / daysInMonth) * 20, 20);
+            // 1) Kehadiran = 20%
+            const kehadiranScore = Math.min((rekap.totalHadirScore / getDaysInMonth(bulan)) * 20, 20);
         
-            // 2. Total Penghasilan (20%)
-            const totalPenghasilanScore = Math.min((totalPenghasilan / (daysInMonth * 100000)) * 20, 20);
+            // 2) 3 komponen utama berbasis ranking bulanan
+            const maxPenghasilan = stats.maxPenghasilan || 0;
+            const maxNota = stats.maxNota || 0;
+            const maxTrxMitra = stats.maxTrxMitra || 0;
         
-            // 3. Total Nota (30%)
-            const totalNotaScore = Math.min((totalNota / (daysInMonth * 15)) * 30, 30);
+            const totalPenghasilanScore = maxPenghasilan > 0
+                ? (totalPenghasilan / maxPenghasilan) * 20
+                : 0;
         
-            // 4. Trx Mitra (20%)
-            const trxMitraScore = Math.min((trxMitra / (daysInMonth * 10)) * 20, 20);
+            const totalNotaScore = maxNota > 0
+                ? (totalNota / maxNota) * 30
+                : 0;
         
-            // 5. Off Berlebihan (10%)
+            const trxMitraScore = maxTrxMitra > 0
+                ? (trxMitra / maxTrxMitra) * 20
+                : 0;
+        
+            // 3) Off bulanan = 10%
             const offNormal = 2;
             const offScore = rekap.totalOff <= offNormal
                 ? 10
@@ -5521,7 +5527,7 @@
         }
         
         function buildKPIData(bulan) {
-            const data = [];
+            const rawData = [];
         
             Object.entries(cloudKurirList || {}).forEach(([id, u]) => {
                 if (!u || u.role !== 'kurir') return;
@@ -5530,18 +5536,77 @@
                 const nama = (u.nama || '').trim();
                 const username = (u.username || '').trim();
         
-                const row = calcKpiForKurir(username || nama, bulan);
+                const rekap = getRekapJadwalKurirByName(nama || username, bulan);
         
-                data.push({
+                let totalNota = 0;
+                let trxMitra = 0;
+                let totalPenghasilan = 0;
+        
+                Object.values(cloudNotaList || {}).forEach(n => {
+                    if (!n) return;
+        
+                    const kurirUsername = (n.kurirUsername || '').trim().toLowerCase();
+                    const kurirNama = (n.kurirNama || '').trim().toLowerCase();
+        
+                    if (kurirUsername !== username.toLowerCase() && kurirNama !== nama.toLowerCase()) return;
+                    if (!n.tanggalRaw || n.tanggalRaw.slice(0, 7) !== bulan) return;
+        
+                    totalNota++;
+                    const ongkir = parseInt(n.ongkir) || 0;
+                    const biaya = (n.biayaTambahan || []).reduce((a, b) => a + (parseInt(b.nominal) || 0), 0);
+                    totalPenghasilan += (ongkir + biaya);
+                });
+        
+                Object.values(cloudLogMitra || {}).forEach(log => {
+                    if (!log) return;
+        
+                    const kurirUsername = (log.kurirUsername || '').trim().toLowerCase();
+                    const kurirNama = (log.kurirNama || '').trim().toLowerCase();
+        
+                    if (kurirUsername !== username.toLowerCase() && kurirNama !== nama.toLowerCase()) return;
+                    if (!log.tglRaw || log.tglRaw.slice(0, 7) !== bulan) return;
+        
+                    trxMitra += parseInt(log.trxInput) || 0;
+                });
+        
+                rawData.push({
                     id,
-                    nama: row.nama || nama || '-',
-                    username: row.username || username || '-',
-                    leader: row.leader || u.leader || '-',
-                    ...row
+                    nama: nama || '-',
+                    username: username || '-',
+                    leader: u.leader || '-',
+                    hadir: rekap.totalHadirScore,
+                    hadirFull: rekap.hadirFull,
+                    hadirHalf: rekap.hadirHalf,
+                    masukTepat: rekap.totalAbsenMasuk,
+                    off: rekap.totalOff,
+                    trxMitra,
+                    totalNota,
+                    totalPenghasilan,
+                    kehadiranScore: 0,
+                    totalPenghasilanScore: 0,
+                    totalNotaScore: 0,
+                    trxMitraScore: 0,
+                    offScore: 0,
+                    rating: 0
                 });
             });
         
-            return data.sort((a, b) => b.rating - a.rating);
+            const stats = {
+                maxPenghasilan: Math.max(...rawData.map(x => x.totalPenghasilan), 0),
+                maxNota: Math.max(...rawData.map(x => x.totalNota), 0),
+                maxTrxMitra: Math.max(...rawData.map(x => x.trxMitra), 0)
+            };
+        
+            const finalData = rawData.map(item => {
+                const finalRow = calcKpiForKurir(item.username || item.nama, bulan, stats);
+                return {
+                    ...item,
+                    ...finalRow,
+                    id: item.id
+                };
+            });
+        
+            return finalData.sort((a, b) => b.rating - a.rating);
         }
         
         window.renderKPISection = function(section = 'penghargaan') {
@@ -5684,10 +5749,49 @@
             }
         
             if (section === 'top5') {
+                const today = getWibRawDate();
+            
                 const topNota = [...data].sort((a, b) => b.totalNota - a.totalNota).slice(0, 5);
                 const topPenghasilan = [...data].sort((a, b) => b.totalPenghasilan - a.totalPenghasilan).slice(0, 5);
                 const topKonsisten = [...data].sort((a, b) => b.rating - a.rating).slice(0, 5);
-        
+            
+                // TOP 5 HARI INI
+                const todayData = [];
+                Object.entries(cloudKurirList || {}).forEach(([id, u]) => {
+                    if (!u || u.role !== 'kurir') return;
+                    if (u.status && u.status !== 'aktif') return;
+            
+                    const nama = (u.nama || '').trim();
+                    const username = (u.username || '').trim();
+            
+                    let notaHariIni = 0;
+                    let penghasilanHariIni = 0;
+            
+                    Object.values(cloudNotaList || {}).forEach(n => {
+                        if (!n) return;
+                        const kurirUsername = (n.kurirUsername || '').trim().toLowerCase();
+                        const kurirNama = (n.kurirNama || '').trim().toLowerCase();
+                        if (kurirUsername !== username.toLowerCase() && kurirNama !== nama.toLowerCase()) return;
+                        if (n.tanggalRaw !== today) return;
+            
+                        notaHariIni++;
+                        const ongkir = parseInt(n.ongkir) || 0;
+                        const biaya = (n.biayaTambahan || []).reduce((a, b) => a + (parseInt(b.nominal) || 0), 0);
+                        penghasilanHariIni += (ongkir + biaya);
+                    });
+            
+                    todayData.push({
+                        id,
+                        nama,
+                        username,
+                        notaHariIni,
+                        penghasilanHariIni
+                    });
+                });
+            
+                const topNotaHariIni = [...todayData].sort((a, b) => b.notaHariIni - a.notaHariIni).slice(0, 5);
+                const topPenghasilanHariIni = [...todayData].sort((a, b) => b.penghasilanHariIni - a.penghasilanHariIni).slice(0, 5);
+            
                 container.innerHTML = `
                     <div class="space-y-3">
                         <div class="p-4 rounded-3xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-xl">
@@ -5702,7 +5806,7 @@
                                 </div>
                             `).join('')}
                         </div>
-        
+            
                         <div class="p-4 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xl">
                             <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Penghasilan (${bulan})</h4>
                             ${topPenghasilan.map((x, i) => `
@@ -5715,7 +5819,7 @@
                                 </div>
                             `).join('')}
                         </div>
-        
+            
                         <div class="p-4 rounded-3xl bg-gradient-to-br from-orange-500 to-rose-500 text-white shadow-xl">
                             <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Ranking (${bulan})</h4>
                             ${topKonsisten.map((x, i) => `
@@ -5727,6 +5831,36 @@
                                     <div class="font-black">${x.rating}%</div>
                                 </div>
                             `).join('')}
+                        </div>
+            
+                        <div class="p-4 rounded-3xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-xl">
+                            <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Nota Hari Ini (${today})</h4>
+                            ${topNotaHariIni.length ? topNotaHariIni.map((x, i) => `
+                                <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
+                                    <div class="min-w-0">
+                                        <div class="font-bold truncate">${i+1}. ${x.nama}</div>
+                                        <div class="text-[10px] opacity-80">Nota hari ini</div>
+                                    </div>
+                                    <div class="font-black">${x.notaHariIni}</div>
+                                </div>
+                            `).join('') : `
+                                <div class="text-xs opacity-80">Belum ada nota hari ini.</div>
+                            `}
+                        </div>
+            
+                        <div class="p-4 rounded-3xl bg-gradient-to-br from-fuchsia-500 to-pink-600 text-white shadow-xl">
+                            <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Penghasilan Hari Ini (${today})</h4>
+                            ${topPenghasilanHariIni.length ? topPenghasilanHariIni.map((x, i) => `
+                                <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
+                                    <div class="min-w-0">
+                                        <div class="font-bold truncate">${i+1}. ${x.nama}</div>
+                                        <div class="text-[10px] opacity-80">Hari ini</div>
+                                    </div>
+                                    <div class="font-black">Rp ${x.penghasilanHariIni.toLocaleString('id-ID')}</div>
+                                </div>
+                            `).join('') : `
+                                <div class="text-xs opacity-80">Belum ada penghasilan hari ini.</div>
+                            `}
                         </div>
                     </div>
                 `;
@@ -6092,8 +6226,8 @@
           const leaderName = (namaLeader || '').trim();
           if (!leaderName) return null;
       
-          const leaderItem = Object.values(cloudKurirList || {}).find(u =>
-              u && (u.nama || '').trim() === leaderName && u.status === 'aktif'
+          const leaderItem = Object.values(cloudLeaderList || {}).find(u =>
+              u && (u.nama || '').trim() === leaderName
           );
       
           const anggotaData = Object.values(cloudKurirList || {}).filter(u => {
@@ -6103,68 +6237,85 @@
                   (u.leader || '').trim() === leaderName;
           });
       
-          const leaderRatingObj = calcKpiForKurir(leaderName, bulan) || {
-              rating: 0,
-              totalNota: 0,
-              trxMitra: 0,
-              totalPenghasilan: 0
-          };
-      
-          let totalRatingAnggota = 0;
-          let totalNotaAnggota = 0;
-          let totalTrxMitraAnggota = 0;
-          let totalPenghasilanAnggota = 0;
+          if (!anggotaData.length) {
+              return {
+                  namaLeader: leaderName,
+                  leaderUsername: leaderItem?.username || '-',
+                  anggotaCount: 0,
+                  leaderRating: 0,
+                  bonusTopRanking: 0,
+                  skorAkhir: 0,
+                  totalKehadiranAnggota: 0,
+                  totalPenghasilanAnggota: 0,
+                  totalNotaAnggota: 0,
+                  totalTrxMitraAnggota: 0,
+                  totalOffAnggota: 0,
+                  anggotaRanking: [],
+                  terbaik: null,
+                  sedang: null,
+                  beban: null
+              };
+          }
       
           const anggotaRanking = anggotaData.map(u => {
               const namaAnggota = (u.nama || u.username || '-').trim();
               const stat = calcKpiForKurir(namaAnggota, bulan) || {
                   rating: 0,
+                  hadir: 0,
                   totalNota: 0,
                   trxMitra: 0,
-                  totalPenghasilan: 0
+                  totalPenghasilan: 0,
+                  off: 0
               };
       
-              totalRatingAnggota += stat.rating || 0;
-              totalNotaAnggota += stat.totalNota || 0;
-              totalTrxMitraAnggota += stat.trxMitra || 0;
-              totalPenghasilanAnggota += stat.totalPenghasilan || 0;
+              const badge = getRatingBadge(stat.rating || 0);
       
               return {
                   nama: namaAnggota,
                   rating: stat.rating || 0,
+                  hadir: stat.hadir || 0,
                   totalNota: stat.totalNota || 0,
                   trxMitra: stat.trxMitra || 0,
-                  totalPenghasilan: stat.totalPenghasilan || 0
+                  totalPenghasilan: stat.totalPenghasilan || 0,
+                  off: stat.off || 0,
+                  badgeLabel: badge.label,
+                  badgeEmoji: badge.emoji
               };
           }).sort((a, b) => b.rating - a.rating);
       
-          const avgRatingAnggota = anggotaRanking.length
-              ? Math.round(totalRatingAnggota / anggotaRanking.length)
-              : 0;
+          const top1 = anggotaRanking[0] || null;
+          const top2 = anggotaRanking[1] || null;
+          const top3 = anggotaRanking[2] || null;
       
-          const skorAkhir = Math.min(100, Math.round(
-              (leaderRatingObj.rating * 0.4) +
-              (avgRatingAnggota * 0.6)
-          ));
+          // Total semua komponen rating anggota
+          const totalRatingAnggota = anggotaRanking.reduce((acc, a) => acc + (a.rating || 0), 0);
       
-          const terbaik = anggotaRanking[0] || null;
-          const sedang = anggotaRanking.length ? anggotaRanking[Math.floor(anggotaRanking.length / 2)] : null;
-          const beban = anggotaRanking.length ? anggotaRanking[anggotaRanking.length - 1] : null;
+          // Normalisasi: rata-rata rating semua anggota
+          const leaderRating = Math.round(totalRatingAnggota / anggotaRanking.length);
+      
+          const bonusTopRanking =
+              (top1 ? 5 : 0) +
+              (top2 ? 3 : 0) +
+              (top3 ? 1 : 0);
+      
+          const skorAkhir = Math.min(100, Math.round(leaderRating + bonusTopRanking));
       
           return {
               namaLeader: leaderName,
               leaderUsername: leaderItem?.username || '-',
               anggotaCount: anggotaRanking.length,
-              leaderRating: leaderRatingObj.rating || 0,
-              avgRatingAnggota,
+              leaderRating,
+              bonusTopRanking,
               skorAkhir,
-              totalNotaAnggota,
-              totalTrxMitraAnggota,
-              totalPenghasilanAnggota,
+              totalKehadiranAnggota: anggotaRanking.reduce((a, b) => a + (b.hadir || 0), 0),
+              totalPenghasilanAnggota: anggotaRanking.reduce((a, b) => a + (b.totalPenghasilan || 0), 0),
+              totalNotaAnggota: anggotaRanking.reduce((a, b) => a + (b.totalNota || 0), 0),
+              totalTrxMitraAnggota: anggotaRanking.reduce((a, b) => a + (b.trxMitra || 0), 0),
+              totalOffAnggota: anggotaRanking.reduce((a, b) => a + (b.off || 0), 0),
               anggotaRanking,
-              terbaik,
-              sedang,
-              beban
+              terbaik: top1,
+              sedang: anggotaRanking.length ? anggotaRanking[Math.floor(anggotaRanking.length / 2)] : null,
+              beban: anggotaRanking[anggotaRanking.length - 1] || null
           };
       }
       window.renderPenilaianLeader = function() {
@@ -6198,14 +6349,21 @@
               const anggotaList = d.anggotaRanking || [];
       
               return `
-                  <div class="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border text-xs space-y-3">
-                      <div class="flex justify-between items-start">
+                  <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
+                      <div class="flex items-start justify-between gap-3">
                           <div class="min-w-0">
-                              <div class="font-bold text-sm">${i + 1}. ${d.namaLeader}</div>
-                              <div class="text-[10px] text-slate-400">Anggota: ${d.anggotaCount}</div>
-                              <div class="text-[10px] text-slate-400">Username: ${d.leaderUsername}</div>
+                              <div class="flex items-center gap-2">
+                                  <div class="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-950 flex items-center justify-center text-violet-600 dark:text-violet-300 font-black text-xs">
+                                      ${i + 1}
+                                  </div>
+                                  <div class="min-w-0">
+                                      <div class="font-bold text-sm truncate">${d.namaLeader}</div>
+                                      <div class="text-[10px] text-slate-400 truncate">Username: ${d.leaderUsername}</div>
+                                  </div>
+                              </div>
                           </div>
-                          <div class="text-right">
+      
+                          <div class="text-right shrink-0">
                               <div class="text-lg font-black text-primary">${d.skorAkhir}%</div>
                               <div class="text-[10px] font-bold ${badge.color || 'text-slate-500'}">
                                   ${badge.emoji} ${badge.label}
@@ -6213,39 +6371,82 @@
                           </div>
                       </div>
       
-                      <div class="grid grid-cols-2 gap-2">
-                          <div class="p-2 bg-white dark:bg-darkCard rounded-xl">
-                              <div class="text-[10px] text-slate-400">Rating Leader</div>
-                              <div class="font-bold">${d.leaderRating}%</div>
+                      <div class="grid grid-cols-2 gap-2 text-xs">
+                          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+                              <div class="text-[10px] text-slate-400 uppercase">Skor Dasar Leader</div>
+                              <div class="font-black mt-1">${d.leaderRating}</div>
                           </div>
-                          <div class="p-2 bg-white dark:bg-darkCard rounded-xl">
-                              <div class="text-[10px] text-slate-400">Rata-rata Anggota</div>
-                              <div class="font-bold">${d.avgRatingAnggota}%</div>
+                          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+                              <div class="text-[10px] text-slate-400 uppercase">Bonus Top Ranking</div>
+                              <div class="font-black mt-1">+${d.bonusTopRanking}</div>
                           </div>
-                          <div class="p-2 bg-white dark:bg-darkCard rounded-xl">
-                              <div class="text-[10px] text-slate-400">Total Nota Anggota</div>
-                              <div class="font-bold">${d.totalNotaAnggota}</div>
+                          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 col-span-2">
+                              <div class="text-[10px] text-slate-400 uppercase">Total Anggota Aktif</div>
+                              <div class="font-black mt-1">${d.anggotaCount}</div>
                           </div>
-                          <div class="p-2 bg-white dark:bg-darkCard rounded-xl">
-                              <div class="text-[10px] text-slate-400">Trx Mitra Anggota</div>
-                              <div class="font-bold">${d.totalTrxMitraAnggota}</div>
+                      </div>
+      
+                      <div class="grid grid-cols-4 gap-2 text-xs">
+                          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+                              <div class="text-[10px] text-slate-400 uppercase">Kehadiran</div>
+                              <div class="font-black mt-1">${d.totalKehadiranAnggota}</div>
+                          </div>
+                          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+                              <div class="text-[10px] text-slate-400 uppercase">Penghasilan</div>
+                              <div class="font-black mt-1 text-emerald-600 dark:text-emerald-400">
+                                  Rp ${d.totalPenghasilanAnggota.toLocaleString('id-ID')}
+                              </div>
+                          </div>
+                          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+                              <div class="text-[10px] text-slate-400 uppercase">Total Nota</div>
+                              <div class="font-black mt-1">${d.totalNotaAnggota}</div>
+                          </div>
+                          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+                              <div class="text-[10px] text-slate-400 uppercase">Trx Mitra</div>
+                              <div class="font-black mt-1">${d.totalTrxMitraAnggota}</div>
+                          </div>
+                      </div>
+      
+                      <div class="grid grid-cols-1 gap-2 text-xs">
+                          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+                              <div class="text-[10px] text-slate-400 uppercase">OFF Berlebihan</div>
+                              <div class="font-black mt-1">${d.totalOffAnggota}</div>
+                          </div>
+                      </div>
+      
+                      <div>
+                          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                              Anggota & Badge
+                          </div>
+                          <div class="flex flex-wrap gap-1.5">
+                              ${anggotaList.length
+                                  ? anggotaList.map(a => {
+                                      const badgeA = getRatingBadge(a.rating);
+                                      return `
+                                          <span class="px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border text-[10px] font-semibold">
+                                              ${a.nama} • ${a.rating}% • ${badgeA.emoji} ${badgeA.label}
+                                          </span>
+                                      `;
+                                  }).join('')
+                                  : '<span class="text-[10px] text-slate-400">Belum ada anggota.</span>'
+                              }
                           </div>
                       </div>
       
                       <div class="space-y-2">
-                          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                              Daftar Anggota
+                          <div class="flex justify-between text-[10px] font-bold uppercase text-slate-400">
+                              <span>Progress Leader</span>
+                              <span>${d.skorAkhir}%</span>
                           </div>
-                          <div class="flex flex-wrap gap-1.5">
-                              ${anggotaList.length
-                                  ? anggotaList.map(a => `
-                                      <span class="px-2 py-1 rounded-full bg-white dark:bg-darkBg border text-[10px]">
-                                          ${a.nama} • ${a.rating}%
-                                      </span>
-                                  `).join('')
-                                  : '<span class="text-[10px] text-slate-400">Belum ada anggota.</span>'
-                              }
+                          <div class="h-2.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                              <div class="h-full bg-primary rounded-full" style="width:${d.skorAkhir}%"></div>
                           </div>
+                      </div>
+      
+                      <div class="text-[11px] text-slate-600 dark:text-slate-300 space-y-1 leading-relaxed">
+                          <p><b>Leader Score</b> diambil dari total rating seluruh anggota + bonus Top 3 anggota.</p>
+                          <p>Badge tiap anggota tetap mengikuti KPI kurir masing-masing.</p>
+                          <p>Anggota nonaktif/blokir tidak dihitung.</p>
                       </div>
                   </div>
               `;
