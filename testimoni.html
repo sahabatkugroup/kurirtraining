@@ -112,7 +112,7 @@
                 </div>
             </div>
             <!-- Tombol Kunjungi Web di Navbar -->
-            <a href="https://sahabatkugroup.github.io/websitesahabatkudelivery/" target="_blank" class="btn-gradient-glow text-white text-xs md:text-sm font-semibold px-5 py-2.5 rounded-full flex items-center gap-2">
+            <a href="https://sahabatkugroupdelivery.netlify.app" target="_blank" class="btn-gradient-glow text-white text-xs md:text-sm font-semibold px-5 py-2.5 rounded-full flex items-center gap-2">
                 Kunjungi Web Kami <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
             </a>
         </div>
@@ -141,9 +141,16 @@
                         <input type="text" id="fullname" required placeholder="Contoh: Thom Haye" class="w-full px-4 py-3 rounded-xl bg-slate-50/50 border border-slate-200 focus:border-premium focus:ring-2 focus:ring-premium/20 transition-all outline-none text-sm">
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="courierName">Nama Kurir <span class="text-slate-400 font-normal">(Opsional)</span></label>
-                        <input type="text" id="courierName" placeholder="Nama kurir yang mengantar..." class="w-full px-4 py-3 rounded-xl bg-slate-50/50 border border-slate-200 focus:border-premium focus:ring-2 focus:ring-premium/20 transition-all outline-none text-sm">
+                    <div class="relative">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="courierName">
+                            Nama Kurir <span class="text-slate-400 font-normal">(Opsional)</span>
+                        </label>
+                        <input type="text" id="courierName" autocomplete="off" placeholder="Nama kurir yang mengantar..."
+                            class="w-full px-4 py-3 rounded-xl bg-slate-50/50 border border-slate-200 focus:border-premium focus:ring-2 focus:ring-premium/20 transition-all outline-none text-sm">
+                        
+                        <div id="courierSuggestions"
+                            class="absolute z-20 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg hidden max-h-48 overflow-y-auto">
+                        </div>
                     </div>
 
                     <div>
@@ -379,6 +386,62 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const testimonialsRef = ref(db, 'testimonials');
+        const usersRef = ref(db, 'users');
+        const courierInput = document.getElementById('courierName');
+        const courierSuggestions = document.getElementById('courierSuggestions');
+        
+        let courierList = [];
+        
+        onValue(usersRef, (snapshot) => {
+            const data = snapshot.val();
+            courierList = [];
+        
+            if (data) {
+                Object.values(data).forEach(user => {
+                    if (user.nama) courierList.push(user.nama);
+                });
+            }
+        });
+        
+        courierInput.addEventListener('input', function () {
+            const query = this.value.toLowerCase().trim();
+        
+            if (!query) {
+                courierSuggestions.classList.add('hidden');
+                courierSuggestions.innerHTML = '';
+                return;
+            }
+        
+            const filtered = courierList.filter(name =>
+                name.toLowerCase().includes(query)
+            ).slice(0, 5);
+        
+            if (filtered.length === 0) {
+                courierSuggestions.classList.add('hidden');
+                courierSuggestions.innerHTML = '';
+                return;
+            }
+        
+            courierSuggestions.innerHTML = filtered.map(name => `
+                <div class="px-4 py-3 hover:bg-slate-50 cursor-pointer text-sm text-slate-700"
+                     onclick="selectCourier('${name.replace(/'/g, "\\'")}')">
+                    ${name}
+                </div>
+            `).join('');
+        
+            courierSuggestions.classList.remove('hidden');
+        });
+        
+        window.selectCourier = function(name) {
+            courierInput.value = name;
+            courierSuggestions.classList.add('hidden');
+        };
+        
+        document.addEventListener('click', function (e) {
+            if (!courierSuggestions.contains(e.target) && e.target !== courierInput) {
+                courierSuggestions.classList.add('hidden');
+            }
+        });
 
         // Handle Form Submit
         const form = document.getElementById('testimonialForm');
