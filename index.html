@@ -17,6 +17,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -50,6 +51,48 @@
             opacity: 0; transition: all 0.8s;
         }
         .ripple:active:after { padding: 0; margin: 0; opacity: 1; transition: 0s; }
+        @media (max-width: 640px) {
+          #canvas-nota {
+            max-width: 100% !important;
+            padding: 12px !important;
+            border-radius: 16px !important;
+          }
+        
+          #preview-action-buttons {
+            max-width: 100% !important;
+          }
+        
+          #preview-action-buttons button {
+            padding-top: 8px !important;
+            padding-bottom: 8px !important;
+            font-size: 10px !important;
+          }
+        }
+        @media (max-width: 640px) {
+          #modal-preview-nota {
+            align-items: center !important;
+          }
+        
+          #modal-preview-nota > div {
+            max-width: 100% !important;
+            width: calc(100% - 16px) !important;
+          }
+        
+          #canvas-nota-admin {
+            padding: 12px !important;
+          }
+        }
+        @media (max-width: 640px) {
+          #modal-kpi-detail {
+            align-items: center !important;
+          }
+        
+          #modal-kpi-detail > div {
+            width: calc(100% - 16px) !important;
+            max-width: 100% !important;
+          }
+        }
+
     </style>
 </head>
 <body class="bg-lightBg text-slate-800 dark:bg-darkBg dark:text-slate-100 font-sans transition-colors duration-300">
@@ -522,8 +565,8 @@
 
                 <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Riwayat Trx Inputan</h3>
-                        <button onclick="toggleRiwayatTrxInputan()" class="px-3 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Trx Inputan</h3>
+                        <button onclick="toggleRiwayatTrxInputan()" class="px-2 py-1 rounded-lg bg-slate-800 text-white text-[8px] font-bold uppercase tracking-wide leading-none">
                             Riwayat Trx Inputan
                         </button>
                     </div>
@@ -975,29 +1018,34 @@
                 </div>
             </div>
 
-            <div id="screen-preview" class="screen p-4 space-y-4">
-                <div id="canvas-nota" class="bg-white text-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 max-w-sm mx-auto space-y-4">
-
-                    <div class="text-center border-b border-dashed border-slate-300 pb-3">
-                        <h3 class="font-extrabold text-lg text-primary tracking-wide">SAHABATKU DELIVERY</h3>
-                        <p class="text-[10px] text-slate-400">Jatibarang, Indramayu</p>
+            <div id="screen-preview" class="screen p-2 sm:p-4 space-y-3">
+                <div id="canvas-nota" class="bg-white text-slate-800 p-3 sm:p-5 rounded-2xl shadow-sm border border-slate-200 max-w-[340px] mx-auto space-y-2 sm:space-y-4">
+            
+                    <div class="text-center border-b border-dashed border-slate-300 pb-2 sm:pb-3">
+                        <h3 class="font-extrabold text-base sm:text-lg text-primary tracking-wide">SAHABATKU DELIVERY</h3>
+                        <p class="text-[9px] sm:text-[10px] text-slate-400">Jatibarang, Indramayu</p>
                     </div>
                 
-                    <div class="text-[11px] space-y-1">
+                    <div class="text-[10px] sm:text-[11px] space-y-0.5 sm:space-y-1">
                         <div class="flex justify-between"><span class="text-slate-400">Nomor Nota:</span><span class="font-bold text-slate-700" id="p-nota-num">NT-******</span></div>
                         <div class="flex justify-between"><span class="text-slate-400">Tanggal:</span><span id="p-nota-date">00/00/0000 00:00</span></div>
                         <div class="flex justify-between"><span class="text-slate-400">Kurir:</span><span class="font-medium" id="p-nota-kurir">-</span></div>
                         <div class="flex justify-between"><span class="text-slate-400">Status:</span><span class="uppercase font-semibold" id="p-nota-status">-</span></div>
                     </div>
                     
-                    <table class="w-full text-[11px] text-left mt-2">
+                    <table class="w-full text-[10px] sm:text-[11px] text-left mt-1 sm:mt-2">
                         <thead>
-                            <tr class="border-b border-dashed border-slate-300 text-slate-400 font-semibold"><th class="py-1">Item</th><th class="text-center">Qty</th><th class="text-right">Harga</th><th class="text-right">Total</th></tr>
+                            <tr class="border-b border-dashed border-slate-300 text-slate-400 font-semibold text-[9px] sm:text-[11px]">
+                                <th class="py-1">Item</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-right">Harga</th>
+                                <th class="text-right">Total</th>
+                            </tr>
                         </thead>
                         <tbody id="p-table-body"></tbody>
                     </table>
                 
-                    <div class="border-t border-dashed border-slate-300 pt-2.5 text-[11px] space-y-1">
+                    <div class="border-t border-dashed border-slate-300 pt-2 text-[10px] sm:text-[11px] space-y-0.5 sm:space-y-1">
                         <div class="flex justify-between"><span class="text-slate-400">Subtotal Item</span><span id="p-subtotal">0</span></div>
                         <div class="flex justify-between"><span class="text-slate-400">Ongkir</span><span id="p-ongkir">0</span></div>
                         <div class="flex justify-between"><span class="text-slate-400">Tambahan Biaya</span><span id="p-biaya">0</span></div>
@@ -1005,24 +1053,25 @@
                         <div class="flex justify-between text-sm font-extrabold text-slate-900 pt-1"><span>TOTAL</span><span id="p-total" class="text-primary">0</span></div>
                     </div>
                 
-                    <div class="border-t border-dashed border-slate-300 pt-3 text-center space-y-1">
-                        <p class="text-[10px] text-slate-500 italic">Terima kasih telah menggunakan jasa Sahabatku Delivery.</p>
-                        <p class="text-[10px] font-medium text-slate-700">Pastikan Selalu Order Melalui WhatsApp Resmi Kami:<br>
-                           <span class="text-primary font-bold text-xs">0821-1845-415</span>
+                    <div class="border-t border-dashed border-slate-300 pt-2 text-center space-y-0.5 sm:space-y-1">
+                        <p class="text-[9px] sm:text-[10px] text-slate-500 italic">Terima kasih telah menggunakan jasa Sahabatku Delivery.</p>
+                        <p class="text-[9px] sm:text-[10px] font-medium text-slate-700">Pastikan Selalu Order Melalui WhatsApp Resmi Kami:<br>
+                           <span class="text-primary font-bold text-[10px] sm:text-xs">0821-1845-415</span>
                         </p>
                     </div>
                 </div>
-                <div id="preview-action-buttons" class="grid gap-2 max-w-sm mx-auto">
-                    <button id="btn-simpan-gambar" onclick="saveNotaAsJpg()" class="py-2.5 bg-slate-800 text-white font-medium text-xs rounded-xl flex items-center justify-center gap-2 shadow">
-                        <i data-lucide="image" class="w-4 h-4"></i> Simpan Gambar
+            
+                <div id="preview-action-buttons" class="grid gap-2 max-w-[340px] mx-auto">
+                    <button id="btn-simpan-gambar" onclick="saveNotaAsJpg()" class="py-2 bg-slate-800 text-white font-medium text-[10px] rounded-xl flex items-center justify-center gap-2 shadow">
+                        <i data-lucide="image" class="w-3.5 h-3.5"></i> Simpan Gambar
                     </button>
                 
-                    <button id="btn-simpan-nota" onclick="commitSaveNota()" class="py-2.5 bg-primary text-white font-medium text-xs rounded-xl flex items-center justify-center gap-2 shadow">
-                        <i data-lucide="save" class="w-4 h-4"></i> Simpan Nota
+                    <button id="btn-simpan-nota" onclick="commitSaveNota()" class="py-2 bg-primary text-white font-medium text-[10px] rounded-xl flex items-center justify-center gap-2 shadow">
+                        <i data-lucide="save" class="w-3.5 h-3.5"></i> Simpan Nota
                     </button>
                 
-                    <button id="btn-share-wa" onclick="shareWhatsApp()" class="py-2.5 bg-success text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-md">
-                        <i data-lucide="share-2" class="w-4 h-4"></i> Bagikan WhatsApp
+                    <button id="btn-share-wa" onclick="shareWhatsApp()" class="py-2 bg-success text-white font-bold text-[10px] rounded-xl flex items-center justify-center gap-2 shadow-md">
+                        <i data-lucide="share-2" class="w-3.5 h-3.5"></i> Bagikan WhatsApp
                     </button>
                 </div>
             </div>
@@ -1107,7 +1156,7 @@
                 
                 <div class="bg-white dark:bg-darkCard p-3 rounded-xl border shadow-sm space-y-2">
                     <div class="flex items-center justify-between">
-                        <h4 class="font-bold text-xs uppercase text-slate-400">Riwayat Transaksi Mitra Saya</h4>
+                        <h4 class="font-bold text-xs uppercase text-slate-400">Transaksi Mitra Saya</h4>
                         <button onclick="toggleRiwayatMitraKurir()" class="px-3 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
                             Riwayat Trx Inputan
                         </button>
@@ -1227,19 +1276,66 @@
         </nav>
     </div>
 
-    <div id="modal-preview-nota" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-darkCard p-4 rounded-2xl w-full max-w-sm space-y-4">
-            <div id="canvas-nota-admin" class="bg-white text-slate-800 p-4 rounded-xl border space-y-3 text-xs">
+    <div id="modal-preview-nota" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-[360px] sm:max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4 space-y-3 max-h-[90vh] overflow-y-auto">
+            
+            <div id="canvas-nota-admin" class="bg-white text-slate-800 p-3 rounded-xl border border-slate-200 space-y-2 text-[10px] leading-tight">
+                <div class="text-center border-b border-dashed border-slate-300 pb-2">
+                    <h3 class="font-extrabold text-sm text-primary tracking-wide">SAHABATKU DELIVERY</h3>
+                    <p class="text-[9px] text-slate-400">Jatibarang, Indramayu</p>
                 </div>
-            <div class="flex gap-2">
-                <button onclick="downloadAdminNotaJpg()" class="flex-1 py-2 bg-slate-800 text-white font-bold text-xs rounded-xl">Unduh Gambar</button>
-                <button onclick="closeAdminModal()" class="px-4 py-2 bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-white text-xs rounded-xl">Tutup</button>
+    
+                <div class="space-y-0.5">
+                    <div class="flex justify-between gap-2"><span class="text-slate-400">Nomor Nota:</span><span class="font-bold text-slate-700 text-right" id="p-nota-num">NT-******</span></div>
+                    <div class="flex justify-between gap-2"><span class="text-slate-400">Tanggal:</span><span class="text-right" id="p-nota-date">00/00/0000 00:00</span></div>
+                    <div class="flex justify-between gap-2"><span class="text-slate-400">Kurir:</span><span class="font-medium text-right" id="p-nota-kurir">-</span></div>
+                    <div class="flex justify-between gap-2"><span class="text-slate-400">Status:</span><span class="uppercase font-semibold text-right" id="p-nota-status">-</span></div>
+                </div>
+    
+                <table class="w-full text-[9px] sm:text-[10px] text-left mt-1">
+                    <thead>
+                        <tr class="border-b border-dashed border-slate-300 text-slate-400 font-semibold">
+                            <th class="py-1">Item</th>
+                            <th class="text-center">Qty</th>
+                            <th class="text-right">Harga</th>
+                            <th class="text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="p-table-body"></tbody>
+                </table>
+    
+                <div class="border-t border-dashed border-slate-300 pt-2 space-y-0.5">
+                    <div class="flex justify-between"><span class="text-slate-400">Subtotal Item</span><span id="p-subtotal">0</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Ongkir</span><span id="p-ongkir">0</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Tambahan Biaya</span><span id="p-biaya">0</span></div>
+                    <div id="p-rincian-biaya-list" class="pl-2 space-y-0.5 text-[9px] text-slate-500 hidden"></div>
+                    <div class="flex justify-between text-sm font-extrabold text-slate-900 pt-1">
+                        <span>TOTAL</span><span id="p-total" class="text-primary">0</span>
+                    </div>
+                </div>
+    
+                <div class="border-t border-dashed border-slate-300 pt-2 text-center space-y-0.5">
+                    <p class="text-[9px] text-slate-500 italic">Terima kasih telah menggunakan jasa Sahabatku Delivery.</p>
+                    <p class="text-[9px] font-medium text-slate-700">
+                        Pastikan Selalu Order Melalui WhatsApp Resmi Kami:<br>
+                        <span class="text-primary font-bold text-[10px]">0821-1845-415</span>
+                    </p>
+                </div>
+            </div>
+    
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="downloadAdminNotaJpg()" class="py-2 bg-slate-800 text-white font-bold text-[10px] sm:text-xs rounded-xl flex items-center justify-center gap-2">
+                    <i data-lucide="image" class="w-3.5 h-3.5"></i> Unduh Gambar
+                </button>
+                <button onclick="closeAdminModal()" class="py-2 bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-white font-bold text-[10px] sm:text-xs rounded-xl">
+                    Tutup
+                </button>
             </div>
         </div>
     </div>
     
-    <div id="modal-edit-kurir" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative">
+    <div id="modal-edit-kurir" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-[360px] sm:max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative max-h-[90vh] overflow-y-auto">
             <button onclick="closeEditKurirModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">
                 ✕
             </button>
@@ -1249,20 +1345,42 @@
             </h3>
     
             <input type="hidden" id="edit-kurir-id">
-            <input type="text" id="edit-kurir-nama" placeholder="Nama lengkap" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-            
-            <select id="edit-kurir-leader" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-                <option value="">-- Pilih Leader --</option>
-            </select>
-            
-            <input type="text" id="edit-kurir-username" placeholder="Username" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-            <input type="text" id="edit-kurir-password" placeholder="Password" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-            <input type="date" id="edit-kurir-tgl-gabung" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-            
-            <select id="edit-kurir-status" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-                <option value="aktif">AKTIF</option>
-                <option value="nonaktif">BLOKIR</option>
-            </select>
+    
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Nama Lengkap</label>
+                <input type="text" id="edit-kurir-nama" placeholder="Nama lengkap" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+            </div>
+    
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Leader</label>
+                <select id="edit-kurir-leader" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                    <option value="">-- Pilih Leader --</option>
+                </select>
+            </div>
+    
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Username</label>
+                <input type="text" id="edit-kurir-username" placeholder="Username" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+            </div>
+    
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Password</label>
+                <input type="text" id="edit-kurir-password" placeholder="Password" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+            </div>
+    
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Tanggal Bergabung</label>
+                <input type="date" id="edit-kurir-tgl-gabung" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+            </div>
+    
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Status</label>
+                <select id="edit-kurir-status" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                    <option value="aktif">AKTIF</option>
+                    <option value="nonaktif">BLOKIR</option>
+                </select>
+            </div>
+    
             <div class="flex gap-2">
                 <button onclick="saveEditKurir()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl uppercase">
                     Simpan Perubahan
@@ -1350,13 +1468,67 @@
             </div>
         </div>
     </div>
-    <div id="modal-kpi-detail" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center">
-        <div class="bg-white dark:bg-darkCard w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 sm:p-5 max-h-[85vh] overflow-y-auto">
-            <div class="flex items-center justify-between mb-4">
+    <div id="modal-kpi-detail" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-[360px] sm:max-w-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 p-3 sm:p-5 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-3 sm:mb-4">
                 <h3 class="text-sm sm:text-base font-black">Detail Perhitungan KPI</h3>
                 <button onclick="closeKpiDetailModal()" class="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold">✕</button>
             </div>
             <div id="container-kpi-detail" class="space-y-3"></div>
+        </div>
+    </div>
+    <div id="modal-edit-manajemen" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative">
+            <button onclick="closeEditManajemenModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">✕</button>
+    
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400" id="title-edit-manajemen">
+                Edit Data Manajemen
+            </h3>
+    
+            <input type="hidden" id="edit-manajemen-id">
+    
+            <div class="grid grid-cols-2 gap-2">
+                <div class="col-span-2">
+                    <label class="block text-[10px] text-slate-400 mb-1">Kategori</label>
+                    <select id="edit-manajemen-kategori" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                        <option value="Owner">Owner</option>
+                        <option value="Head Operasional">Head Operasional</option>
+                        <option value="HRD">HRD</option>
+                    </select>
+                </div>
+    
+                <div class="col-span-2">
+                    <label class="block text-[10px] text-slate-400 mb-1">Nama</label>
+                    <input type="text" id="edit-manajemen-nama" placeholder="Nama lengkap" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                </div>
+    
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Username</label>
+                    <input type="text" id="edit-manajemen-username" placeholder="Username" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                </div>
+    
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Password</label>
+                    <input type="text" id="edit-manajemen-password" placeholder="Password" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                </div>
+    
+                <div class="col-span-2">
+                    <label class="block text-[10px] text-slate-400 mb-1">Status</label>
+                    <select id="edit-manajemen-status" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                        <option value="aktif">AKTIF</option>
+                        <option value="nonaktif">NONAKTIF</option>
+                    </select>
+                </div>
+            </div>
+    
+            <div class="flex gap-2">
+                <button onclick="saveEditManajemen()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl uppercase">
+                    Simpan Perubahan
+                </button>
+                <button onclick="closeEditManajemenModal()" class="px-3 py-2 bg-slate-100 text-slate-500 dark:bg-slate-800 text-xs rounded-xl">
+                    Batal
+                </button>
+            </div>
         </div>
     </div>
     
@@ -2762,7 +2934,7 @@
                         <div class="text-[10px] text-slate-400 uppercase">Total OFF / Izin / Sakit</div>
                         <div class="font-black mt-1">${(item.totalOff || 0) + (item.totalIzin || 0) + (item.totalSakit || 0)} off</div>
                         <div class="text-[10px] text-slate-400 mt-1">${item.offScore.toFixed(1)} poin</div>
-                        <div class="text-[10px] text-slate-500 mt-1">Normal maksimal 2 off/bulan</div>
+                        <div class="text-[10px] text-slate-500 mt-1">Normal maksimal 3/bulan</div>
                     </div>
                 </div>
         
@@ -2817,13 +2989,17 @@
                                     ${item.ongkirLocked ? 'TERKUNCI' : 'TERBUKA'}
                                 </span>
                             </div>
+                        
                             <input type="text" id="ongkir-pass-${key}" value="${item.ongkirPassword || ''}" placeholder="Password khusus ongkir" class="w-full px-2 py-1 border rounded-md text-[11px] dark:bg-darkBg dark:border-slate-700">
-                            <button onclick="toggleOngkirAkses('${key}')" class="w-full py-1.5 rounded-md text-[10px] font-bold uppercase ${item.ongkirLocked ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">
-                                ${item.ongkirLocked ? 'Buka Akses Ongkir' : 'Kunci Akses Ongkir'}
-                            </button>
-                            <button onclick="simpanPasswordOngkir('${key}')" class="w-full py-1.5 rounded-md bg-blue-50 text-blue-600 font-bold text-[10px] uppercase">
-                                Simpan Password Ongkir
-                            </button>
+                        
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="toggleOngkirAkses('${key}')" class="py-1.5 rounded-md text-[10px] font-bold uppercase ${item.ongkirLocked ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">
+                                    ${item.ongkirLocked ? 'Buka Akses Ongkir' : 'Kunci Akses Ongkir'}
+                                </button>
+                                <button onclick="simpanPasswordOngkir('${key}')" class="py-1.5 rounded-md bg-blue-50 text-blue-600 font-bold text-[10px] uppercase">
+                                    Simpan Password Ongkir
+                                </button>
+                            </div>
                         </div>
                 
                         <div class="flex justify-end space-x-2 pt-1">
@@ -2990,23 +3166,33 @@
             document.getElementById('modal-preview-nota').classList.add('hidden');
         }
         window.downloadAdminNotaJpg = function() {
-            html2canvas(document.getElementById('canvas-nota-admin')).then(canvas => {
+            const el = document.getElementById('canvas-nota-admin');
+            if (!el) return;
+        
+            if (typeof html2canvas === 'undefined') {
+                alert('Fitur gambar belum siap. Coba reload halaman.');
+                return;
+            }
+        
+            html2canvas(el, {
+                scale: 1,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
                 const link = document.createElement('a');
         
-                const noNota = document.getElementById('canvas-nota-admin')?.innerText.includes('Nomor Nota:')
-                    ? (document.querySelector('#canvas-nota-admin .font-bold.text-slate-700')?.innerText || 'Nota')
-                    : 'Nota';
-        
-                const kurir = cloudNotaList[Object.keys(cloudNotaList).find(k => cloudNotaList[k].id === noNota)]?.kurirNama || 'Kurir';
+                const noNota = document.querySelector('#canvas-nota-admin .font-bold.text-slate-700')?.innerText || 'Nota';
+                const kurir = 'Kurir';
         
                 const fileName = `${noNota}_${kurir}.jpg`
                     .replace(/\s+/g, '_')
                     .replace(/[\/\\:*?"<>|]/g, '');
         
                 link.download = fileName;
-                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.href = canvas.toDataURL('image/jpeg', 0.7);
                 link.click();
-            });        }
+            });
+        }
         window.saveDataMitra = function() {
             const idEdit = document.getElementById('am-id-edit').value;
             const nama = document.getElementById('am-nama').value.trim();
@@ -3651,7 +3837,7 @@
             tbody.innerHTML = '';
             
             if (notaState.items.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center italic text-slate-400 py-2">- Tidak ada rincian barang-</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center italic text-slate-400 py-2">- Tidak ada rincian.</td></tr>`;
             } else {
                 notaState.items.forEach(it => {
                     tbody.innerHTML += `<tr><td>${it.nama}</td><td class="text-center">${it.qty}</td><td class="text-right">${it.harga.toLocaleString('id-ID')}</td><td class="text-right">${it.subtotal.toLocaleString('id-ID')}</td></tr>`;
@@ -3663,10 +3849,22 @@
             navigateTo('screen-preview');
         }
         window.saveNotaAsJpg = function() {
-            html2canvas(document.getElementById('canvas-nota')).then(canvas => {
+            const el = document.getElementById('canvas-nota');
+            if (!el) return;
+        
+            if (typeof html2canvas === 'undefined') {
+                alert('Fitur gambar belum siap. Coba reload halaman.');
+                return;
+            }
+        
+            html2canvas(el, {
+                scale: 1,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `${document.getElementById('p-nota-num').innerText}.jpg`;
-                link.href = canvas.toDataURL();
+                link.href = canvas.toDataURL('image/jpeg', 0.7);
                 link.click();
             });
         }
@@ -3712,11 +3910,26 @@
             const kurir = document.getElementById('p-nota-kurir').innerText;
             const element = document.getElementById('canvas-nota');
             const captionText = `Nota: ${num}\nKurir: ${kurir}`;
-            const fileNameJpg = `${num}_${kurir}.jpg`.replace(/\s+/g, '_'); 
+            const fileNameJpg = `${num}_${kurir}.jpg`.replace(/\s+/g, '_');
             const btnShare = document.querySelector("button[onclick='shareWhatsApp()']");
+        
+            if (!element) {
+                alert('Preview nota tidak ditemukan.');
+                return;
+            }
+        
+            if (typeof html2canvas === 'undefined') {
+                alert('Fitur gambar belum siap. Coba reload halaman.');
+                return;
+            }
+        
             if (btnShare) btnShare.disabled = true;
         
-            html2canvas(element, { useCORS: true, scale: 2 }).then(canvas => {
+            html2canvas(element, {
+                scale: 1,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
                 canvas.toBlob(function(blob) {
                     if (!blob) {
                         alert("Gagal memproses gambar nota.");
@@ -3725,32 +3938,29 @@
                     }
         
                     const file = new File([blob], fileNameJpg, { type: 'image/jpeg' });
+        
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         navigator.share({
                             files: [file],
                             title: `Nota ${num}`,
                             text: captionText
                         })
-                        .then(() => console.log('Nota berhasil dibagikan.'))
-                        .catch((error) => console.log('Batal membagikan:', error))
                         .finally(() => {
                             if (btnShare) btnShare.disabled = false;
                         });
                     } else {
-                        if (btnShare) btnShare.disabled = false;
-                        alert("Browser tidak mendukung share langsung. Gambar terunduh otomatis.");
-                        
                         const link = document.createElement('a');
                         link.download = fileNameJpg;
-                        link.href = canvas.toDataURL('image/jpeg');
+                        link.href = canvas.toDataURL('image/jpeg', 0.7);
                         link.click();
-                        
+        
                         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(captionText)}`, '_blank');
+                        if (btnShare) btnShare.disabled = false;
                     }
-                }, 'image/jpeg', 0.9);
+                }, 'image/jpeg', 0.7);
             }).catch(err => {
                 if (btnShare) btnShare.disabled = false;
-                alert("Terjadi kesalahan sistem gambar: " + err.message);
+                alert("Terjadi kesalahan gambar: " + err.message);
             });
         }
         window.updatePreviewButtonsLayout = function() {
@@ -6227,7 +6437,7 @@
                         <p><b>2. Total Penghasilan (20%)</b> = Penghasilan bulanan dari ongkir + biaya tambahan.</p>
                         <p><b>3. Total Nota (30%)</b> = Jumlah nota bulanan yang berhasil diinput.</p>
                         <p><b>4. Trx Mitra (20%)</b> = Total transaksi mitra bulanan.</p>
-                        <p><b>5. Total OFF / Izin / Sakit (10%)</b> = Normal maksimal 3 OFF/bulan, lebih dari itu poin berkurang.</p>
+                        <p><b>5. Total OFF / Izin / Sakit (10%)</b> = Normal maksimal 3/bulan, lebih dari itu poin berkurang.</p>
                     </div>
                 </div>
             `;
@@ -6275,19 +6485,47 @@
             const d = cloudManajemenList[key];
             if (!d) return;
         
-            document.getElementById('manajemen-id-edit').value = key;
-            document.getElementById('manajemen-kategori').value = d.kategori || 'Head Operasional';
-            document.getElementById('manajemen-nama').value = d.nama || '';
-            document.getElementById('manajemen-username').value = d.username || '';
-            document.getElementById('manajemen-password').value = d.password || '';
-            document.getElementById('manajemen-status').value = d.status || 'aktif';
-            document.getElementById('title-form-manajemen').innerText = 'Edit Data Manajemen';
+            document.getElementById('edit-manajemen-id').value = key;
+            document.getElementById('edit-manajemen-kategori').value = d.kategori || 'Head Operasional';
+            document.getElementById('edit-manajemen-nama').value = d.nama || '';
+            document.getElementById('edit-manajemen-username').value = d.username || '';
+            document.getElementById('edit-manajemen-password').value = d.password || '';
+            document.getElementById('edit-manajemen-status').value = d.status || 'aktif';
         
-            const screen = document.getElementById('screen-admin-manajemen');
-            if (screen) {
-                screen.classList.remove('hidden');
-                screen.classList.add('active');
-            }
+            document.getElementById('modal-edit-manajemen').classList.remove('hidden');
+        };
+        window.saveEditManajemen = function() {
+            const id = document.getElementById('edit-manajemen-id').value;
+            const kategori = document.getElementById('edit-manajemen-kategori').value;
+            const nama = document.getElementById('edit-manajemen-nama').value.trim();
+            const username = document.getElementById('edit-manajemen-username').value.trim().toLowerCase();
+            const password = document.getElementById('edit-manajemen-password').value.trim();
+            const status = document.getElementById('edit-manajemen-status').value;
+        
+            if (!id) return alert('Data manajemen tidak ditemukan!');
+            if (!kategori || !nama || !username || !password) return alert('Lengkapi semua data!');
+        
+            update(ref(db, `manajemen_sahabatku/${id}`), {
+                kategori,
+                nama,
+                username,
+                password,
+                status
+            }).then(() => {
+                alert('Data manajemen berhasil diperbarui!');
+                closeEditManajemenModal();
+            }).catch(err => {
+                alert('Gagal update: ' + err.message);
+            });
+        };
+        window.closeEditManajemenModal = function() {
+            document.getElementById('modal-edit-manajemen').classList.add('hidden');
+            document.getElementById('edit-manajemen-id').value = '';
+            document.getElementById('edit-manajemen-kategori').value = 'Head Operasional';
+            document.getElementById('edit-manajemen-nama').value = '';
+            document.getElementById('edit-manajemen-username').value = '';
+            document.getElementById('edit-manajemen-password').value = '';
+            document.getElementById('edit-manajemen-status').value = 'aktif';
         };
         
         window.resetFormManajemen = function() {
