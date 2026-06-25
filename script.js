@@ -2329,7 +2329,7 @@
             }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `${document.getElementById('p-nota-num').innerText}.jpg`;
-                link.href = canvas.toDataURL('image/jpeg', 0.82);
+                link.href = canvas.toDataURL('image/jpeg', 0.9);
                 link.click();
             });
         }
@@ -2391,7 +2391,6 @@
                 alert("Terjadi kesalahan gambar: " + err.message);
             });
         }
-
         window.shareWhatsApp = function() {
             const num = document.getElementById('p-nota-num').innerText;
             const kurir = document.getElementById('p-nota-kurir').innerText;
@@ -2399,21 +2398,21 @@
             const captionText = `Nota: ${num}\nKurir: ${kurir}`;
             const fileNameJpg = `${num}_${kurir}.jpg`.replace(/\s+/g, '_');
             const btnShare = document.querySelector("button[onclick='shareWhatsApp()']");
-        
+
             if (!element) {
                 alert('Preview nota tidak ditemukan.');
                 return;
             }
-        
+
             if (typeof html2canvas === 'undefined') {
                 alert('Fitur gambar belum siap. Coba reload halaman.');
                 return;
             }
-        
+
             if (btnShare) btnShare.disabled = true;
-        
+
             html2canvas(element, {
-                scale: 1,
+                scale: 2,
                 useCORS: true,
                 backgroundColor: '#ffffff'
             }).then(canvas => {
@@ -2423,33 +2422,33 @@
                         if (btnShare) btnShare.disabled = false;
                         return;
                     }
-        
+
                     const file = new File([blob], fileNameJpg, { type: 'image/jpeg' });
-        
+
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         navigator.share({
                             files: [file],
                             title: `Nota ${num}`,
                             text: captionText
-                        })
-                        .finally(() => {
+                        }).finally(() => {
                             if (btnShare) btnShare.disabled = false;
                         });
                     } else {
                         const link = document.createElement('a');
                         link.download = fileNameJpg;
-                        link.href = canvas.toDataURL('image/jpeg', 0.7);
+                        link.href = canvas.toDataURL('image/jpeg', 0.9);
                         link.click();
-        
+
                         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(captionText)}`, '_blank');
                         if (btnShare) btnShare.disabled = false;
                     }
-                }, 'image/jpeg', 0.7);
+                }, 'image/jpeg', 0.9);
             }).catch(err => {
                 if (btnShare) btnShare.disabled = false;
                 alert("Terjadi kesalahan gambar: " + err.message);
             });
         }
+
         window.updatePreviewButtonsLayout = function() {
             const btnSimpanNota = document.getElementById('btn-simpan-nota');
             const previewButtons = document.getElementById('preview-action-buttons');
