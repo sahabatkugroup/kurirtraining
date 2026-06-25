@@ -440,10 +440,25 @@
 
     const themeToggle = document.getElementById('themeToggle');
     const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') document.documentElement.classList.remove('dark');
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme === 'light') {
+      document.documentElement.classList.remove('dark');
+    } else if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.toggle('dark', systemDark);
+    }
+    
     themeToggle.addEventListener('click', () => {
       const isDark = document.documentElement.classList.toggle('dark');
       localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    });
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      const savedTheme = localStorage.getItem('theme');
+      if (!savedTheme) {
+        document.documentElement.classList.toggle('dark', e.matches);
+      }
     });
 
     function showMode(mode) {
@@ -1402,7 +1417,7 @@
 
     }
 
-    function openJadwalPopup(key = '', item = null) {
+    window.openJadwalPopup = function(key = '', item = null) {
       editingJadwalKey = key || null;
       document.getElementById('jadwal-key').value = key || '';
       document.getElementById('jadwal-nama').value = item?.nama || '';
@@ -1413,13 +1428,13 @@
       document.getElementById('popup-jadwal').classList.remove('hidden');
       document.getElementById('popup-jadwal').classList.add('flex');
     }
-
+    
     window.closeJadwalPopup = () => {
       document.getElementById('popup-jadwal').classList.add('hidden');
       document.getElementById('popup-jadwal').classList.remove('flex');
     };
 
-    window.editJadwal = (key) => openJadwalPopup(key, DATA_JADWAL[key]);
+    window.editJadwal = (key) => window.openJadwalPopup(key, DATA_JADWAL[key]);
     window.hapusJadwal = (key) => { if (confirm('Hapus jadwal ini?')) remove(ref(db, `jadwal_off/${key}`)); };
 
     function openAbsensiPopup(key = '', item = null) {
