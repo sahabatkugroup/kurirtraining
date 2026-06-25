@@ -12,10 +12,12 @@
         .ripple:active:after { padding: 0; margin: 0; opacity: 1; transition: 0s; }
         @media (max-width: 640px) {
           #canvas-nota {
-            max-width: 100% !important;
-            padding: 12px !important;
+            width: 340px !important;
+            max-width: 340px !important;
+            padding: 16px !important;
             border-radius: 16px !important;
           }
+
         
           #preview-action-buttons {
             max-width: 100% !important;
