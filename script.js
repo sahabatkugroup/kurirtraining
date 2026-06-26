@@ -365,7 +365,7 @@
             onValue(ref(db, 'nota'), (snapshot) => {
                 cloudNotaList = snapshot.val() || {};
                 if (typeof renderAdminNota === 'function') renderAdminNota();
-                if (typeof renderKurirRiwayatList === 'function') renderKurirRiwayatList();
+                if (typeof renderKurirRiwayatList === 'function') renderKurirRiwayatList(false);
                 if (typeof populateLaporanFilter === 'function') populateLaporanFilter();
                 if (typeof renderLaporanData === 'function') renderLaporanData();
                 calculateDashboardStats();
@@ -374,7 +374,7 @@
             onValue(ref(db, 'mitra'), (snapshot) => {
                 cloudMitraList = snapshot.val() || {};
                 if (typeof renderAdminDaftarMitra === 'function') renderAdminDaftarMitra();
-                if (typeof renderKurirMitraView === 'function') renderKurirMitraView();
+                if (typeof renderKurirMitraView === 'function') renderKurirMitraView(false);
                 if (typeof populateMitraSelectionDropdown === 'function') populateMitraSelectionDropdown();
             
                 const amFilterBulanEl = document.getElementById('am-filter-bulan');
@@ -400,7 +400,7 @@
         
             onValue(ref(db, 'log_mitra'), (snapshot) => {
                 cloudLogMitra = snapshot.val() || {};
-                if (typeof renderKurirMitraView === 'function') renderKurirMitraView();
+                if (typeof renderKurirMitraView === 'function') renderKurirMitraView(false);
                 if (typeof renderAdminDaftarMitra === 'function') renderAdminDaftarMitra();
                 if (typeof sembunyikanRiwayatMitraAdmin === 'function') sembunyikanRiwayatMitraAdmin();
                 if (typeof calculateMitraStats === 'function') calculateMitraStats();
@@ -2332,63 +2332,41 @@
                 link.click();
             });
         }
+        window.commitSaveNota = function() {
+            const notaNum = document.getElementById('p-nota-num').innerText || "Nota";
+            const payload = {
+                id: notaNum,
+                tanggal: document.getElementById('p-nota-date').innerText,
+                tanggalRaw: getWibRawDate(),
+                kurirNama: userSession.nama,
+                kurirUsername: userSession.username,
+                status: document.getElementById('p-nota-status').innerText || "Lunas",
+                itemsCount: notaState.items.length,
+                items: notaState.items || [],
+                biayaTambahan: notaState.biaya || [],
+                subtotal: notaState.subtotal,
+                ongkir: notaState.ongkir,
+                total: notaState.total
+            };
 
-        window.shareWhatsApp = function() {
-            const num = document.getElementById('p-nota-num').innerText;
-            const kurir = document.getElementById('p-nota-kurir').innerText;
-            const element = document.getElementById('canvas-nota');
-            const captionText = `Nota: ${num}\nKurir: ${kurir}`;
-            const fileNameJpg = `${num}_${kurir}.jpg`.replace(/\s+/g, '_');
-            const btnShare = document.querySelector("button[onclick='shareWhatsApp()']");
-
-            if (!element) {
-                alert('Preview nota tidak ditemukan.');
-                return;
-            }
-
-            if (typeof html2canvas === 'undefined') {
-                alert('Fitur gambar belum siap. Coba reload halaman.');
-                return;
-            }
-
-            if (btnShare) btnShare.disabled = true;
-
-            html2canvas(element, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff'
-            }).then(canvas => {
-                canvas.toBlob(function(blob) {
-                    if (!blob) {
-                        alert("Gagal memproses gambar nota.");
-                        if (btnShare) btnShare.disabled = false;
-                        return;
-                    }
-
-                    const file = new File([blob], fileNameJpg, { type: 'image/jpeg' });
-
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        navigator.share({
-                            files: [file],
-                            title: `Nota ${num}`,
-                            text: captionText
-                        }).finally(() => {
-                            if (btnShare) btnShare.disabled = false;
-                        });
-                    } else {
-                        const link = document.createElement('a');
-                        link.download = fileNameJpg;
-                        link.href = canvas.toDataURL('image/jpeg', 0.82);
-                        link.click();
-
-                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(captionText)}`, '_blank');
-                        if (btnShare) btnShare.disabled = false;
-                    }
-                }, 'image/jpeg', 0.82);
-            }).catch(err => {
-                if (btnShare) btnShare.disabled = false;
-                alert("Terjadi kesalahan gambar: " + err.message);
-            });
+            push(ref(db, 'nota'), payload).then(() => {
+                alert("Nota kiriman berhasil disimpan!");
+                localStorage.removeItem('sahabatku_nota_draft');
+                notaState = { items: [], biaya: [], subtotal: 0, ongkir: 6000, total: 6000 };
+                document.getElementById('container-items').innerHTML = '';
+                document.getElementById('container-biaya').innerHTML = '';
+                
+                // TAMBAHAN: Reset input Dropdown Tambahan Biaya ke kondisi awal kosong
+                const dropBiaya = document.getElementById('biaya-dropdown');
+                if (dropBiaya) dropBiaya.value = '';
+                if (document.getElementById('biaya-nama-manual')) document.getElementById('biaya-nama-manual').classList.add('hidden');
+                if (document.getElementById('biaya-nominal')) document.getElementById('biaya-nominal').value = '';
+                
+                const inputOngkir = document.getElementById('nota-ongkir');
+                if(inputOngkir) inputOngkir.value = '6.000';
+                
+                navigateTo('screen-dashboard');
+            })
         }
         window.shareWhatsApp = function() {
             const num = document.getElementById('p-nota-num').innerText;
@@ -2459,35 +2437,32 @@
                 previewButtons.className = 'grid grid-cols-3 gap-2 max-w-sm mx-auto';
             }
         };
-        window.renderKurirRiwayatList = function() {
+        window.renderKurirRiwayatList = function(showList = false) {
             const container = document.getElementById('container-riwayat-list');
-            if(!container) return;
+            if (!container) return;
+
+            const searchKeyword = (document.getElementById('search-riwayat')?.value || '').toLowerCase().trim();
+            const filterTgl = document.getElementById('filter-date-riwayat')?.value || getWibRawDate();
+            const filterBulan = document.getElementById('filter-bulan-riwayat')?.value || getWibRawDate().substring(0, 7);
+
+            if (!showList) {
+                container.innerHTML = `<div class="text-center text-xs text-slate-400 py-4">Klik <b>Cari</b> untuk menampilkan riwayat.</div>`;
+                return;
+            }
+
             container.innerHTML = '';
-        
-            let filterTgl = document.getElementById('filter-date-riwayat') ? document.getElementById('filter-date-riwayat').value : '';
-            if (!filterTgl) filterTgl = new Date().toISOString().split('T')[0];
-        
-            const searchKeyword = document.getElementById('search-riwayat')
-                ? document.getElementById('search-riwayat').value.toLowerCase().trim()
-                : '';
-        
             let hasData = false;
-        
-            const keys = Object.keys(cloudNotaList || {}).sort((a, b) => {
-                const getNo = (key) => {
-                    const id = cloudNotaList[key]?.id || '';
-                    const angka = id.toString().match(/(\d+)$/);
-                    return angka ? parseInt(angka[1]) : 0;
-                };
-                return getNo(b) - getNo(a);
-            });
-        
+
+            const keys = Object.keys(cloudNotaList || {}).sort((a, b) => b.localeCompare(a));
+
             for (let k of keys) {
                 const n = cloudNotaList[k];
+                if (!n) continue;
                 if (userSession && userSession.role === 'kurir' && n.kurirUsername !== userSession.username) continue;
+                if (filterBulan && (!n.tanggalRaw || n.tanggalRaw.substring(0, 7) !== filterBulan)) continue;
                 if (filterTgl && n.tanggalRaw !== filterTgl) continue;
                 if (searchKeyword && n.id && !n.id.toLowerCase().includes(searchKeyword)) continue;
-        
+
                 hasData = true;
                 container.innerHTML += `
                     <div class="bg-white dark:bg-darkCard p-3 rounded-xl border text-xs space-y-2 shadow-sm">
@@ -2501,22 +2476,31 @@
                                 <p class="mt-0.5">Status: <span class="font-semibold text-slate-600 dark:text-slate-300">${n.status || 'Lunas'}</span></p>
                             </div>
                             <div class="flex items-center gap-3">
-                                <button onclick="previewRiwayatNota('${k}')" class="text-blue-500 font-bold bg-blue-50 dark:bg-blue-950/40 px-2 py-1 rounded-md hover:opacity-80">
-                                    Preview
-                                </button>
-                                <button onclick="hapusRiwayatNota('${k}')" class="text-danger font-bold bg-red-50 dark:bg-red-950/40 px-2 py-1 rounded-md hover:opacity-80">
-                                    Hapus
-                                </button>
+                                <button onclick="previewRiwayatNota('${k}')" class="text-blue-500 font-bold bg-blue-50 dark:bg-blue-950/40 px-2 py-1 rounded-md">Preview</button>
+                                <button onclick="hapusRiwayatNota('${k}')" class="text-danger font-bold bg-red-50 dark:bg-red-950/40 px-2 py-1 rounded-md">Hapus</button>
                             </div>
                         </div>
                     </div>
                 `;
             }
-        
+
             if (!hasData) {
-                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Tidak ada riwayat nota untuk tanggal ini.</div>';
+                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Tidak ada riwayat nota untuk filter ini.</div>';
             }
-        }
+        };
+        window.resetRiwayatFilter = function() {
+            const today = getWibRawDate();
+            const bulanEl = document.getElementById('filter-bulan-riwayat');
+            const dateEl = document.getElementById('filter-date-riwayat');
+            const searchEl = document.getElementById('search-riwayat');
+
+            if (bulanEl) bulanEl.value = today.substring(0, 7);
+            if (dateEl) dateEl.value = today;
+            if (searchEl) searchEl.value = '';
+
+            renderKurirRiwayatList(false);
+        };
+
         window.previewRiwayatNota = function(key) {
             const n = cloudNotaList[key];
             if (!n) {
@@ -2796,44 +2780,58 @@
                 }
             }
         };
-        window.renderKurirMitraView = function() {
+        window.renderKurirMitraView = function(showList = false) {
             const container = document.getElementById('container-mitra-list');
-            if(!container) return;
+            if (!container) return;
+
+            if (!showList) {
+                container.innerHTML = `
+                    <div class="bg-white dark:bg-darkCard p-4 rounded-xl border text-center">
+                        <div class="font-bold text-sm">Daftar mitra disembunyikan</div>
+                        <div class="text-xs text-slate-400 mt-1">Klik tombol untuk menampilkan list.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            if (container.dataset.loaded === '1') return;
+            container.dataset.loaded = '1';
             container.innerHTML = '';
-        
+
             const selectMitra = document.getElementById('m-input-pilih');
             if (selectMitra && selectMitra.options.length <= 1) {
                 selectMitra.innerHTML = '<option value="">-- Pilih Mitra --</option>';
                 for (let k in cloudMitraList) {
-                    selectMitra.innerHTML += `<option value="${cloudMitraList[k].nama}">${cloudMitraList[k].nama}</option>`;
+                    if (cloudMitraList[k] && cloudMitraList[k].nama) {
+                        selectMitra.innerHTML += `<option value="${cloudMitraList[k].nama}">${cloudMitraList[k].nama}</option>`;
+                    }
                 }
             }
-        
+
             let nomorUrut = 1;
-            for(let k in cloudMitraList) {
+            for (let k in cloudMitraList) {
                 const m = cloudMitraList[k];
                 if (!m || !m.nama) continue;
-        
+
                 const namaKey = normalizeNama(m.nama);
                 let totalTrxMenyeluruh = 0;
-        
+
                 for (let logKey in cloudLogMitra) {
                     const log = cloudLogMitra[logKey];
                     if (!log || !log.mitraNama) continue;
-        
                     if (normalizeNama(log.mitraNama) === namaKey) {
                         totalTrxMenyeluruh += (parseInt(log.trxInput) || 0);
                     }
                 }
-        
+
                 const targetMitra = m.target || 0;
                 let cleanPhone = (m.hp || '').toString().trim().replace(/[^0-9+]/g, '');
                 if (cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.substring(1);
                 else if (cleanPhone.startsWith('+')) cleanPhone = cleanPhone.substring(1);
-        
+
                 const waLink = cleanPhone ? `https://wa.me/${cleanPhone}` : '#';
                 const mapsLink = m.alamat ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.alamat)}` : '#';
-        
+
                 container.innerHTML += `
                     <div class="bg-white dark:bg-darkCard p-3 rounded-xl border text-xs space-y-2.5 shadow-sm">
                         <div class="flex justify-between items-start">
@@ -2845,7 +2843,7 @@
                             </div>
                             <a href="${waLink}" target="_blank" class="px-2.5 py-1 bg-emerald-50 text-success rounded font-bold text-[10px] border border-emerald-100">WhatsApp</a>
                         </div>
-        
+
                         <div class="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg text-[11px] border border-slate-100 dark:border-slate-800">
                             <div>
                                 <span class="text-slate-400 block text-[9px] uppercase">Total Transaksi</span>
@@ -2856,7 +2854,7 @@
                                 <span class="font-extrabold text-amber-500">${targetMitra} Trx</span>
                             </div>
                         </div>
-        
+
                         <div class="flex gap-1.5 pt-0.5">
                             <button onclick="bukaInputTransaksiMitra('${m.nama}')" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[10px] uppercase">Input Trx</button>
                             <button onclick="lihatRiwayatMitraOtomatis('${m.nama}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-lg text-[10px] uppercase border border-slate-200/50">Lihat</button>
@@ -2866,6 +2864,19 @@
                 nomorUrut++;
             }
         };
+        window.toggleMitraList = function() {
+            const box = document.getElementById('container-mitra-list');
+            if (!box) return;
+
+            if (box.dataset.loaded === '1') {
+                box.dataset.loaded = '0';
+                box.innerHTML = '';
+                renderKurirMitraView(false);
+            } else {
+                renderKurirMitraView(true);
+            }
+        };
+
         window.toggleRiwayatTrxInputan = function() {
             const box = document.getElementById('box-riwayat-trx-inputan');
             if (!box) return;
@@ -2951,7 +2962,7 @@
             });
         
             if (typeof renderKurirMitraView === 'function') {
-                renderKurirMitraView();
+                renderKurirMitraView(false);
             }
             if (typeof sembunyikanRiwayatMitra === 'function') {
                 sembunyikanRiwayatMitra();
@@ -5968,4 +5979,3 @@
           if (!list.includes(notifId)) list.push(notifId);
           localStorage.setItem('hidden_notif_ids', JSON.stringify(list));
       }
-
