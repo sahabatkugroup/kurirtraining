@@ -4629,6 +4629,113 @@
                 `).join('') : `<div class="text-center text-xs text-slate-400 py-6 bg-white dark:bg-darkCard rounded-2xl border">Belum ada data rekap jadwal.</div>`;
                 return;
             }
+            if (section === 'top5') {
+                const today = getWibRawDate();
+
+                const topNota = [...data].sort((a, b) => b.totalNota - a.totalNota).slice(0, 5);
+                const topPenghasilan = [...data].sort((a, b) => b.totalPenghasilan - a.totalPenghasilan).slice(0, 5);
+                const topKonsisten = [...data].sort((a, b) => b.rating - a.rating).slice(0, 5);
+
+                const todayData = [];
+                Object.entries(cloudKurirList || {}).forEach(([id, u]) => {
+                    if (!u || u.role !== 'kurir') return;
+                    if (u.status && u.status !== 'aktif') return;
+
+                    const nama = (u.nama || '').trim();
+                    const username = (u.username || '').trim();
+
+                    let notaHariIni = 0;
+                    let penghasilanHariIni = 0;
+
+                    Object.values(cloudNotaList || {}).forEach(n => {
+                        if (!n) return;
+                        const kurirUsername = (n.kurirUsername || '').trim().toLowerCase();
+                        const kurirNama = (n.kurirNama || '').trim().toLowerCase();
+                        if (kurirUsername !== username.toLowerCase() && kurirNama !== nama.toLowerCase()) return;
+                        if (n.tanggalRaw !== today) return;
+
+                        notaHariIni++;
+                        const ongkir = parseInt(n.ongkir) || 0;
+                        const biaya = (n.biayaTambahan || []).reduce((a, b) => a + (parseInt(b.nominal) || 0), 0);
+                        penghasilanHariIni += (ongkir + biaya);
+                    });
+
+                    todayData.push({ id, nama, username, notaHariIni, penghasilanHariIni });
+                });
+
+                const topNotaHariIni = [...todayData].sort((a, b) => b.notaHariIni - a.notaHariIni).slice(0, 5);
+                const topPenghasilanHariIni = [...todayData].sort((a, b) => b.penghasilanHariIni - a.penghasilanHariIni).slice(0, 5);
+
+                container.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="p-4 rounded-3xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-xl">
+                            <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Total Nota (${bulan})</h4>
+                            ${topNota.length ? topNota.map((x, i) => `
+                                <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
+                                    <div>
+                                        <div class="font-bold">${i + 1}. ${x.nama}</div>
+                                        <div class="text-[10px] opacity-80">${getRatingBadge(x.rating).emoji} ${Number(x.rating).toFixed(1)}% ${getRatingBadge(x.rating).label}</div>
+                                    </div>
+                                    <div class="font-black">${x.totalNota}</div>
+                                </div>
+                            `).join('') : `<div class="text-xs opacity-80">Belum ada data.</div>`}
+                        </div>
+
+                        <div class="p-4 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xl">
+                            <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Penghasilan (${bulan})</h4>
+                            ${topPenghasilan.length ? topPenghasilan.map((x, i) => `
+                                <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
+                                    <div>
+                                        <div class="font-bold">${i + 1}. ${x.nama}</div>
+                                        <div class="text-[10px] opacity-80">${getRatingBadge(x.rating).emoji} ${Number(x.rating).toFixed(1)}% ${getRatingBadge(x.rating).label}</div>
+                                    </div>
+                                    <div class="font-black">Rp ${x.totalPenghasilan.toLocaleString('id-ID')}</div>
+                                </div>
+                            `).join('') : `<div class="text-xs opacity-80">Belum ada data.</div>`}
+                        </div>
+
+                        <div class="p-4 rounded-3xl bg-gradient-to-br from-orange-500 to-rose-500 text-white shadow-xl">
+                            <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Ranking (${bulan})</h4>
+                            ${topKonsisten.length ? topKonsisten.map((x, i) => `
+                                <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
+                                    <div>
+                                        <div class="font-bold">${i + 1}. ${x.nama}</div>
+                                        <div class="text-[10px] opacity-80">${getRatingBadge(x.rating).emoji} ${Number(x.rating).toFixed(1)}% ${getRatingBadge(x.rating).label}</div>
+                                    </div>
+                                    <div class="font-black">${x.rating}%</div>
+                                </div>
+                            `).join('') : `<div class="text-xs opacity-80">Belum ada data.</div>`}
+                        </div>
+
+                        <div class="p-4 rounded-3xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-xl">
+                            <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Nota Hari Ini (${today})</h4>
+                            ${topNotaHariIni.length ? topNotaHariIni.map((x, i) => `
+                                <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
+                                    <div class="min-w-0">
+                                        <div class="font-bold truncate">${i + 1}. ${x.nama}</div>
+                                        <div class="text-[10px] opacity-80">Nota hari ini</div>
+                                    </div>
+                                    <div class="font-black">${x.notaHariIni}</div>
+                                </div>
+                            `).join('') : `<div class="text-xs opacity-80">Belum ada nota hari ini.</div>`}
+                        </div>
+
+                        <div class="p-4 rounded-3xl bg-gradient-to-br from-fuchsia-500 to-pink-600 text-white shadow-xl">
+                            <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Penghasilan Hari Ini (${today})</h4>
+                            ${topPenghasilanHariIni.length ? topPenghasilanHariIni.map((x, i) => `
+                                <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
+                                    <div class="min-w-0">
+                                        <div class="font-bold truncate">${i + 1}. ${x.nama}</div>
+                                        <div class="text-[10px] opacity-80">Hari ini</div>
+                                    </div>
+                                    <div class="font-black">Rp ${x.penghasilanHariIni.toLocaleString('id-ID')}</div>
+                                </div>
+                            `).join('') : `<div class="text-xs opacity-80">Belum ada penghasilan hari ini.</div>`}
+                        </div>
+                    </div>
+                `;
+                return;
+            }
 
             if (section === 'penghargaan') {
                 const top1 = data[0], top2 = data[1], top3 = data[2];
