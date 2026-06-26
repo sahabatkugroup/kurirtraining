@@ -4240,69 +4240,71 @@
         function calcKpiForKurir(identifier, bulan, stats = {}) {
             const target = (identifier || '').trim().toLowerCase();
             const norm = (v) => (v || '').toString().trim().toLowerCase();
-        
+
             const kurirObj = Object.entries(cloudKurirList || {}).find(([id, u]) => {
                 if (!u || u.role !== 'kurir') return false;
-                return norm(id) === target || norm(u.username) === target;
+                return norm(id) === target || norm(u.username) === target || norm(u.nama) === target;
             });
-        
+
             const idTarget = norm(kurirObj?.[0] || '');
             const usernameTarget = norm(kurirObj?.[1]?.username || '');
             const namaResmi = kurirObj?.[1]?.nama || '-';
             const leaderResmi = kurirObj?.[1]?.leader || '-';
-        
+
             const rekap = getRekapJadwalKurirByName(namaResmi || idTarget || usernameTarget, bulan);
-        
+
             let totalNota = 0;
             let trxMitra = 0;
             let totalPenghasilan = 0;
-        
+
             Object.values(cloudNotaList || {}).forEach(n => {
                 if (!n) return;
-        
                 const notaUsername = norm(n.kurirUsername);
                 const notaId = norm(n.kurirId);
                 if (notaUsername !== usernameTarget && notaId !== idTarget) return;
                 if (!n.tanggalRaw || n.tanggalRaw.slice(0, 7) !== bulan) return;
-        
+
                 totalNota++;
                 const ongkir = parseInt(n.ongkir) || 0;
                 const biaya = (n.biayaTambahan || []).reduce((a, b) => a + (parseInt(b.nominal) || 0), 0);
                 totalPenghasilan += (ongkir + biaya);
             });
-        
+
             Object.values(cloudLogMitra || {}).forEach(log => {
                 if (!log) return;
-        
                 const logUsername = norm(log.kurirUsername);
                 const logId = norm(log.kurirId);
                 if (logUsername !== usernameTarget && logId !== idTarget) return;
                 if (!log.tglRaw || log.tglRaw.slice(0, 7) !== bulan) return;
-        
+
                 trxMitra += parseInt(log.trxInput) || 0;
             });
-        
-            const kehadiranScore = Math.min((rekap.totalHadirScore / getDaysInMonth(bulan)) * 20, 20);
-        
+
+            const daysInMonth = getDaysInMonth(bulan);
+
+            const kehadiranScore = daysInMonth > 0
+                ? Math.min(20, (rekap.totalHadirScore / daysInMonth) * 20)
+                : 0;
+
             const maxPenghasilan = stats.maxPenghasilan || 0;
             const maxNota = stats.maxNota || 0;
             const maxTrxMitra = stats.maxTrxMitra || 0;
+
             const totalPenghasilanScore = maxPenghasilan > 0
-                ? Math.min(20, (totalPenghasilan / maxPenghasilan) * 18)
+                ? Math.min(20, (totalPenghasilan / maxPenghasilan) * 20)
                 : 0;
-            
+
             const totalNotaScore = maxNota > 0
-                ? Math.min(30, (totalNota / maxNota) * 27)
+                ? Math.min(20, (totalNota / maxNota) * 20)
                 : 0;
-            
+
             const trxMitraScore = maxTrxMitra > 0
-                ? Math.min(20, (trxMitra / maxTrxMitra) * 18)
+                ? Math.min(20, (trxMitra / maxTrxMitra) * 20)
                 : 0;
 
             const totalOffGabungan = (rekap.totalOff || 0) + (rekap.totalIzin || 0) + (rekap.totalSakit || 0);
-            const offScore = totalOffGabungan <= 3
-                ? 10
-                : Math.max(0, 10 - ((totalOffGabungan - 3) * 0.75));
+            const offPenalty = Math.max(0, totalOffGabungan - 3);
+            const offScore = Math.max(0, 20 - (offPenalty * 2));
 
             const rating = Number(Math.min(100, (
                 kehadiranScore +
@@ -4335,6 +4337,7 @@
                 rating
             };
         }
+
         function getRekapJadwalKurirByName(identifier, bulan) {
             const target = (identifier || '').trim().toLowerCase();
             if (!target) {
@@ -4350,7 +4353,7 @@
                     totalAbsenPulang: 0
                 };
             }
-        
+
             const norm = (v) => (v || '').toString().trim().toLowerCase();
             const tanggalMap = {};
             let totalOff = 0;
@@ -4359,26 +4362,25 @@
             let totalSakit = 0;
             let totalAbsenMasuk = 0;
             let totalAbsenPulang = 0;
-        
+
             const cocokKurirAbsensi = (a) => {
                 const idKurir = norm(a?.idKurir || a?.kurirId);
                 const username = norm(a?.username || a?.kurirUsername);
                 const nama = norm(a?.nama || a?.namaKurir);
                 return target === idKurir || target === username || target === nama;
             };
-        
-            // ABSENSI
+
             Object.values(cloudAbsensiList || {}).forEach(a => {
                 if (!a) return;
-        
+
                 const tgl = (a.tanggal || '').trim();
                 if (!tgl || tgl.slice(0, 7) !== bulan) return;
                 if (!cocokKurirAbsensi(a)) return;
-        
+
                 if (!tanggalMap[tgl]) {
                     tanggalMap[tgl] = { masuk: false, pulang: false, off: false };
                 }
-        
+
                 if (a.jamMasuk) {
                     tanggalMap[tgl].masuk = true;
                     totalAbsenMasuk++;
@@ -4387,66 +4389,64 @@
                     tanggalMap[tgl].pulang = true;
                     totalAbsenPulang++;
                 }
-        
+
                 const status = norm(a.status);
                 if (status === 'izin') totalIzin++;
                 if (status === 'sakit') totalSakit++;
             });
-        
-            // JADWAL OFF
+
             Object.values(cloudJadwalOff || {}).forEach(j => {
                 if (!j) return;
-        
+
                 const namaKurir = norm(j.nama);
                 const jenisOff = norm(j.jenisOff);
                 const statusOff = norm(j.status);
                 const tglMulai = (j.tanggalMulai || '').trim();
                 const tglSelesai = (j.tanggalSelesai || tglMulai || '').trim();
-        
+
                 if (!tglMulai || tglMulai.slice(0, 7) !== bulan) return;
                 if (target !== namaKurir) return;
-        
-                // Kalau tanggalMulai = tanggalSelesai, dihitung 1 kali saja
+
                 const start = new Date(tglMulai);
                 const end = new Date(tglSelesai);
                 const daysCount = Math.max(1, Math.round((end - start) / 86400000) + 1);
-        
+
                 for (let i = 0; i < daysCount; i++) {
                     const d = new Date(start);
                     d.setDate(start.getDate() + i);
-        
+
                     const y = d.getFullYear();
                     const m = String(d.getMonth() + 1).padStart(2, '0');
                     const dd = String(d.getDate()).padStart(2, '0');
                     const tglLoop = `${y}-${m}-${dd}`;
-        
+
                     if (tglLoop.slice(0, 7) !== bulan) continue;
-        
+
                     if (jenisOff === 'off reguler') totalOff++;
                     if (jenisOff === 'izin') totalIzin++;
                     if (jenisOff === 'tidak ambil off') totalTidakAmbilOff++;
                     if (jenisOff === 'sakit') totalSakit++;
-        
+
                     if (!tanggalMap[tglLoop]) {
                         tanggalMap[tglLoop] = { masuk: false, pulang: false, off: true };
                     } else {
                         tanggalMap[tglLoop].off = true;
                     }
-        
+
                     if (statusOff !== 'aktif') {
                         totalTidakAmbilOff++;
                     }
                 }
             });
-        
+
             let hadirFull = 0;
             let hadirHalf = 0;
-        
+
             Object.values(tanggalMap).forEach(v => {
                 if (v.masuk && v.pulang) hadirFull += 1;
                 else if (v.masuk || v.pulang) hadirHalf += 1;
             });
-        
+
             return {
                 hadirFull,
                 hadirHalf,
@@ -5386,9 +5386,11 @@
                       </div>
 
                       <div class="text-[11px] text-slate-600 dark:text-slate-300 space-y-1 leading-relaxed">
-                          <p><b>Leader Score</b> diambil dari total rating seluruh anggota + bonus Top 3 anggota.</p>
-                          <p>Badge tiap anggota tetap mengikuti KPI kurir masing-masing.</p>
-                          <p>Anggota nonaktif/blokir tidak dihitung.</p>
+                          <p><b>Kehadiran (20%)</b> = hadir dari absen masuk + pulang.</p>
+                          <p><b>Total Penghasilan (20%)</b> = ongkir + biaya tambahan bulanan.</p>
+                          <p><b>Total Nota (20%)</b> = jumlah nota bulanan.</p>
+                          <p><b>Trx Mitra (20%)</b> = total transaksi mitra bulanan.</p>
+                          <p><b>Total OFF / Izin / Sakit (20%)</b> = normal maksimal 3/bulan.</p>
                       </div>
                   </div>
               `;
