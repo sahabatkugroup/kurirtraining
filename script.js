@@ -2019,10 +2019,9 @@
                         <div class="bg-white dark:bg-darkCard p-2 rounded-lg text-[11px] text-slate-600 dark:text-slate-300">
                             ${t.comments || '-'}
                         </div>
-        
                         <div class="flex gap-2">
-                            <button onclick="toggleTestimonialPublish('${key}')" class="flex-1 py-2 rounded-lg text-[10px] font-bold uppercase bg-blue-50 text-blue-600 dark:bg-blue-950/40">
-                                Tampilkan / Sembunyikan
+                            <button onclick="toggleTestimonialPublish('${key}')" class="flex-1 py-2 rounded-lg text-[10px] font-bold uppercase ${t.isPublished ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40'}">
+                                ${t.isPublished ? 'Sembunyikan' : 'Tampilkan'}
                             </button>
                             <button onclick="hapusTestimonial('${key}')" class="px-3 py-2 rounded-lg text-[10px] font-bold uppercase bg-rose-50 text-rose-600 dark:bg-rose-950/40">
                                 Hapus
@@ -3846,34 +3845,121 @@
                 remove(ref(db, `ongkir_wilayah/${key}`));
             }
         };
-        
-        window.renderAdminOngkirList = function() {
+        window.filterAdminOngkirList = function() {
             const container = document.getElementById('container-admin-ongkir');
             if (!container) return;
-        
-            container.innerHTML = '';
-        
+
+            const q = (document.getElementById('admin-ongkir-search')?.value || '').toLowerCase().trim();
             const keys = Object.keys(cloudOngkirList || {});
-            if (keys.length === 0) {
+
+            if (!keys.length) {
                 container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data ongkir.</div>';
                 return;
             }
-        
-            keys.forEach(key => {
-                const d = cloudOngkirList[key];
-                container.innerHTML += `
-                    <div class="bg-white dark:bg-darkCard p-3 rounded-xl border shadow-sm flex justify-between items-center">
-                        <div>
-                            <div class="font-bold text-sm">${d.wilayah || '-'}</div>
-                            <div class="text-primary font-semibold">Rp ${(d.tarif || 0).toLocaleString('id-ID')}</div>
+
+            container.innerHTML = keys.map(key => {
+                const d = cloudOngkirList[key] || {};
+                const wilayah = (d.wilayah || '').toLowerCase();
+                if (q && !wilayah.includes(q)) return '';
+                const tarif = (d.tarif || 0).toLocaleString('id-ID');
+
+                return `
+                    <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/40 flex items-center justify-center text-purple-500 shrink-0">
+                                        <i data-lucide="truck" class="w-4 h-4"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="font-bold text-sm text-slate-800 dark:text-white truncate">${d.wilayah || '-'}</div>
+                                        <div class="text-[10px] text-slate-400">Daftar ongkir wilayah</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300 shrink-0">
+                                Rp ${tarif}
+                            </span>
                         </div>
-                        <div class="flex gap-2">
-                            <button onclick="editDataOngkir('${key}')" class="px-2.5 py-1 rounded-md bg-blue-50 text-blue-600 font-bold text-[10px]">Edit</button>
-                            <button onclick="hapusDataOngkir('${key}')" class="px-2.5 py-1 rounded-md bg-red-50 text-red-600 font-bold text-[10px]">Hapus</button>
+
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <button onclick="editDataOngkir('${key}')" class="w-full py-2.5 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 text-[10px] font-bold uppercase">
+                                Edit
+                            </button>
+                            <button onclick="hapusDataOngkir('${key}')" class="w-full py-2.5 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 text-[10px] font-bold uppercase">
+                                Hapus
+                            </button>
                         </div>
                     </div>
                 `;
-            });
+            }).join('');
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
+
+        window.pilihAdminOngkirSearch = function(nama) {
+            const input = document.getElementById('admin-ongkir-search');
+            const box = document.getElementById('suggest-admin-ongkir-search');
+            if (input) input.value = nama;
+            if (box) {
+                box.classList.add('hidden');
+                box.innerHTML = '';
+            }
+            filterAdminOngkirList();
+        };
+        window.renderAdminOngkirList = function() {
+            const container = document.getElementById('container-admin-ongkir');
+            if (!container) return;
+
+            const keys = Object.keys(cloudOngkirList || {});
+            const q = (document.getElementById('admin-ongkir-search')?.value || '').toLowerCase().trim();
+
+            if (!keys.length) {
+                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data ongkir.</div>';
+                return;
+            }
+
+            if (q) {
+                filterAdminOngkirList();
+                return;
+            }
+
+            container.innerHTML = keys.map(key => {
+                const d = cloudOngkirList[key] || {};
+                const tarif = (d.tarif || 0).toLocaleString('id-ID');
+
+                return `
+                    <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/40 flex items-center justify-center text-purple-500 shrink-0">
+                                        <i data-lucide="truck" class="w-4 h-4"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="font-bold text-sm text-slate-800 dark:text-white truncate">${d.wilayah || '-'}</div>
+                                        <div class="text-[10px] text-slate-400">Daftar ongkir wilayah</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300 shrink-0">
+                                Rp ${tarif}
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <button onclick="editDataOngkir('${key}')" class="w-full py-2.5 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 text-[10px] font-bold uppercase">
+                                Edit
+                            </button>
+                            <button onclick="hapusDataOngkir('${key}')" class="w-full py-2.5 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 text-[10px] font-bold uppercase">
+                                Hapus
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         };
 
         window.updateOngkirSuggestions = function(type) {
@@ -5819,23 +5905,23 @@
                   : `Kurir Terpilih (${(n.targetList || []).length})`;
       
               container.innerHTML += `
-                  <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border text-xs space-y-2">
-                      <div class="flex justify-between items-start gap-2">
-                          <div class="min-w-0">
-                              <div class="font-bold text-sm truncate">${n.message || '-'}</div>
-                              <div class="text-[10px] text-slate-400 mt-1">${targetText}</div>
-                              <div class="text-[10px] text-slate-400">${n.createdAt ? new Date(n.createdAt).toLocaleString('id-ID') : '-'}</div>
-                          </div>
-                      </div>
-                      <div class="flex gap-2">
-                          <button onclick="resendNotification('${key}')" class="flex-1 py-2 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-bold uppercase">
-                              Kirim Lagi
-                          </button>
-                          <button onclick="deleteNotification('${key}')" class="px-3 py-2 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-bold uppercase">
-                              Hapus
-                          </button>
-                      </div>
-                  </div>
+                    <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border text-xs space-y-2">
+                        <div class="flex justify-between items-start gap-2">
+                            <div class="min-w-0 flex-1">
+                                <div class="font-bold text-[11px] sm:text-sm leading-snug break-words">${n.message || '-'}</div>
+                                <div class="text-[10px] text-slate-400 mt-1">${targetText}</div>
+                                <div class="text-[10px] text-slate-400">${n.createdAt ? new Date(n.createdAt).toLocaleString('id-ID') : '-'}</div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="resendNotification('${key}')" class="w-full py-2 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-bold uppercase">
+                                Kirim Lagi
+                            </button>
+                            <button onclick="deleteNotification('${key}')" class="w-full py-2 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-bold uppercase">
+                                Hapus
+                            </button>
+                        </div>
+                    </div>
               `;
           });
       }
