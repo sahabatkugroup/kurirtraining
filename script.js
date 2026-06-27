@@ -39,7 +39,76 @@
         let cloudJadwalOff = {};
         let selectedTrackingUser = null;
         let pendingAutoLoginCheck = false;
+
+        let isDashboardStatsRunning = false;
+        let isRenderLaporanRunning = false;
+        let isRenderKpiRunning = false;
+        let isRenderLeaderRunning = false;
+        let isRenderAdminNotaRunning = false;
+        let isRenderMitraRunning = false;
+        let isRenderNotificationHistoryRunning = false;
+        let isRenderNotifKurirRunning = false;
+        let refreshQueueScheduled = false;
+        let lastUiRefreshAt = 0;
+        let uiRefreshInProgress = false;
+        let lastCloudSnapshotSignature = '';
+        let refreshTimer = null;
+        let firebaseListenersBound = false;
+        let lastKpiRenderAt = 0;
         
+        function buildCloudSignature() {
+            return [
+                Object.keys(cloudKurirList || {}).length,
+                Object.keys(cloudNotaList || {}).length,
+                Object.keys(cloudMitraList || {}).length,
+                Object.keys(cloudLogMitra || {}).length,
+                Object.keys(cloudOngkirList || {}).length,
+                Object.keys(cloudLeaderList || {}).length,
+                Object.keys(cloudTestimonialList || {}).length,
+                Object.keys(cloudManajemenList || {}).length,
+                Object.keys(cloudNotificationList || {}).length
+            ].join('|');
+        }
+        
+        function queueUiRefresh(force = false) {
+            const now = Date.now();
+            const sig = buildCloudSignature();
+            if (!force && sig === lastCloudSnapshotSignature && (now - lastUiRefreshAt) < 500) return;
+            if (uiRefreshInProgress || refreshQueueScheduled) return;
+        
+            lastCloudSnapshotSignature = sig;
+            lastUiRefreshAt = now;
+            refreshQueueScheduled = true;
+        
+            if (refreshTimer) clearTimeout(refreshTimer);
+            refreshTimer = setTimeout(() => {
+                refreshQueueScheduled = false;
+                uiRefreshInProgress = true;
+                try {
+                    if (currentScreen === 'screen-admin-kurir' && typeof renderAdminKurirList === 'function') renderAdminKurirList();
+                    if (currentScreen === 'screen-admin-manajemen' && typeof renderAdminManajemen === 'function') renderAdminManajemen();
+                    if (currentScreen === 'screen-admin-nota' && typeof renderAdminNota === 'function') renderAdminNota();
+                    if (currentScreen === 'screen-admin-mitra' && typeof renderAdminDaftarMitra === 'function') renderAdminDaftarMitra();
+                    if (currentScreen === 'screen-admin-laporan' && typeof renderLaporanData === 'function') renderLaporanData();
+                    if (currentScreen === 'screen-admin-tracking' && typeof renderTrackingKurirList === 'function') renderTrackingKurirList();
+                    if (currentScreen === 'screen-admin-testimonial' && typeof renderAdminTestimonial === 'function') renderAdminTestimonial();
+                    if (currentScreen === 'screen-admin-notifikasi') {
+                        if (typeof renderAdminNotificationHistory === 'function') renderAdminNotificationHistory();
+                        if (typeof renderKurirNotifications === 'function') renderKurirNotifications();
+                    }
+                    if (currentScreen === 'screen-admin-ongkir' && typeof renderAdminOngkirList === 'function') renderAdminOngkirList();
+                    if (currentScreen === 'screen-admin-kpi' && typeof renderKPISection === 'function') renderKPISection(currentKPISection);
+                    if (currentScreen === 'screen-dashboard' && typeof updateKurirDashboard === 'function') updateKurirDashboard();
+                    if (currentScreen === 'screen-rekap' && typeof loadRekapKurir === 'function') loadRekapKurir();
+                    if (currentScreen === 'screen-mitra' && typeof renderKurirMitraView === 'function') renderKurirMitraView(true);
+        
+                    if (typeof calculateDashboardStats === 'function') calculateDashboardStats();
+                    if (typeof calculateMitraStats === 'function') calculateMitraStats();
+                } finally {
+                    uiRefreshInProgress = false;
+                }
+            }, 250);
+        }
         function getWibDate() {
             return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
         }
@@ -160,6 +229,7 @@
                 }
             );
         };
+
         window.renderTrackingKurirList = function() {
             const container = document.getElementById('container-tracking-kurir');
             if (!container) return;
@@ -336,12 +406,7 @@
             }
             onValue(ref(db, 'users'), (snapshot) => {
                 cloudKurirList = snapshot.val() || {};
-                renderAdminKurirList();
-                populateKurirDropdownFilter();
-                populateMitraLogKurirDropdown();
-                populateLeaderDropdown();
-                populateAnggotaDropdownLeader();
-                renderAdminLogMitra();
+                queueUiRefresh();
                 if (pendingAutoLoginCheck && userSession && userSession.role === 'kurir') {
                     const currentKurir = cloudKurirList[userSession.id];
                     if (currentKurir && currentKurir.status === 'aktif') {
@@ -353,62 +418,36 @@
                     }
                     pendingAutoLoginCheck = false;
                 }
-
             });
-        
             onValue(ref(db, 'nota'), (snapshot) => {
                 cloudNotaList = snapshot.val() || {};
-                if (typeof renderAdminNota === 'function') renderAdminNota();
-                if (typeof renderKurirRiwayatList === 'function') renderKurirRiwayatList(false);
-                if (typeof populateLaporanFilter === 'function') populateLaporanFilter();
-                if (typeof renderLaporanData === 'function') renderLaporanData();
-                calculateDashboardStats();
+                queueUiRefresh();
             });
-        
             onValue(ref(db, 'mitra'), (snapshot) => {
                 cloudMitraList = snapshot.val() || {};
-                if (typeof renderAdminDaftarMitra === 'function') renderAdminDaftarMitra();
-                if (typeof renderKurirMitraView === 'function') renderKurirMitraView(false);
-                if (typeof populateMitraSelectionDropdown === 'function') populateMitraSelectionDropdown();
-            
-                const amFilterBulanEl = document.getElementById('am-filter-bulan');
-                if (amFilterBulanEl && !amFilterBulanEl.value) {
-                    amFilterBulanEl.value = getWibRawDate().substring(0, 7);
-                }
-            
-                const amLogBulanEl = document.getElementById('am-log-bulan');
-                if (amLogBulanEl && !amLogBulanEl.value) {
-                    amLogBulanEl.value = getWibRawDate().substring(0, 7);
-                }
-            
-                if (typeof renderAdminDaftarMitra === 'function') renderAdminDaftarMitra();
+                queueUiRefresh();
             });
-        
             onValue(ref(db, 'live_locations'), (snapshot) => {
                 liveLocations = snapshot.val() || {};
+                if (currentScreen === 'screen-admin-tracking' && typeof renderTrackingKurirList === 'function') {
+                    renderTrackingKurirList();
+                    if (selectedKurirTracking) renderTrackingMap(selectedKurirTracking);
+                }
             });
-        
             onValue(ref(db, 'log_mitra'), (snapshot) => {
                 cloudLogMitra = snapshot.val() || {};
-                if (typeof renderKurirMitraView === 'function') renderKurirMitraView(false);
-                if (typeof renderAdminDaftarMitra === 'function') renderAdminDaftarMitra();
-                if (typeof sembunyikanRiwayatMitraAdmin === 'function') sembunyikanRiwayatMitraAdmin();
-                if (typeof calculateMitraStats === 'function') calculateMitraStats();
-                if (typeof calculateDashboardStats === 'function') calculateDashboardStats();
+                queueUiRefresh();
             });
-        
             onValue(ref(db, 'ongkir_wilayah'), (snapshot) => {
                 cloudOngkirList = snapshot.val() || {};
-                if (typeof renderAdminOngkirList === 'function') renderAdminOngkirList();
+                queueUiRefresh();
             });
-        
             onValue(ref(db, 'absensi_sahabatku'), (snapshot) => {
                 cloudAbsensiList = snapshot.val() || {};
             });
             onValue(ref(db, 'leader_list'), (snapshot) => {
                 cloudLeaderList = snapshot.val() || {};
-                populateLeaderDropdown();
-                renderLeaderList();
+                queueUiRefresh();
             });
             onValue(ref(db, 'jadwal_off'), (snapshot) => {
                 cloudJadwalOff = snapshot.val() || {};
@@ -538,17 +577,14 @@
                         kehadiran: item.hadirScore
                     }));
             };
-        
             onValue(ref(db, 'testimonials'), (snapshot) => {
                 cloudTestimonialList = snapshot.val() || {};
-                if (typeof renderAdminTestimonial === 'function') renderAdminTestimonial();
+                queueUiRefresh();
             });
-        
             onValue(ref(db, 'manajemen_sahabatku'), (snapshot) => {
                 cloudManajemenList = snapshot.val() || {};
-                if (typeof renderAdminManajemen === 'function') renderAdminManajemen();
+                queueUiRefresh();
             });
-        
             const savedSession = localStorage.getItem('sahabatku_session');
             if (savedSession) {
                 userSession = JSON.parse(savedSession);
@@ -1145,53 +1181,59 @@
         };
 
         function calculateDashboardStats() {
-            let totalNotaToday = 0;
-            let totalOmsetToday = 0;
-            let totalTrxMitraToday = 0;
-        
-            const tglSkrg = getWibRawDate();
-            const kurirAktifSet = new Set();
-        
-            for (let k in cloudNotaList) {
-                const n = cloudNotaList[k];
-                if (!n) continue;
-                if (n.tanggalRaw === tglSkrg) {
-                    totalNotaToday++;
-        
-                    const nominalOngkir = parseInt(n.ongkir) || 0;
-                    let nominalTambahan = 0;
-        
-                    if (n.biayaTambahan && Array.isArray(n.biayaTambahan)) {
-                        n.biayaTambahan.forEach(item => {
-                            nominalTambahan += (parseInt(item.nominal) || 0);
-                        });
-                    }
-                    totalOmsetToday += (nominalOngkir + nominalTambahan);
-                    if (n.kurirUsername) {
-                        kurirAktifSet.add(n.kurirUsername);
-                    }
-                }
-            }
-            for (let k in cloudLogMitra) {
-                const log = cloudLogMitra[k];
-                if (!log) continue;
-                if (!log.tglRaw) continue;
+            if (isDashboardStatsRunning) return;
+            isDashboardStatsRunning = true;
+            try {
+                let totalNotaToday = 0;
+                let totalOmsetToday = 0;
+                let totalTrxMitraToday = 0;
             
-                const tglLog = log.tglRaw.toString().slice(0, 10);
-                if (tglLog === tglSkrg) {
-                    totalTrxMitraToday += (parseInt(log.trxInput) || 0);
+                const tglSkrg = getWibRawDate();
+                const kurirAktifSet = new Set();
+            
+                for (let k in cloudNotaList) {
+                    const n = cloudNotaList[k];
+                    if (!n) continue;
+                    if (n.tanggalRaw === tglSkrg) {
+                        totalNotaToday++;
+            
+                        const nominalOngkir = parseInt(n.ongkir) || 0;
+                        let nominalTambahan = 0;
+            
+                        if (n.biayaTambahan && Array.isArray(n.biayaTambahan)) {
+                            n.biayaTambahan.forEach(item => {
+                                nominalTambahan += (parseInt(item.nominal) || 0);
+                            });
+                        }
+                        totalOmsetToday += (nominalOngkir + nominalTambahan);
+                        if (n.kurirUsername) {
+                            kurirAktifSet.add(n.kurirUsername);
+                        }
+                    }
                 }
-            }
+                for (let k in cloudLogMitra) {
+                    const log = cloudLogMitra[k];
+                    if (!log) continue;
+                    if (!log.tglRaw) continue;
+                
+                    const tglLog = log.tglRaw.toString().slice(0, 10);
+                    if (tglLog === tglSkrg) {
+                        totalTrxMitraToday += (parseInt(log.trxInput) || 0);
+                    }
+                }
 
-            const elTotalNota = document.getElementById('adm-dash-total-nota');
-            const elTotalOmset = document.getElementById('adm-dash-total-omset');
-            const elTotalMitra = document.getElementById('adm-dash-total-mitra');
-            const elKurirAktif = document.getElementById('adm-dash-kurir-aktif');
-        
-            if (elTotalNota) elTotalNota.innerText = totalNotaToday;
-            if (elTotalOmset) elTotalOmset.innerText = "Rp " + totalOmsetToday.toLocaleString('id-ID');
-            if (elTotalMitra) elTotalMitra.innerText = totalTrxMitraToday;
-            if (elKurirAktif) elKurirAktif.innerText = kurirAktifSet.size;
+                const elTotalNota = document.getElementById('adm-dash-total-nota');
+                const elTotalOmset = document.getElementById('adm-dash-total-omset');
+                const elTotalMitra = document.getElementById('adm-dash-total-mitra');
+                const elKurirAktif = document.getElementById('adm-dash-kurir-aktif');
+            
+                if (elTotalNota) elTotalNota.innerText = totalNotaToday;
+                if (elTotalOmset) elTotalOmset.innerText = "Rp " + totalOmsetToday.toLocaleString('id-ID');
+                if (elTotalMitra) elTotalMitra.innerText = totalTrxMitraToday;
+                if (elKurirAktif) elKurirAktif.innerText = kurirAktifSet.size;
+            } finally {
+                isDashboardStatsRunning = false;
+            }
         }
         window.calculateMitraStats = function() {
             const tglSkrgWib = getWibRawDate();
@@ -1406,67 +1448,7 @@
             document.getElementById('modal-kpi-detail').classList.add('hidden');
         };
 
-        function renderAdminKurirList() {
-            const container = document.getElementById('container-admin-kurir');
-            if (!container) return;
-            container.innerHTML = '';
-            
-            if (Object.keys(cloudKurirList).length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Belum ada data kurir.</p>';
-                return;
-            }
 
-            for (let key in cloudKurirList) {
-                const item = cloudKurirList[key];
-                if (item.role === 'admin' || item.username === 'admin') continue;
-
-                const dotStatus = item.status === 'aktif' ? 'bg-emerald-500' : 'bg-rose-500';
-                container.innerHTML += `
-                    <div class="bg-white dark:bg-darkCard p-3.5 rounded-xl border dark:border-slate-800 shadow-sm space-y-2 text-xs">
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2.5 h-2.5 rounded-full ${dotStatus}"></span>
-                                <span class="font-bold text-sm dark:text-white">${item.nama}</span>
-                            </div>
-                            <span class="text-[10px] text-slate-400">Gabung: ${item.tglGabung}</span>
-                        </div>
-                        <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg grid grid-cols-2 gap-2 font-mono text-[11px]">
-                            <div class="dark:text-slate-300">Leader: <span class="text-emerald-600 font-bold block truncate">${item.leader || '-'}</span></div>
-                            <div class="dark:text-slate-300">User: <span class="text-primary font-bold block truncate">@${item.username}</span></div>
-                            <div class="dark:text-slate-300">Pass: <span class="text-amber-500 font-bold block truncate">${item.password}</span></div>
-                            <div class="dark:text-slate-300">Ongkir Pass: <span class="text-fuchsia-500 font-bold block truncate">${item.ongkirPassword || '-'}</span></div>
-                        </div>
-
-                        <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg space-y-2">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] text-slate-500">Akses Cek Ongkir</span>
-                                <span class="text-[10px] font-bold ${item.ongkirLocked ? 'text-rose-500' : 'text-emerald-500'}">
-                                    ${item.ongkirLocked ? 'TERKUNCI' : 'TERBUKA'}
-                                </span>
-                            </div>
-                        
-                            <input type="text" id="ongkir-pass-${key}" value="${item.ongkirPassword || ''}" placeholder="Password khusus ongkir" class="w-full px-2 py-1 border rounded-md text-[11px] dark:bg-darkBg dark:border-slate-700">
-                        
-                            <div class="grid grid-cols-2 gap-2">
-                                <button onclick="toggleOngkirAkses('${key}')" class="py-1.5 rounded-md text-[10px] font-bold uppercase ${item.ongkirLocked ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">
-                                    ${item.ongkirLocked ? 'Buka Akses Ongkir' : 'Kunci Akses Ongkir'}
-                                </button>
-                                <button onclick="simpanPasswordOngkir('${key}')" class="py-1.5 rounded-md bg-blue-50 text-blue-600 font-bold text-[10px] uppercase">
-                                    Simpan Password Ongkir
-                                </button>
-                            </div>
-                        </div>
-                
-                        <div class="flex justify-end space-x-2 pt-1">
-                            ${userSession && (userSession.role === 'owner' || userSession.role === 'admin' || userSession.role === 'manajemen') ? `
-                                <button onclick="editAkunKurir('${key}')" class="px-2.5 py-1 bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-white rounded-md font-semibold">Edit</button>
-                                <button onclick="hapusAkunKurir('${key}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 rounded-md font-semibold">Hapus</button>
-                            ` : ''}
-                        </div>
-                `;
-            }
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
         window.simpanPasswordOngkir = function(key) {
             const input = document.getElementById(`ongkir-pass-${key}`);
             if (!input) return;
@@ -1787,101 +1769,92 @@
             }
         }
         window.renderAdminDaftarMitra = function() {
-            const container = document.getElementById('container-admin-daftar-mitra');
-            if (!container) return;
-        
-            const searchKey = normalizeNama(document.getElementById('am-search-mitra')?.value || '');
-            const filterBulanEl = document.getElementById('am-filter-bulan');
-            const bulanSekarang = getWibRawDate().substring(0, 7);
-        
-            if (filterBulanEl && !filterBulanEl.value) {
-                filterBulanEl.value = bulanSekarang;
-            }
-        
-            const filterBulan = filterBulanEl?.value || bulanSekarang;
-            const isOwner = userSession && userSession.role === 'owner';
-        
-            container.innerHTML = '';
-        
-            let nomorUrut = 1;
-            let adaData = false;
-        
-            for (let key in cloudMitraList) {
-                const m = cloudMitraList[key];
-                if (!m || !m.nama) continue;
-        
-                const namaMitra = normalizeNama(m.nama);
-                if (searchKey && !namaMitra.includes(searchKey)) continue;
-        
-                let totalTrxMenyeluruh = 0;
-                let totalTrxFilterBulan = 0;
-        
-                for (let logKey in cloudLogMitra) {
-                    const log = cloudLogMitra[logKey];
-                    if (!log || !log.mitraNama) continue;
-        
-                    if (normalizeNama(log.mitraNama) === namaMitra) {
-                        const trx = parseInt(log.trxInput) || 0;
-                        totalTrxMenyeluruh += trx;
-        
-                        if (log.tglRaw && log.tglRaw.substring(0, 7) === filterBulan) {
-                            totalTrxFilterBulan += trx;
+            if (isRenderMitraRunning) return;
+            isRenderMitraRunning = true;
+            try {
+                const container = document.getElementById('container-admin-daftar-mitra');
+                if (!container) return;
+
+                const isOpen = ensureSectionToggleState('container-admin-daftar-mitra', false);
+                const searchKey = normalizeNama(document.getElementById('am-search-mitra')?.value || '');
+                const filterBulan = document.getElementById('am-filter-bulan')?.value || getWibRawDate().substring(0, 7);
+
+                container.innerHTML = `
+                    <div class="flex items-center gap-2 mb-2">
+                        <button type="button" onclick="toggleSectionList('container-admin-daftar-mitra')" class="flex-1 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
+                            ${isOpen ? 'Tutup' : 'Buka'}
+                        </button>
+                    </div>
+                    <div id="container-admin-daftar-mitra-inner" class="${isOpen ? '' : 'hidden'} space-y-2"></div>
+                `;
+
+                const inner = document.getElementById('container-admin-daftar-mitra-inner');
+                if (!inner || !isOpen) return;
+
+                const isOwner = userSession && userSession.role === 'owner';
+                const list = [];
+                let nomorUrut = 1;
+
+                for (let key in cloudMitraList) {
+                    const m = cloudMitraList[key];
+                    if (!m || !m.nama) continue;
+
+                    const namaMitra = normalizeNama(m.nama);
+                    if (searchKey && !namaMitra.includes(searchKey)) continue;
+
+                    let totalTrxMenyeluruh = 0;
+                    let totalTrxFilterBulan = 0;
+
+                    for (let logKey in cloudLogMitra) {
+                        const log = cloudLogMitra[logKey];
+                        if (!log || !log.mitraNama) continue;
+                        if (normalizeNama(log.mitraNama) === namaMitra) {
+                            const trx = parseInt(log.trxInput) || 0;
+                            totalTrxMenyeluruh += trx;
+                            if (log.tglRaw && log.tglRaw.substring(0, 7) === filterBulan) totalTrxFilterBulan += trx;
                         }
                     }
+
+                    const targetMitra = m.target || 0;
+                    let cleanPhone = (m.hp || '').toString().trim().replace(/[^0-9+]/g, '');
+                    if (cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.substring(1);
+                    else if (cleanPhone.startsWith('+')) cleanPhone = cleanPhone.substring(1);
+
+                    const waLink = cleanPhone ? `https://wa.me/${cleanPhone}` : '#';
+                    const mapsLink = m.alamat ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.alamat)}` : '#';
+
+                    list.push(`
+                        <div class="bg-white dark:bg-darkCard p-3 rounded-xl border text-xs space-y-2.5 shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h5 class="font-bold text-slate-800 dark:text-white">${nomorUrut}. ${m.nama}</h5>
+                                    <a href="${mapsLink}" target="_blank" class="text-[10px] text-blue-600 dark:text-blue-400 hover:underline block mt-0.5">
+                                        Alamat: ${m.alamat || 'Belum Diisi'}
+                                    </a>
+                                </div>
+                                <a href="${waLink}" target="_blank" class="px-2.5 py-1 bg-emerald-50 text-success rounded font-bold text-[10px] border border-emerald-100">WhatsApp</a>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg text-[11px] border border-slate-100 dark:border-slate-800">
+                                <div><span class="text-slate-400 block text-[9px] uppercase">Total Transaksi</span><span class="font-extrabold text-slate-700 dark:text-slate-200">${filterBulan ? totalTrxFilterBulan : totalTrxMenyeluruh} Trx</span></div>
+                                <div><span class="text-slate-400 block text-[9px] uppercase">Target Bulanan</span><span class="font-extrabold text-amber-500">${targetMitra} Trx</span></div>
+                            </div>
+                            <div class="flex gap-1.5 pt-0.5">
+                                <button onclick="bukaInputTransaksiMitra('${m.nama}')" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[10px] uppercase">Input Trx</button>
+                                <button onclick="lihatRiwayatMitraOtomatis('${m.nama}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-lg text-[10px] uppercase border border-slate-200/50">Lihat</button>
+                            </div>
+                            ${isOwner ? `
+                            <div class="flex justify-end gap-2 pt-1">
+                                <button onclick="editDataMitra('${key}')" class="px-2.5 py-1 bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-white rounded-md font-semibold">Edit</button>
+                                <button onclick="hapusMitra('${key}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 rounded-md font-semibold">Hapus</button>
+                            </div>` : ''}
+                        </div>
+                    `);
+                    nomorUrut++;
                 }
-        
-                adaData = true;
-        
-                const targetMitra = m.target || 0;
-                let cleanPhone = (m.hp || '').toString().trim().replace(/[^0-9+]/g, '');
-                if (cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.substring(1);
-                else if (cleanPhone.startsWith('+')) cleanPhone = cleanPhone.substring(1);
-        
-                const waLink = cleanPhone ? `https://wa.me/${cleanPhone}` : '#';
-                const mapsLink = m.alamat ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.alamat)}` : '#';
-        
-                container.innerHTML += `
-                    <div class="bg-white dark:bg-darkCard p-3 rounded-xl border text-xs space-y-2.5 shadow-sm">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h5 class="font-bold text-slate-800 dark:text-white">${nomorUrut}. ${m.nama}</h5>
-                                <a href="${mapsLink}" target="_blank" class="text-[10px] text-blue-600 dark:text-blue-400 hover:underline block mt-0.5">
-                                    Alamat: ${m.alamat || 'Belum Diisi'}
-                                </a>
-                            </div>
-                            <a href="${waLink}" target="_blank" class="px-2.5 py-1 bg-emerald-50 text-success rounded font-bold text-[10px] border border-emerald-100">WhatsApp</a>
-                        </div>
-        
-                        <div class="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg text-[11px] border border-slate-100 dark:border-slate-800">
-                            <div>
-                                <span class="text-slate-400 block text-[9px] uppercase">Total Transaksi</span>
-                                <span class="font-extrabold text-slate-700 dark:text-slate-200">
-                                    ${filterBulan ? totalTrxFilterBulan : totalTrxMenyeluruh} Trx
-                                </span>
-                            </div>
-                            <div>
-                                <span class="text-slate-400 block text-[9px] uppercase">Target Bulanan</span>
-                                <span class="font-extrabold text-amber-500">${targetMitra} Trx</span>
-                            </div>
-                        </div>
-        
-                        <div class="flex gap-1.5 pt-0.5">
-                            <button onclick="bukaInputTransaksiMitra('${m.nama}')" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[10px] uppercase">Input Trx</button>
-                            <button onclick="lihatRiwayatMitraOtomatis('${m.nama}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-lg text-[10px] uppercase border border-slate-200/50">Lihat</button>
-                        </div>
-        
-                        ${isOwner ? `
-                        <div class="flex justify-end gap-2 pt-1">
-                            <button onclick="editDataMitra('${key}')" class="px-2.5 py-1 bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-white rounded-md font-semibold">Edit</button>
-                            <button onclick="hapusMitra('${key}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 rounded-md font-semibold">Hapus</button>
-                        </div>` : ''}
-                    </div>
-                `;
-                nomorUrut++;
-            }
-        
-            if (!adaData) {
-                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data mitra.</div>';
+
+                inner.innerHTML = list.join('') || '<div class="text-center text-xs text-slate-400 py-4">Belum ada data mitra.</div>';
+            } finally {
+                isRenderMitraRunning = false;
             }
         };
         window.cleanupDailyLiveLocations = async function() {
@@ -1928,98 +1901,94 @@
         
         window.renderAdminTestimonial = function() {
             const container = document.getElementById('container-admin-testimonial');
-            const bulanFilter = document.getElementById('testimonial-filter-bulan')?.value || '';
             if (!container) return;
-        
-            container.innerHTML = '';
-        
+
+            const isOpen = container.dataset.open === undefined ? false : container.dataset.open === '1';
+            const bulanFilter = document.getElementById('testimonial-filter-bulan')?.value || '';
+            const selectMode = document.body.dataset.testimonialSelectMode === '1';
+
+            container.innerHTML = `
+                <div class="flex items-center gap-2 mb-2">
+                    <button type="button" onclick="toggleTestimonialOpen()" class="flex-1 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
+                        ${isOpen ? 'Tutup' : 'Buka'}
+                    </button>
+                    <button type="button" onclick="toggleTestimonialSelectMode()" id="btn-testimonial-select-mode" class="flex-1 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
+                        ${selectMode ? 'Hapus Pilihan' : 'Pilih'}
+                    </button>
+                    <button type="button" id="btn-hapus-testimonial-bulan" onclick="hapusSemuaTestimonialBulan()" class="${selectMode ? '' : 'hidden'} flex-1 py-2 rounded-xl bg-rose-600 text-white text-[10px] font-bold uppercase">
+                        Hapus Semua Bulan Ini
+                    </button>
+                </div>
+                <div id="container-admin-testimonial-inner" class="${isOpen ? '' : 'hidden'} space-y-2"></div>
+            `;
+
+            const inner = document.getElementById('container-admin-testimonial-inner');
+            if (!inner || !isOpen) return;
+
             const keys = Object.keys(cloudTestimonialList || {});
-            if (keys.length === 0) {
-                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data testimoni.</div>';
-                return;
-            }
-        
             const filteredKeys = keys.filter(key => {
                 const t = cloudTestimonialList[key];
                 if (!t) return false;
-        
-                const rawBulan = t.timestamp
-                    ? new Date(t.timestamp).toISOString().slice(0, 7)
-                    : (t.date ? t.date.split('/').reverse().join('-').slice(0, 7) : '');
-        
-                if (bulanFilter && rawBulan !== bulanFilter) return false;
-                return true;
+                const rawBulan = t.timestamp ? new Date(t.timestamp).toISOString().slice(0, 7) : (t.date ? t.date.split('/').reverse().join('-').slice(0, 7) : '');
+                return !bulanFilter || rawBulan === bulanFilter;
             });
-        
-            if (filteredKeys.length === 0) {
-                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Tidak ada testimoni pada bulan ini.</div>';
-                return;
-            }
-        
-            filteredKeys.forEach(key => {
+
+            inner.innerHTML = filteredKeys.length ? filteredKeys.map(key => {
                 const t = cloudTestimonialList[key];
-                if (!t) return;
-        
                 const statusText = t.isPublished ? 'TAMPIL' : 'SEMBUNYI';
-                const statusClass = t.isPublished
-                    ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300'
-                    : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300';
-        
-                const createdText = t.timestamp
-                    ? new Date(t.timestamp).toLocaleString('id-ID', {
-                        day: '2-digit',
-                        month: 'long',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })
-                    : `${t.date || '-'} ${t.time || '-'}`;
-        
-                container.innerHTML += `
+                const statusClass = t.isPublished ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500';
+                const createdText = t.timestamp ? new Date(t.timestamp).toLocaleString('id-ID') : `${t.date || '-'} ${t.time || '-'}`;
+
+                return `
                     <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700 text-xs space-y-2">
                         <div class="flex items-start justify-between gap-2">
                             <label class="flex items-start gap-2 min-w-0 flex-1">
-                                <input type="checkbox" class="testimonial-checkbox mt-1 hidden testimonial-select-box" value="${key}">
+                                <input type="checkbox" class="testimonial-checkbox mt-1 ${selectMode ? '' : 'hidden'}" value="${key}">
                                 <div class="min-w-0">
                                     <div class="font-bold text-sm text-slate-800 dark:text-white">${t.fullname || '-'}</div>
                                     <div class="text-[10px] text-slate-400">Kurir: ${t.nama || '-'}</div>
                                     <div class="text-[10px] text-slate-400">Tanggal/Jam: ${createdText}</div>
                                 </div>
                             </label>
-                            <span class="px-2 py-1 rounded-full text-[10px] font-bold ${statusClass}">
-                                ${statusText}
-                            </span>
+                            <span class="px-2 py-1 rounded-full text-[10px] font-bold ${statusClass}">${statusText}</span>
                         </div>
-        
                         <div class="grid grid-cols-3 gap-2 text-[10px]">
-                            <div class="bg-white dark:bg-darkCard p-2 rounded-lg">
-                                <div class="text-slate-400">Rating</div>
-                                <div class="font-bold">${t.rating || 0}</div>
-                            </div>
-                            <div class="bg-white dark:bg-darkCard p-2 rounded-lg">
-                                <div class="text-slate-400">Attitude</div>
-                                <div class="font-bold">${t.attitude || '-'}</div>
-                            </div>
-                            <div class="bg-white dark:bg-darkCard p-2 rounded-lg">
-                                <div class="text-slate-400">Speed</div>
-                                <div class="font-bold">${t.speed || '-'}</div>
-                            </div>
+                            <div class="bg-white dark:bg-darkCard p-2 rounded-lg"><div class="text-slate-400">Rating</div><div class="font-bold">${t.rating || 0}</div></div>
+                            <div class="bg-white dark:bg-darkCard p-2 rounded-lg"><div class="text-slate-400">Attitude</div><div class="font-bold">${t.attitude || '-'}</div></div>
+                            <div class="bg-white dark:bg-darkCard p-2 rounded-lg"><div class="text-slate-400">Speed</div><div class="font-bold">${t.speed || '-'}</div></div>
                         </div>
-        
-                        <div class="bg-white dark:bg-darkCard p-2 rounded-lg text-[11px] text-slate-600 dark:text-slate-300">
-                            ${t.comments || '-'}
-                        </div>
+                        <div class="bg-white dark:bg-darkCard p-2 rounded-lg text-[11px] text-slate-600 dark:text-slate-300">${t.comments || '-'}</div>
                         <div class="flex gap-2">
-                            <button onclick="toggleTestimonialPublish('${key}')" class="flex-1 py-2 rounded-lg text-[10px] font-bold uppercase ${t.isPublished ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40'}">
+                            <button onclick="toggleTestimonialPublish('${key}')" class="flex-1 py-2 rounded-lg text-[10px] font-bold uppercase ${t.isPublished ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}">
                                 ${t.isPublished ? 'Sembunyikan' : 'Tampilkan'}
                             </button>
-                            <button onclick="hapusTestimonial('${key}')" class="px-3 py-2 rounded-lg text-[10px] font-bold uppercase bg-rose-50 text-rose-600 dark:bg-rose-950/40">
-                                Hapus
-                            </button>
+                            <button onclick="hapusTestimonial('${key}')" class="px-3 py-2 rounded-lg text-[10px] font-bold uppercase bg-rose-50 text-rose-600">Hapus</button>
                         </div>
                     </div>
                 `;
-            });
+            }).join('') : '<div class="text-center text-xs text-slate-400 py-4">Tidak ada testimoni pada bulan ini.</div>';
+        };
+
+        window.toggleTestimonialOpen = function() {
+            const el = document.getElementById('container-admin-testimonial');
+            if (!el) return;
+            el.dataset.open = el.dataset.open === '1' ? '0' : '1';
+            renderAdminTestimonial();
+        };
+
+        window.toggleTestimonialSelectMode = function() {
+            const active = document.body.dataset.testimonialSelectMode === '1';
+            document.body.dataset.testimonialSelectMode = active ? '0' : '1';
+            renderAdminTestimonial();
+        };
+
+        window.hapusTestimonialTerpilih = function() {
+            const checks = document.querySelectorAll('.testimonial-checkbox:checked');
+            if (!checks.length) return alert('Pilih minimal 1 testimoni.');
+            if (!confirm(`Hapus ${checks.length} testimoni terpilih?`)) return;
+            checks.forEach(cb => remove(ref(db, `testimonials/${cb.value}`)));
+            document.body.dataset.testimonialSelectMode = '0';
+            renderAdminTestimonial();
         };
         window.toggleTestimonialSelectMode = function() {
             const boxes = document.querySelectorAll('.testimonial-select-box');
@@ -2061,34 +2030,20 @@
         
         window.hapusSemuaTestimonialBulan = function() {
             const bulanFilter = document.getElementById('testimonial-filter-bulan')?.value || '';
-            if (!bulanFilter) {
-                alert('Pilih bulan terlebih dahulu.');
-                return;
-            }
-        
+            if (!bulanFilter) return alert('Pilih bulan terlebih dahulu.');
+
             const keys = Object.keys(cloudTestimonialList || {}).filter(key => {
                 const t = cloudTestimonialList[key];
                 if (!t) return false;
-        
-                const rawBulan = t.timestamp
-                    ? new Date(t.timestamp).toISOString().slice(0, 7)
-                    : (t.date ? t.date.split('/').reverse().join('-').slice(0, 7) : '');
-        
+                const rawBulan = t.timestamp ? new Date(t.timestamp).toISOString().slice(0, 7) : (t.date ? t.date.split('/').reverse().join('-').slice(0, 7) : '');
                 return rawBulan === bulanFilter;
             });
-        
-            if (!keys.length) {
-                alert('Tidak ada testimoni pada bulan ini.');
-                return;
-            }
-        
+
+            if (!keys.length) return alert('Tidak ada testimoni pada bulan ini.');
             if (!confirm(`Hapus semua ${keys.length} testimoni pada bulan ini?`)) return;
-        
-            keys.forEach(key => {
-                remove(ref(db, `testimonials/${key}`));
-            });
-        };
-        
+
+            keys.forEach(key => remove(ref(db, `testimonials/${key}`)));
+        };  
         window.openModulNota = function() {
             document.getElementById('nota-kurir').value = userSession.nama;
             
@@ -2883,6 +2838,76 @@
                 renderAdminLogMitra();
             }
         };
+        window.renderAdminKurirList = function() {
+            const container = document.getElementById('container-admin-kurir');
+            if (!container) return;
+
+            const isOpen = ensureSectionToggleState('container-admin-kurir', false);
+            const keys = Object.keys(cloudKurirList || {}).filter(k => {
+                const item = cloudKurirList[k];
+                return item && item.role !== 'admin' && item.username !== 'admin';
+            });
+
+            container.innerHTML = `
+                <div class="flex items-center gap-2 mb-2">
+                    <button type="button" onclick="toggleSectionList('container-admin-kurir')" class="flex-1 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
+                        ${isOpen ? 'Tutup' : 'Buka'}
+                    </button>
+                </div>
+                <div id="container-admin-kurir-inner" class="${isOpen ? '' : 'hidden'} space-y-2"></div>
+            `;
+
+            const inner = document.getElementById('container-admin-kurir-inner');
+            if (!inner || !isOpen) return;
+
+            if (!keys.length) {
+                inner.innerHTML = '<p class="text-xs text-slate-400 text-center py-4">Belum ada data kurir.</p>';
+                return;
+            }
+
+            inner.innerHTML = keys.map(key => {
+                const item = cloudKurirList[key];
+                const dotStatus = item.status === 'aktif' ? 'bg-emerald-500' : 'bg-rose-500';
+                return `
+                    <div class="bg-white dark:bg-darkCard p-3.5 rounded-xl border dark:border-slate-800 shadow-sm space-y-2 text-xs">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="w-2.5 h-2.5 rounded-full ${dotStatus} shrink-0"></span>
+                                <span class="font-bold text-sm dark:text-white truncate">${item.nama}</span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 shrink-0">Gabung: ${item.tglGabung || '-'}</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg grid grid-cols-2 gap-2 font-mono text-[11px]">
+                            <div class="dark:text-slate-300">Leader: <span class="text-emerald-600 font-bold block truncate">${item.leader || '-'}</span></div>
+                            <div class="dark:text-slate-300">User: <span class="text-primary font-bold block truncate">@${item.username}</span></div>
+                            <div class="dark:text-slate-300">Pass: <span class="text-amber-500 font-bold block truncate">${item.password}</span></div>
+                            <div class="dark:text-slate-300">Ongkir Pass: <span class="text-fuchsia-500 font-bold block truncate">${item.ongkirPassword || '-'}</span></div>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] text-slate-500">Akses Cek Ongkir</span>
+                                <span class="text-[10px] font-bold ${item.ongkirLocked ? 'text-rose-500' : 'text-emerald-500'}">${item.ongkirLocked ? 'TERKUNCI' : 'TERBUKA'}</span>
+                            </div>
+                            <input type="text" id="ongkir-pass-${key}" value="${item.ongkirPassword || ''}" placeholder="Password khusus ongkir" class="w-full px-2 py-1 border rounded-md text-[11px] dark:bg-darkBg dark:border-slate-700">
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="toggleOngkirAkses('${key}')" class="py-1.5 rounded-md text-[10px] font-bold uppercase ${item.ongkirLocked ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">
+                                    ${item.ongkirLocked ? 'Buka Akses Ongkir' : 'Kunci Akses Ongkir'}
+                                </button>
+                                <button onclick="simpanPasswordOngkir('${key}')" class="py-1.5 rounded-md bg-blue-50 text-blue-600 font-bold text-[10px] uppercase">
+                                    Simpan Password Ongkir
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex justify-end gap-2 pt-1">
+                            <button onclick="editAkunKurir('${key}')" class="px-2.5 py-1 bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-white rounded-md font-semibold">Edit</button>
+                            <button onclick="hapusAkunKurir('${key}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 rounded-md font-semibold">Hapus</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };        
         window.sembunyikanRiwayatMitraAdmin = function() {
             const box = document.getElementById('box-riwayat-trx-inputan');
             const container = document.getElementById('container-admin-log-mitra');
@@ -3010,13 +3035,62 @@
             const modal = document.getElementById('modal-sop');
             if (modal) modal.classList.remove('hidden');
         };
-        
+        window.renderAdminNotificationHistory = function() {
+            const container = document.getElementById('container-admin-notification-history');
+            if (!container) return;
+
+            const isOpen = ensureSectionToggleState('container-admin-notification-history', false);
+            const items = Object.entries(cloudNotificationList || {}).sort((a, b) => (b[1]?.createdAt || '').localeCompare(a[1]?.createdAt || ''));
+
+            container.innerHTML = `
+                <div class="flex items-center gap-2 mb-2">
+                    <button type="button" onclick="toggleSectionList('container-admin-notification-history')" class="flex-1 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
+                        ${isOpen ? 'Tutup' : 'Buka'}
+                    </button>
+                </div>
+                <div id="container-admin-notification-history-inner" class="${isOpen ? '' : 'hidden'} space-y-2"></div>
+            `;
+
+            const inner = document.getElementById('container-admin-notification-history-inner');
+            if (!inner || !isOpen) return;
+
+            inner.innerHTML = items.length ? items.map(([key, n]) => `
+                <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border text-xs space-y-2">
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="min-w-0 flex-1">
+                            <div class="font-bold text-[11px] sm:text-sm leading-snug break-words">${n.message || '-'}</div>
+                            <div class="text-[10px] text-slate-400 mt-1">${n.target === 'all' ? 'Semua Kurir' : `Kurir Terpilih (${(n.targetList || []).length})`}</div>
+                            <div class="text-[10px] text-slate-400">${n.createdAt ? new Date(n.createdAt).toLocaleString('id-ID') : '-'}</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="resendNotification('${key}')" class="w-full py-2 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-bold uppercase">Kirim Lagi</button>
+                        <button onclick="deleteNotification('${key}')" class="w-full py-2 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-bold uppercase">Hapus</button>
+                    </div>
+                </div>
+            `).join('') : '<div class="text-center text-xs text-slate-400 py-4">Belum ada notifikasi.</div>';
+        };        
         window.closeModal = function(id) {
             const modal = document.getElementById(id);
             if (modal) modal.classList.add('hidden');
         };
-        window.toggleSection = function(id) { document.getElementById(id).classList.toggle('hidden'); }
+        function ensureSectionToggleState(id, defaultOpen = false) {
+            const el = document.getElementById(id);
+            if (!el) return false;
+            if (!el.dataset.open) el.dataset.open = defaultOpen ? '1' : '0';
+            return el.dataset.open === '1';
+        }
 
+        window.toggleSectionList = function(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.dataset.open = el.dataset.open === '1' ? '0' : '1';
+            if (id === 'container-admin-kurir') renderAdminKurirList();
+            if (id === 'container-admin-manajemen') renderAdminManajemen();
+            if (id === 'container-admin-daftar-mitra') renderAdminDaftarMitra();
+            if (id === 'container-admin-ongkir') renderAdminOngkirList();
+            if (id === 'container-admin-notification-history') renderAdminNotificationHistory();
+        };
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
             const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -3371,85 +3445,91 @@
             }
         };
         window.renderAdminNota = function() {
-            const container = document.getElementById('container-admin-nota');
-            if (!container) return;
-        
-            const filterKurir = document.getElementById('an-filter-kurir')?.value || 'semua';
-            const filterTgl = document.getElementById('an-filter-tgl')?.value || '';
-            const filterBulan = document.getElementById('an-filter-bulan')?.value || '';
-        
-            container.innerHTML = '';
-        
-            let adaData = false;
-        
-            const keys = Object.keys(cloudNotaList || {}).sort((a, b) => {
-                const ta = cloudNotaList[a]?.tanggalRaw || '';
-                const tb = cloudNotaList[b]?.tanggalRaw || '';
-                return tb.localeCompare(ta);
-            });
-        
-            keys.forEach(key => {
-                const n = cloudNotaList[key];
-                if (!n) return;
-        
-                if (filterKurir !== 'semua' && n.kurirUsername !== filterKurir) return;
-                if (filterTgl && n.tanggalRaw !== filterTgl) return;
-                if (filterBulan && (!n.tanggalRaw || n.tanggalRaw.substring(0, 7) !== filterBulan)) return;
-        
-                adaData = true;
-        
-                const totalBiaya = (n.biayaTambahan || []).reduce((acc, b) => acc + (b.nominal || 0), 0);
-                const statusText = (n.status || '-').toUpperCase();
-                const statusColor = statusText === 'ADMIN'
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300'
-                    : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300';
-        
-                container.innerHTML += `
-                    <div class="bg-white dark:bg-darkCard p-2.5 rounded-lg border shadow-sm text-[11px] space-y-1.5">
-                        <div class="flex justify-between items-start gap-2">
-                            <div class="min-w-0">
-                                <div class="font-bold text-[12px] leading-tight truncate">${n.id || '-'}</div>
-                                <div class="text-[10px] text-slate-400">${n.tanggal || '-'}</div>
+            if (isRenderAdminNotaRunning) return;
+            isRenderAdminNotaRunning = true;
+            try {
+                const container = document.getElementById('container-admin-nota');
+                if (!container) return;
+            
+                const filterKurir = document.getElementById('an-filter-kurir')?.value || 'semua';
+                const filterTgl = document.getElementById('an-filter-tgl')?.value || '';
+                const filterBulan = document.getElementById('an-filter-bulan')?.value || '';
+            
+                container.innerHTML = '';
+            
+                let adaData = false;
+            
+                const keys = Object.keys(cloudNotaList || {}).sort((a, b) => {
+                    const ta = cloudNotaList[a]?.tanggalRaw || '';
+                    const tb = cloudNotaList[b]?.tanggalRaw || '';
+                    return tb.localeCompare(ta);
+                });
+            
+                keys.forEach(key => {
+                    const n = cloudNotaList[key];
+                    if (!n) return;
+            
+                    if (filterKurir !== 'semua' && n.kurirUsername !== filterKurir) return;
+                    if (filterTgl && n.tanggalRaw !== filterTgl) return;
+                    if (filterBulan && (!n.tanggalRaw || n.tanggalRaw.substring(0, 7) !== filterBulan)) return;
+            
+                    adaData = true;
+            
+                    const totalBiaya = (n.biayaTambahan || []).reduce((acc, b) => acc + (b.nominal || 0), 0);
+                    const statusText = (n.status || '-').toUpperCase();
+                    const statusColor = statusText === 'ADMIN'
+                        ? 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300'
+                        : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300';
+            
+                    container.innerHTML += `
+                        <div class="bg-white dark:bg-darkCard p-2.5 rounded-lg border shadow-sm text-[11px] space-y-1.5">
+                            <div class="flex justify-between items-start gap-2">
+                                <div class="min-w-0">
+                                    <div class="font-bold text-[12px] leading-tight truncate">${n.id || '-'}</div>
+                                    <div class="text-[10px] text-slate-400">${n.tanggal || '-'}</div>
+                                </div>
+                                <div class="flex flex-col items-end gap-1">
+                                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${statusColor}">
+                                        ${statusText}
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                        ${n.kurirNama || '-'}
+                                    </span>
+                                </div>
                             </div>
-                            <div class="flex flex-col items-end gap-1">
-                                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold ${statusColor}">
-                                    ${statusText}
-                                </span>
-                                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                                    ${n.kurirNama || '-'}
-                                </span>
+            
+                            <div class="grid grid-cols-2 gap-1.5 bg-slate-50 dark:bg-slate-800 p-2 rounded-md">
+                                <div>
+                                    <div class="text-[9px] text-slate-400">Ongkir</div>
+                                    <div class="font-bold text-[11px]">Rp ${(n.ongkir || 0).toLocaleString('id-ID')}</div>
+                                </div>
+                                <div>
+                                    <div class="text-[9px] text-slate-400">Tambahan</div>
+                                    <div class="font-bold text-[11px]">Rp ${totalBiaya.toLocaleString('id-ID')}</div>
+                                </div>
+                                <div>
+                                    <div class="text-[9px] text-slate-400">Item</div>
+                                    <div class="font-bold text-[11px]">${(n.items || []).length}</div>
+                                </div>
+                                <div>
+                                    <div class="text-[9px] text-slate-400">Total</div>
+                                    <div class="font-bold text-[11px] text-primary">Rp ${(n.total || 0).toLocaleString('id-ID')}</div>
+                                </div>
+                            </div>
+            
+                            <div class="flex justify-end gap-2 pt-0.5">
+                                <button onclick="viewAdminNota('${key}')" class="px-2.5 py-1 rounded-md bg-blue-50 text-blue-600 font-bold text-[10px]">Preview</button>
+                                <button onclick="hapusNotaGlobal('${key}')" class="px-2.5 py-1 rounded-md bg-red-50 text-red-600 font-bold text-[10px]">Hapus</button>
                             </div>
                         </div>
-        
-                        <div class="grid grid-cols-2 gap-1.5 bg-slate-50 dark:bg-slate-800 p-2 rounded-md">
-                            <div>
-                                <div class="text-[9px] text-slate-400">Ongkir</div>
-                                <div class="font-bold text-[11px]">Rp ${(n.ongkir || 0).toLocaleString('id-ID')}</div>
-                            </div>
-                            <div>
-                                <div class="text-[9px] text-slate-400">Tambahan</div>
-                                <div class="font-bold text-[11px]">Rp ${totalBiaya.toLocaleString('id-ID')}</div>
-                            </div>
-                            <div>
-                                <div class="text-[9px] text-slate-400">Item</div>
-                                <div class="font-bold text-[11px]">${(n.items || []).length}</div>
-                            </div>
-                            <div>
-                                <div class="text-[9px] text-slate-400">Total</div>
-                                <div class="font-bold text-[11px] text-primary">Rp ${(n.total || 0).toLocaleString('id-ID')}</div>
-                            </div>
-                        </div>
-        
-                        <div class="flex justify-end gap-2 pt-0.5">
-                            <button onclick="viewAdminNota('${key}')" class="px-2.5 py-1 rounded-md bg-blue-50 text-blue-600 font-bold text-[10px]">Preview</button>
-                            <button onclick="hapusNotaGlobal('${key}')" class="px-2.5 py-1 rounded-md bg-red-50 text-red-600 font-bold text-[10px]">Hapus</button>
-                        </div>
-                    </div>
-                `;
-            });
-        
-            if (!adaData) {
-                container.innerHTML = `<div class="text-center text-xs text-slate-400 py-4">Tidak ada nota sesuai filter.</div>`;
+                    `;
+                });
+            
+                if (!adaData) {
+                    container.innerHTML = `<div class="text-center text-xs text-slate-400 py-4">Tidak ada nota sesuai filter.</div>`;
+                }
+            } finally {
+                isRenderAdminNotaRunning = false;
             }
         };
         window.populateLaporanFilter = function() {
@@ -3900,23 +3980,30 @@
             const container = document.getElementById('container-admin-ongkir');
             if (!container) return;
 
+            const isOpen = ensureSectionToggleState('container-admin-ongkir', false);
             const keys = Object.keys(cloudOngkirList || {});
             const q = (document.getElementById('admin-ongkir-search')?.value || '').toLowerCase().trim();
 
-            if (!keys.length) {
-                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data ongkir.</div>';
-                return;
-            }
+            container.innerHTML = `
+                <div class="flex items-center gap-2 mb-2">
+                    <button type="button" onclick="toggleSectionList('container-admin-ongkir')" class="flex-1 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
+                        ${isOpen ? 'Tutup' : 'Buka'}
+                    </button>
+                </div>
+                <div id="container-admin-ongkir-inner" class="${isOpen ? '' : 'hidden'} space-y-2"></div>
+            `;
 
-            if (q) {
-                filterAdminOngkirList();
-                return;
-            }
+            const inner = document.getElementById('container-admin-ongkir-inner');
+            if (!inner || !isOpen) return;
 
-            container.innerHTML = keys.map(key => {
+            const filtered = keys.filter(key => {
+                const d = cloudOngkirList[key] || {};
+                return !q || (d.wilayah || '').toLowerCase().includes(q);
+            });
+
+            inner.innerHTML = filtered.length ? filtered.map(key => {
                 const d = cloudOngkirList[key] || {};
                 const tarif = (d.tarif || 0).toLocaleString('id-ID');
-
                 return `
                     <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
                         <div class="flex items-start justify-between gap-3">
@@ -3935,22 +4022,16 @@
                                 Rp ${tarif}
                             </span>
                         </div>
-
                         <div class="grid grid-cols-2 gap-2 mt-3">
-                            <button onclick="editDataOngkir('${key}')" class="w-full py-2.5 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 text-[10px] font-bold uppercase">
-                                Edit
-                            </button>
-                            <button onclick="hapusDataOngkir('${key}')" class="w-full py-2.5 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 text-[10px] font-bold uppercase">
-                                Hapus
-                            </button>
+                            <button onclick="editDataOngkir('${key}')" class="w-full py-2.5 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/40 text-[10px] font-bold uppercase">Edit</button>
+                            <button onclick="hapusDataOngkir('${key}')" class="w-full py-2.5 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 text-[10px] font-bold uppercase">Hapus</button>
                         </div>
                     </div>
                 `;
-            }).join('');
+            }).join('') : '<div class="text-center text-xs text-slate-400 py-4">Belum ada data ongkir.</div>';
 
             if (typeof lucide !== 'undefined') lucide.createIcons();
         };
-
         window.updateOngkirSuggestions = function(type) {
             const input = document.getElementById(type === 'asal' ? 'ongkir-asal' : 'ongkir-tujuan');
             const box = document.getElementById(type === 'asal' ? 'suggest-ongkir-asal' : 'suggest-ongkir-tujuan');
@@ -4616,392 +4697,371 @@
         
             return data[0] || null;
         }
-        
         window.renderKPISection = function(section = 'penghargaan') {
-            const container = document.getElementById('container-kpi-kurir');
-            if (!container) return;
-        
-            currentKPISection = section;
-            const bulan = getKpiMonth();
-            const data = buildKPIData(bulan);
-        
-            const top1 = data[0];
-            const top2 = data[1];
-            const top3 = data[2];
-        
-            const topKurirTerbaik = [...data].sort((a, b) => b.rating - a.rating)[0];
-            const topTrxMitra = [...data].sort((a, b) => b.trxMitra - a.trxMitra)[0];
-            const topAktif = [...data].sort((a, b) => {
-                const offA = (a.totalOff || 0) + (a.totalIzin || 0) + (a.totalSakit || 0);
-                const offB = (b.totalOff || 0) + (b.totalIzin || 0) + (b.totalSakit || 0);
+            if (isRenderKpiRunning) return;
+            isRenderKpiRunning = true;
+            try {
+                const container = document.getElementById('container-kpi-kurir');
+                if (!container) return;
             
-                if ((b.hadir || 0) !== (a.hadir || 0)) {
-                    return (b.hadir || 0) - (a.hadir || 0); // kehadiran terbanyak
-                }
+                currentKPISection = section;
+                const bulan = getKpiMonth();
+                const data = buildKPIData(bulan);
             
-                if (offA !== offB) {
-                    return offA - offB; // off paling sedikit
-                }
+                const top1 = data[0];
+                const top2 = data[1];
+                const top3 = data[2];
             
-                return (b.rating || 0) - (a.rating || 0); // tie breaker
-            })[0];
-            if (section === 'rekapjadwal') {
-                const rekap = window.calcRekapJadwalKurir();
-            
-                container.innerHTML = `
-                    <div class="space-y-3">
-                        ${rekap.length ? rekap.map((r, i) => `
-                            <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-4 space-y-3">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="min-w-0">
-                                        <div class="flex items-center gap-2">
-                                            <div class="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-950 flex items-center justify-center text-violet-600 dark:text-violet-300 font-black text-xs">
-                                                ${i + 1}
-                                            </div>
-                                            <div class="min-w-0">
-                                                <div class="font-bold text-sm truncate">${r.namaKurir}</div>
-                                                <div class="text-[10px] text-slate-400 truncate">Leader: ${r.leader || '-'}</div>
+                const topKurirTerbaik = [...data].sort((a, b) => b.rating - a.rating)[0];
+                const topTrxMitra = [...data].sort((a, b) => b.trxMitra - a.trxMitra)[0];
+                const topAktif = [...data].sort((a, b) => {
+                    const offA = (a.totalOff || 0) + (a.totalIzin || 0) + (a.totalSakit || 0);
+                    const offB = (b.totalOff || 0) + (b.totalIzin || 0) + (b.totalSakit || 0);
+                
+                    if ((b.hadir || 0) !== (a.hadir || 0)) {
+                        return (b.hadir || 0) - (a.hadir || 0);
+                    }
+                
+                    if (offA !== offB) {
+                        return offA - offB;
+                    }
+                
+                    return (b.rating || 0) - (a.rating || 0);
+                })[0];
+
+                if (section === 'rekapjadwal') {
+                    const rekap = window.calcRekapJadwalKurir();
+                
+                    container.innerHTML = `
+                        <div class="space-y-3">
+                            ${rekap.length ? rekap.map((r, i) => `
+                                <div class="bg-white dark:bg-darkCard rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-4 space-y-3">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-950 flex items-center justify-center text-violet-600 dark:text-violet-300 font-black text-xs">
+                                                    ${i + 1}
+                                                </div>
+                                                <div class="min-w-0">
+                                                    <div class="font-bold text-sm truncate">${r.namaKurir}</div>
+                                                    <div class="text-[10px] text-slate-400 truncate">Leader: ${r.leader || '-'}</div>
+                                                </div>
                                             </div>
                                         </div>
+                                        <div class="text-right shrink-0">
+                                            <div class="text-[10px] text-slate-400 uppercase font-bold">Kehadiran</div>
+                                            <div class="text-lg font-black text-success">${r.kehadiran}</div>
+                                        </div>
                                     </div>
-                                    <div class="text-right shrink-0">
-                                        <div class="text-[10px] text-slate-400 uppercase font-bold">Kehadiran</div>
-                                        <div class="text-lg font-black text-success">${r.kehadiran}</div>
+                                    <div class="grid grid-cols-2 gap-2 text-xs">
+                                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
+                                            <div class="text-[10px] text-slate-400 uppercase">Total Off</div>
+                                            <div class="font-bold">${r.totalOff}</div>
+                                        </div>
+                                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
+                                            <div class="text-[10px] text-slate-400 uppercase">Tidak Ambil Off</div>
+                                            <div class="font-bold text-rose-500">${r.totalTidakAmbilOff}</div>
+                                        </div>
+                                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
+                                            <div class="text-[10px] text-slate-400 uppercase">Izin</div>
+                                            <div class="font-bold text-amber-500">${r.totalIzin}</div>
+                                        </div>
+                                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
+                                            <div class="text-[10px] text-slate-400 uppercase">Sakit</div>
+                                            <div class="font-bold text-blue-500">${r.totalSakit}</div>
+                                        </div>
+                                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
+                                            <div class="text-[10px] text-slate-400 uppercase">Absen Masuk</div>
+                                            <div class="font-bold">${r.totalAbsenMasuk}</div>
+                                        </div>
+                                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
+                                            <div class="text-[10px] text-slate-400 uppercase">Absen Pulang</div>
+                                            <div class="font-bold">${r.totalAbsenPulang}</div>
+                                        </div>
                                     </div>
                                 </div>
-            
-                                <div class="grid grid-cols-2 gap-2 text-xs">
-                                    <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
-                                        <div class="text-[10px] text-slate-400 uppercase">Total Off</div>
-                                        <div class="font-bold">${r.totalOff}</div>
+                            `).join('') : `
+                                <div class="text-center text-xs text-slate-400 py-6 bg-white dark:bg-darkCard rounded-2xl border">
+                                    Belum ada data rekap jadwal.
+                                </div>
+                            `}
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (section === 'penghargaan') {
+                    const testimoniTerbaik = getTestimoniTerbaik(bulan);
+                
+                    container.innerHTML = `
+                        <div class="space-y-4">
+                            <div class="rounded-3xl p-5 bg-gradient-to-br from-yellow-100 to-yellow-300 dark:from-yellow-900/40 dark:to-yellow-800/20 border border-yellow-200 dark:border-yellow-900 shadow-xl">
+                                <div class="text-[10px] uppercase tracking-wider text-yellow-700 dark:text-yellow-200 font-black">🏆 Kurir Terbaik</div>
+                                <div class="flex items-center justify-between mt-2">
+                                    <div>
+                                        <div class="text-2xl font-black">${topKurirTerbaik?.nama || '-'}</div>
+                                        <div class="text-xs font-bold mt-1">${topKurirTerbaik ? `${getRatingBadge(topKurirTerbaik.rating).emoji} ${Number(topKurirTerbaik.rating).toFixed(1)}% ${getRatingBadge(topKurirTerbaik.rating).label}` : '-'}</div>
                                     </div>
-                                    <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
-                                        <div class="text-[10px] text-slate-400 uppercase">Tidak Ambil Off</div>
-                                        <div class="font-bold text-rose-500">${r.totalTidakAmbilOff}</div>
-                                    </div>
-                                    <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
-                                        <div class="text-[10px] text-slate-400 uppercase">Izin</div>
-                                        <div class="font-bold text-amber-500">${r.totalIzin}</div>
-                                    </div>
-                                    <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
-                                        <div class="text-[10px] text-slate-400 uppercase">Sakit</div>
-                                        <div class="font-bold text-blue-500">${r.totalSakit}</div>
-                                    </div>
-                                    <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
-                                        <div class="text-[10px] text-slate-400 uppercase">Absen Masuk</div>
-                                        <div class="font-bold">${r.totalAbsenMasuk}</div>
-                                    </div>
-                                    <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60">
-                                        <div class="text-[10px] text-slate-400 uppercase">Absen Pulang</div>
-                                        <div class="font-bold">${r.totalAbsenPulang}</div>
+                                    <div class="w-16 h-16 rounded-full bg-white/70 flex items-center justify-center font-black text-xl text-yellow-900 shadow-lg">
+                                        ${getKpiAvatarName(topKurirTerbaik?.nama || '')}
                                     </div>
                                 </div>
                             </div>
-                        `).join('') : `
-                            <div class="text-center text-xs text-slate-400 py-6 bg-white dark:bg-darkCard rounded-2xl border">
-                                Belum ada data rekap jadwal.
+
+                            <div class="rounded-3xl p-5 bg-gradient-to-br from-pink-100 to-rose-300 dark:from-pink-900/40 dark:to-rose-800/20 border border-pink-200 dark:border-pink-900 shadow-xl">
+                                <div class="text-[10px] uppercase tracking-wider text-pink-700 dark:text-pink-200 font-black">💬 Kurir Testimoni Terbaik</div>
+                                <div class="flex items-center justify-between mt-2">
+                                    <div>
+                                        <div class="text-2xl font-black">${testimoniTerbaik?.nama || '-'}</div>
+                                        <div class="text-xs font-bold mt-1">
+                                            ${testimoniTerbaik ? `⭐ ${testimoniTerbaik.avgRating.toFixed(1)} / 5 dari ${testimoniTerbaik.jumlah} testimoni` : '-'}
+                                        </div>
+                                    </div>
+                                    <div class="w-16 h-16 rounded-full bg-white/70 flex items-center justify-center font-black text-xl text-pink-900 shadow-lg">
+                                        ${getKpiAvatarName(testimoniTerbaik?.nama || '')}
+                                    </div>
+                                </div>
                             </div>
-                        `}
-                    </div>
-                `;
-            
-                return;
-            }
-        
-            if (section === 'penghargaan') {
-                const testimoniTerbaik = getTestimoniTerbaik(bulan);
-            
-                container.innerHTML = `
-                    <div class="space-y-4">
-                        <div class="rounded-3xl p-5 bg-gradient-to-br from-yellow-100 to-yellow-300 dark:from-yellow-900/40 dark:to-yellow-800/20 border border-yellow-200 dark:border-yellow-900 shadow-xl">
-                            <div class="text-[10px] uppercase tracking-wider text-yellow-700 dark:text-yellow-200 font-black">🏆 Kurir Terbaik</div>
-                            <div class="flex items-center justify-between mt-2">
-                                <div>
-                                    <div class="text-2xl font-black">${topKurirTerbaik?.nama || '-'}</div>
-                                    <div class="text-xs font-bold mt-1">${topKurirTerbaik ? `${getRatingBadge(topKurirTerbaik.rating).emoji} ${Number(topKurirTerbaik.rating).toFixed(1)}% ${getRatingBadge(topKurirTerbaik.rating).label}` : '-'}</div>
+
+                            <div class="rounded-3xl p-5 bg-gradient-to-br from-slate-200 to-slate-400 dark:from-slate-700 dark:to-slate-800 border shadow-xl">
+                                <div class="text-[10px] uppercase tracking-wider text-slate-700 dark:text-slate-200 font-black">🥇 Trx Mitra Terbanyak</div>
+                                <div class="flex items-center justify-between mt-2">
+                                    <div>
+                                        <div class="text-2xl font-black text-slate-900 dark:text-white">${topTrxMitra?.nama || '-'}</div>
+                                        <div class="text-xs font-bold mt-1 text-slate-700 dark:text-slate-200">${topTrxMitra?.trxMitra || 0} trx</div>
+                                    </div>
+                                    <div class="w-16 h-16 rounded-full bg-white/70 flex items-center justify-center font-black text-xl text-slate-900 shadow-lg">
+                                        ${getKpiAvatarName(topTrxMitra?.nama || '')}
+                                    </div>
                                 </div>
-                                <div class="w-16 h-16 rounded-full bg-white/70 flex items-center justify-center font-black text-xl text-yellow-900 shadow-lg">
-                                    ${getKpiAvatarName(topKurirTerbaik?.nama || '')}
+                            </div>
+
+                            <div class="rounded-3xl p-5 bg-gradient-to-br from-orange-100 to-orange-300 dark:from-orange-900/40 dark:to-orange-800/20 border border-orange-200 dark:border-orange-900 shadow-xl">
+                                <div class="text-[10px] uppercase tracking-wider text-orange-700 dark:text-orange-200 font-black">🔥 Kurir Paling Aktif</div>
+                                <div class="flex items-center justify-between mt-2">
+                                    <div>
+                                        <div class="text-2xl font-black">${topAktif?.nama || '-'}</div>
+                                        <div class="text-xs font-bold mt-1 text-orange-700 dark:text-orange-200">Rating ${topAktif?.rating || 0}%</div>
+                                    </div>
+                                    <div class="w-16 h-16 rounded-full bg-white/70 flex items-center justify-center font-black text-xl text-orange-900 shadow-lg">
+                                        ${getKpiAvatarName(topAktif?.nama || '')}
+                                    </div>
                                 </div>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-2">
+                                ${[top1, top2, top3].map((x, idx) => {
+                                    if (!x) return `<div class="rounded-2xl bg-slate-100 dark:bg-slate-800 p-3 text-center text-xs">-</div>`;
+                                    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
+                                    const bg = idx === 0 ? 'from-yellow-300 to-yellow-500' : idx === 1 ? 'from-slate-300 to-slate-500' : 'from-orange-300 to-orange-500';
+                                    return `
+                                        <div class="rounded-2xl bg-gradient-to-br ${bg} p-3 text-center shadow-lg">
+                                            <div class="text-2xl">${medal}</div>
+                                            <div class="font-black text-sm mt-1">${x.nama}</div>
+                                            <div class="text-[10px] font-bold">${Number(x.rating).toFixed(1)}%</div>
+                                        </div>
+                                    `;
+                                }).join('')}
                             </div>
                         </div>
-            
-                        <div class="rounded-3xl p-5 bg-gradient-to-br from-pink-100 to-rose-300 dark:from-pink-900/40 dark:to-rose-800/20 border border-pink-200 dark:border-pink-900 shadow-xl">
-                            <div class="text-[10px] uppercase tracking-wider text-pink-700 dark:text-pink-200 font-black">💬 Kurir Testimoni Terbaik</div>
-                            <div class="flex items-center justify-between mt-2">
-                                <div>
-                                    <div class="text-2xl font-black">${testimoniTerbaik?.nama || '-'}</div>
-                                    <div class="text-xs font-bold mt-1">
-                                        ${testimoniTerbaik ? `⭐ ${testimoniTerbaik.avgRating.toFixed(1)} / 5 dari ${testimoniTerbaik.jumlah} testimoni` : '-'}
-                                    </div>
-                                </div>
-                                <div class="w-16 h-16 rounded-full bg-white/70 flex items-center justify-center font-black text-xl text-pink-900 shadow-lg">
-                                    ${getKpiAvatarName(testimoniTerbaik?.nama || '')}
-                                </div>
-                            </div>
-                        </div>
-            
-                        <div class="rounded-3xl p-5 bg-gradient-to-br from-slate-200 to-slate-400 dark:from-slate-700 dark:to-slate-800 border shadow-xl">
-                            <div class="text-[10px] uppercase tracking-wider text-slate-700 dark:text-slate-200 font-black">🥇 Trx Mitra Terbanyak</div>
-                            <div class="flex items-center justify-between mt-2">
-                                <div>
-                                    <div class="text-2xl font-black text-slate-900 dark:text-white">${topTrxMitra?.nama || '-'}</div>
-                                    <div class="text-xs font-bold mt-1 text-slate-700 dark:text-slate-200">${topTrxMitra?.trxMitra || 0} trx</div>
-                                </div>
-                                <div class="w-16 h-16 rounded-full bg-white/70 flex items-center justify-center font-black text-xl text-slate-900 shadow-lg">
-                                    ${getKpiAvatarName(topTrxMitra?.nama || '')}
-                                </div>
-                            </div>
-                        </div>
-            
-                        <div class="rounded-3xl p-5 bg-gradient-to-br from-orange-100 to-orange-300 dark:from-orange-900/40 dark:to-orange-800/20 border border-orange-200 dark:border-orange-900 shadow-xl">
-                            <div class="text-[10px] uppercase tracking-wider text-orange-700 dark:text-orange-200 font-black">🔥 Kurir Paling Aktif</div>
-                            <div class="flex items-center justify-between mt-2">
-                                <div>
-                                    <div class="text-2xl font-black">${topAktif?.nama || '-'}</div>
-                                    <div class="text-xs font-bold mt-1 text-orange-700 dark:text-orange-200">Rating ${topAktif?.rating || 0}%</div>
-                                </div>
-                                <div class="w-16 h-16 rounded-full bg-white/70 flex items-center justify-center font-black text-xl text-orange-900 shadow-lg">
-                                    ${getKpiAvatarName(topAktif?.nama || '')}
-                                </div>
-                            </div>
-                        </div>
-            
-                        <div class="grid grid-cols-3 gap-2">
-                            ${[top1, top2, top3].map((x, idx) => {
-                                if (!x) return `<div class="rounded-2xl bg-slate-100 dark:bg-slate-800 p-3 text-center text-xs">-</div>`;
-                                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉';
-                                const bg = idx === 0 ? 'from-yellow-300 to-yellow-500' : idx === 1 ? 'from-slate-300 to-slate-500' : 'from-orange-300 to-orange-500';
-                                return `
-                                    <div class="rounded-2xl bg-gradient-to-br ${bg} p-3 text-center shadow-lg">
-                                        <div class="text-2xl">${medal}</div>
-                                        <div class="font-black text-sm mt-1">${x.nama}</div>
-                                        <div class="text-[10px] font-bold">${Number(x.rating).toFixed(1)}%</div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                `;
-                return;
-            }
-        
-            if (section === 'top5') {
-                const today = getWibRawDate();
-            
-                const topNota = [...data].sort((a, b) => b.totalNota - a.totalNota).slice(0, 5);
-                const topPenghasilan = [...data].sort((a, b) => b.totalPenghasilan - a.totalPenghasilan).slice(0, 5);
-                const topKonsisten = [...data].sort((a, b) => b.rating - a.rating).slice(0, 5);
-            
-                // TOP 5 HARI INI
-                const todayData = [];
-                Object.entries(cloudKurirList || {}).forEach(([id, u]) => {
-                    if (!u || u.role !== 'kurir') return;
-                    if (u.status && u.status !== 'aktif') return;
-            
-                    const nama = (u.nama || '').trim();
-                    const username = (u.username || '').trim();
-            
-                    let notaHariIni = 0;
-                    let penghasilanHariIni = 0;
-            
-                    Object.values(cloudNotaList || {}).forEach(n => {
-                        if (!n) return;
-                        const kurirUsername = (n.kurirUsername || '').trim().toLowerCase();
-                        const kurirNama = (n.kurirNama || '').trim().toLowerCase();
-                        if (kurirUsername !== username.toLowerCase() && kurirNama !== nama.toLowerCase()) return;
-                        if (n.tanggalRaw !== today) return;
-            
-                        notaHariIni++;
-                        const ongkir = parseInt(n.ongkir) || 0;
-                        const biaya = (n.biayaTambahan || []).reduce((a, b) => a + (parseInt(b.nominal) || 0), 0);
-                        penghasilanHariIni += (ongkir + biaya);
+                    `;
+                    return;
+                }
+
+                if (section === 'top5') {
+                    const today = getWibRawDate();
+                    const topNota = [...data].sort((a, b) => b.totalNota - a.totalNota).slice(0, 5);
+                    const topPenghasilan = [...data].sort((a, b) => b.totalPenghasilan - a.totalPenghasilan).slice(0, 5);
+                    const topKonsisten = [...data].sort((a, b) => b.rating - a.rating).slice(0, 5);
+
+                    const todayData = [];
+                    Object.entries(cloudKurirList || {}).forEach(([id, u]) => {
+                        if (!u || u.role !== 'kurir') return;
+                        if (u.status && u.status !== 'aktif') return;
+
+                        const nama = (u.nama || '').trim();
+                        const username = (u.username || '').trim();
+
+                        let notaHariIni = 0;
+                        let penghasilanHariIni = 0;
+
+                        Object.values(cloudNotaList || {}).forEach(n => {
+                            if (!n) return;
+                            const kurirUsername = (n.kurirUsername || '').trim().toLowerCase();
+                            const kurirNama = (n.kurirNama || '').trim().toLowerCase();
+                            if (kurirUsername !== username.toLowerCase() && kurirNama !== nama.toLowerCase()) return;
+                            if (n.tanggalRaw !== today) return;
+
+                            notaHariIni++;
+                            const ongkir = parseInt(n.ongkir) || 0;
+                            const biaya = (n.biayaTambahan || []).reduce((a, b) => a + (parseInt(b.nominal) || 0), 0);
+                            penghasilanHariIni += (ongkir + biaya);
+                        });
+
+                        todayData.push({ id, nama, username, notaHariIni, penghasilanHariIni });
                     });
-            
-                    todayData.push({
-                        id,
-                        nama,
-                        username,
-                        notaHariIni,
-                        penghasilanHariIni
-                    });
-                });
-            
-                const topNotaHariIni = [...todayData].sort((a, b) => b.notaHariIni - a.notaHariIni).slice(0, 5);
-                const topPenghasilanHariIni = [...todayData].sort((a, b) => b.penghasilanHariIni - a.penghasilanHariIni).slice(0, 5);
-            
+
+                    const topNotaHariIni = [...todayData].sort((a, b) => b.notaHariIni - a.notaHariIni).slice(0, 5);
+                    const topPenghasilanHariIni = [...todayData].sort((a, b) => b.penghasilanHariIni - a.penghasilanHariIni).slice(0, 5);
+
+                    container.innerHTML = `
+                        <div class="space-y-3">
+                            <div class="p-4 rounded-3xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-xl">
+                                <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Total Nota (${bulan})</h4>
+                                ${topNota.map((x, i) => `
+                                    <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
+                                        <div>
+                                            <div class="font-bold">${i+1}. ${x.nama}</div>
+                                            <div class="text-[10px] opacity-80">${getRatingBadge(x.rating).emoji} ${Number(x.rating).toFixed(1)}% ${getRatingBadge(x.rating).label}</div>
+                                        </div>
+                                        <div class="font-black">${x.totalNota}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="p-4 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xl">
+                                <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Penghasilan (${bulan})</h4>
+                                ${topPenghasilan.map((x, i) => `
+                                    <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
+                                        <div>
+                                            <div class="font-bold">${i+1}. ${x.nama}</div>
+                                            <div class="text-[10px] opacity-80">${getRatingBadge(x.rating).emoji} ${Number(x.rating).toFixed(1)}% ${getRatingBadge(x.rating).label}</div>
+                                        </div>
+                                        <div class="font-black">Rp ${x.totalPenghasilan.toLocaleString('id-ID')}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="p-4 rounded-3xl bg-gradient-to-br from-orange-500 to-rose-500 text-white shadow-xl">
+                                <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Ranking (${bulan})</h4>
+                                ${topKonsisten.map((x, i) => `
+                                    <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
+                                        <div>
+                                            <div class="font-bold">${i+1}. ${x.nama}</div>
+                                            <div class="text-[10px] opacity-80">${getRatingBadge(x.rating).emoji} ${Number(x.rating).toFixed(1)}% ${getRatingBadge(x.rating).label}</div>
+                                        </div>
+                                        <div class="font-black">${x.rating}%</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="p-4 rounded-3xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-xl">
+                                <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Nota Hari Ini (${today})</h4>
+                                ${topNotaHariIni.length ? topNotaHariIni.map((x, i) => `
+                                    <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
+                                        <div class="min-w-0">
+                                            <div class="font-bold truncate">${i+1}. ${x.nama}</div>
+                                            <div class="text-[10px] opacity-80">Nota hari ini</div>
+                                        </div>
+                                        <div class="font-black">${x.notaHariIni}</div>
+                                    </div>
+                                `).join('') : `<div class="text-xs opacity-80">Belum ada nota hari ini.</div>`}
+                            </div>
+                            <div class="p-4 rounded-3xl bg-gradient-to-br from-fuchsia-500 to-pink-600 text-white shadow-xl">
+                                <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Penghasilan Hari Ini (${today})</h4>
+                                ${topPenghasilanHariIni.length ? topPenghasilanHariIni.map((x, i) => `
+                                    <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
+                                        <div class="min-w-0">
+                                            <div class="font-bold truncate">${i+1}. ${x.nama}</div>
+                                            <div class="text-[10px] opacity-80">Hari ini</div>
+                                        </div>
+                                        <div class="font-black">Rp ${x.penghasilanHariIni.toLocaleString('id-ID')}</div>
+                                    </div>
+                                `).join('') : `<div class="text-xs opacity-80">Belum ada penghasilan hari ini.</div>`}
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
                 container.innerHTML = `
                     <div class="space-y-3">
-                        <div class="p-4 rounded-3xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-xl">
-                            <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Total Nota (${bulan})</h4>
-                            ${topNota.map((x, i) => `
-                                <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
-                                    <div>
-                                        <div class="font-bold">${i+1}. ${x.nama}</div>
-                                        <div class="text-[10px] opacity-80">${getRatingBadge(x.rating).emoji} ${Number(x.rating).toFixed(1)}% ${getRatingBadge(x.rating).label}</div>
-                                    </div>
-                                    <div class="font-black">${x.totalNota}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-            
-                        <div class="p-4 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-xl">
-                            <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Penghasilan (${bulan})</h4>
-                            ${topPenghasilan.map((x, i) => `
-                                <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
-                                    <div>
-                                        <div class="font-bold">${i+1}. ${x.nama}</div>
-                                        <div class="text-[10px] opacity-80">${getRatingBadge(x.rating).emoji} ${Number(x.rating).toFixed(1)}% ${getRatingBadge(x.rating).label}</div>
-                                    </div>
-                                    <div class="font-black">Rp ${x.totalPenghasilan.toLocaleString('id-ID')}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-            
-                        <div class="p-4 rounded-3xl bg-gradient-to-br from-orange-500 to-rose-500 text-white shadow-xl">
-                            <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Ranking (${bulan})</h4>
-                            ${topKonsisten.map((x, i) => `
-                                <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
-                                    <div>
-                                        <div class="font-bold">${i+1}. ${x.nama}</div>
-                                        <div class="text-[10px] opacity-80">${getRatingBadge(x.rating).emoji} ${Number(x.rating).toFixed(1)}% ${getRatingBadge(x.rating).label}</div>
-                                    </div>
-                                    <div class="font-black">${x.rating}%</div>
-                                </div>
-                            `).join('')}
-                        </div>
-            
-                        <div class="p-4 rounded-3xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-xl">
-                            <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Nota Hari Ini (${today})</h4>
-                            ${topNotaHariIni.length ? topNotaHariIni.map((x, i) => `
-                                <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
-                                    <div class="min-w-0">
-                                        <div class="font-bold truncate">${i+1}. ${x.nama}</div>
-                                        <div class="text-[10px] opacity-80">Nota hari ini</div>
-                                    </div>
-                                    <div class="font-black">${x.notaHariIni}</div>
-                                </div>
-                            `).join('') : `
-                                <div class="text-xs opacity-80">Belum ada nota hari ini.</div>
-                            `}
-                        </div>
-            
-                        <div class="p-4 rounded-3xl bg-gradient-to-br from-fuchsia-500 to-pink-600 text-white shadow-xl">
-                            <h4 class="text-xs font-black uppercase tracking-wider mb-3">Top 5 Penghasilan Hari Ini (${today})</h4>
-                            ${topPenghasilanHariIni.length ? topPenghasilanHariIni.map((x, i) => `
-                                <div class="flex items-center justify-between py-2 border-b border-white/15 last:border-0">
-                                    <div class="min-w-0">
-                                        <div class="font-bold truncate">${i+1}. ${x.nama}</div>
-                                        <div class="text-[10px] opacity-80">Hari ini</div>
-                                    </div>
-                                    <div class="font-black">Rp ${x.penghasilanHariIni.toLocaleString('id-ID')}</div>
-                                </div>
-                            `).join('') : `
-                                <div class="text-xs opacity-80">Belum ada penghasilan hari ini.</div>
-                            `}
-                        </div>
-                    </div>
-                `;
-                return;
-            }
-            container.innerHTML = `
-                <div class="space-y-3">
-                    ${data.map((x, i) => {
-                        const badge = getRatingBadge(x.rating);
-                        const podium = getPodiumClass(i + 1);
-                        const progress = progressColor(x.rating);
-                        const isTop3 = i < 3;
-            
-                        return `
-                            <div onclick="openKpiDetailModal('${x.id || ''}')" 
-                                 class="relative overflow-hidden rounded-2xl sm:rounded-[28px] border border-white/60 dark:border-slate-700 bg-white/95 dark:bg-darkCard shadow-lg cursor-pointer active:scale-[0.99] transition-transform">
-                                
-                                <div class="absolute inset-0 opacity-60 bg-gradient-to-br ${isTop3 ? 'from-white via-white to-violet-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800' : 'from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800'}"></div>
-            
-                                <div class="relative p-3 sm:p-4">
-                                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                        
-                                        <div class="flex items-start gap-3 min-w-0">
-                                            <div class="relative w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-2xl sm:rounded-[22px] bg-gradient-to-br ${isTop3 ? podium : 'from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800'} p-[2px] shadow-lg">
-                                                <div class="w-full h-full rounded-[18px] sm:rounded-[20px] bg-white dark:bg-darkCard flex items-center justify-center ring-4 ${badge.ring}">
-                                                    <div class="text-center leading-none">
-                                                        <div class="text-base sm:text-lg font-black">${getKpiAvatarName(x.nama)}</div>
-                                                        <div class="text-[8px] sm:text-[9px] font-black uppercase text-slate-400 mt-1">#${i + 1}</div>
+                        ${data.map((x, i) => {
+                            const badge = getRatingBadge(x.rating);
+                            const podium = getPodiumClass(i + 1);
+                            const progress = progressColor(x.rating);
+                            const isTop3 = i < 3;
+
+                            return `
+                                <div onclick="openKpiDetailModal('${x.id || ''}')" class="relative overflow-hidden rounded-2xl sm:rounded-[28px] border border-white/60 dark:border-slate-700 bg-white/95 dark:bg-darkCard shadow-lg cursor-pointer active:scale-[0.99] transition-transform">
+                                    <div class="absolute inset-0 opacity-60 bg-gradient-to-br ${isTop3 ? 'from-white via-white to-violet-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800' : 'from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800'}"></div>
+                                    <div class="relative p-3 sm:p-4">
+                                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                            <div class="flex items-start gap-3 min-w-0">
+                                                <div class="relative w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-2xl sm:rounded-[22px] bg-gradient-to-br ${isTop3 ? podium : 'from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800'} p-[2px] shadow-lg">
+                                                    <div class="w-full h-full rounded-[18px] sm:rounded-[20px] bg-white dark:bg-darkCard flex items-center justify-center ring-4 ${badge.ring}">
+                                                        <div class="text-center leading-none">
+                                                            <div class="text-base sm:text-lg font-black">${getKpiAvatarName(x.nama)}</div>
+                                                            <div class="text-[8px] sm:text-[9px] font-black uppercase text-slate-400 mt-1">#${i + 1}</div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-            
-                                            <div class="min-w-0">
-                                                <div class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider ${isTop3 ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}">
-                                                    ${isTop3 ? 'TOP RANK' : 'RANK'} ${i + 1}
+                                                <div class="min-w-0">
+                                                    <div class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider ${isTop3 ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}">
+                                                        ${isTop3 ? 'TOP RANK' : 'RANK'} ${i + 1}
+                                                    </div>
+                                                    <div class="text-base sm:text-lg font-black mt-2 truncate">${x.nama}</div>
+                                                    <div class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">Leader: ${x.leader || '-'}</div>
                                                 </div>
-                                                <div class="text-base sm:text-lg font-black mt-2 truncate">${x.nama}</div>
-                                                <div class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">Leader: ${x.leader || '-'}</div>
+                                            </div>
+                                            <div class="flex items-center justify-between sm:flex-col sm:items-end gap-2 shrink-0">
+                                                <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r ${badge.bg || 'from-slate-100 to-slate-200'} text-white text-[9px] sm:text-[10px] font-black shadow-md">
+                                                    <span>${badge.emoji}</span>
+                                                    <span>${badge.label}</span>
+                                                </div>
+                                                <div class="text-2xl sm:text-3xl font-black ${badge.color || 'text-slate-900 dark:text-white'}">
+                                                    ${Number(x.rating).toFixed(1)}%
+                                                </div>
                                             </div>
                                         </div>
-            
-                                        <div class="flex items-center justify-between sm:flex-col sm:items-end gap-2 shrink-0">
-                                            <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r ${badge.bg || 'from-slate-100 to-slate-200'} text-white text-[9px] sm:text-[10px] font-black shadow-md">
-                                                <span>${badge.emoji}</span>
-                                                <span>${badge.label}</span>
+                                        <div class="mt-4 grid grid-cols-2 gap-2">
+                                            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                                                <div class="text-[10px] text-slate-400 uppercase font-bold">Trx Mitra</div>
+                                                <div class="text-sm sm:text-base font-black mt-1">${x.trxMitra}</div>
                                             </div>
-                                            <div class="text-2xl sm:text-3xl font-black ${badge.color || 'text-slate-900 dark:text-white'}">
-                                                ${Number(x.rating).toFixed(1)}%
+                                            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                                                <div class="text-[10px] text-slate-400 uppercase font-bold">Total Nota</div>
+                                                <div class="text-sm sm:text-base font-black mt-1">${x.totalNota}</div>
                                             </div>
-                                        </div>
-                                    </div>
-            
-                                    <div class="mt-4 grid grid-cols-2 gap-2">
-                                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
-                                            <div class="text-[10px] text-slate-400 uppercase font-bold">Trx Mitra</div>
-                                            <div class="text-sm sm:text-base font-black mt-1">${x.trxMitra}</div>
-                                        </div>
-                                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
-                                            <div class="text-[10px] text-slate-400 uppercase font-bold">Total Nota</div>
-                                            <div class="text-sm sm:text-base font-black mt-1">${x.totalNota}</div>
-                                        </div>
-                                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
-                                            <div class="text-[10px] text-slate-400 uppercase font-bold">Penghasilan</div>
-                                            <div class="text-sm sm:text-base font-black mt-1 text-emerald-600 dark:text-emerald-400">
-                                                Rp ${x.totalPenghasilan.toLocaleString('id-ID')}
+                                            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                                                <div class="text-[10px] text-slate-400 uppercase font-bold">Penghasilan</div>
+                                                <div class="text-sm sm:text-base font-black mt-1 text-emerald-600 dark:text-emerald-400">
+                                                    Rp ${x.totalPenghasilan.toLocaleString('id-ID')}
+                                                </div>
+                                            </div>
+                                            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
+                                                <div class="text-[10px] text-slate-400 uppercase font-bold">Rating</div>
+                                                <div class="text-sm sm:text-base font-black mt-1">${x.rating}%</div>
                                             </div>
                                         </div>
-                                        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700">
-                                            <div class="text-[10px] text-slate-400 uppercase font-bold">Rating</div>
-                                            <div class="text-sm sm:text-base font-black mt-1">${x.rating}%</div>
+                                        <div class="mt-4 space-y-1.5">
+                                            <div class="flex justify-between text-[10px] font-bold uppercase text-slate-400">
+                                                <span>Progress Ranking</span>
+                                                <span>${x.rating}%</span>
+                                            </div>
+                                            <div class="h-2.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                                                <div class="h-full ${progress} rounded-full shadow-inner transition-all duration-500" style="width:${x.rating}%"></div>
+                                            </div>
                                         </div>
-                                    </div>
-            
-                                    <div class="mt-4 space-y-1.5">
-                                        <div class="flex justify-between text-[10px] font-bold uppercase text-slate-400">
-                                            <span>Progress Ranking</span>
-                                            <span>${x.rating}%</span>
+                                        <div class="mt-3 text-[10px] text-primary font-bold">
+                                            Tap card untuk lihat detail perhitungan
                                         </div>
-                                        <div class="h-2.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                                            <div class="h-full ${progress} rounded-full shadow-inner transition-all duration-500" style="width:${x.rating}%"></div>
-                                        </div>
-                                    </div>
-            
-                                    <div class="mt-3 text-[10px] text-primary font-bold">
-                                        Tap card untuk lihat detail perhitungan
                                     </div>
                                 </div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            
-                <div class="mt-4 p-4 rounded-3xl bg-white/90 dark:bg-darkCard border border-slate-100 dark:border-slate-800 shadow-lg">
-                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Keterangan Perhitungan Ranking</h4>
-                    <div class="text-[11px] text-slate-600 dark:text-slate-300 space-y-2 leading-relaxed">
-                        <p><b>1. Kehadiran (20%)</b> = Hadir dari absen masuk + pulang. Masuk atau pulang saja dihitung setengah.</p>
-                        <p><b>2. Total Penghasilan (20%)</b> = Penghasilan bulanan dari ongkir + biaya tambahan.</p>
-                        <p><b>3. Total Nota (30%)</b> = Jumlah nota bulanan yang berhasil diinput.</p>
-                        <p><b>4. Trx Mitra (20%)</b> = Total transaksi mitra bulanan.</p>
-                        <p><b>5. Total OFF / Izin / Sakit (10%)</b> = Normal maksimal 3/bulan, lebih dari itu poin berkurang.</p>
+                            `;
+                        }).join('')}
                     </div>
-                </div>
-            `;
+                    <div class="mt-4 p-4 rounded-3xl bg-white/90 dark:bg-darkCard border border-slate-100 dark:border-slate-800 shadow-lg">
+                        <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Keterangan Perhitungan Ranking</h4>
+                        <div class="text-[11px] text-slate-600 dark:text-slate-300 space-y-2 leading-relaxed">
+                            <p><b>1. Kehadiran (20%)</b> = Hadir dari absen masuk + pulang. Masuk atau pulang saja dihitung setengah.</p>
+                            <p><b>2. Total Penghasilan (20%)</b> = Penghasilan bulanan dari ongkir + biaya tambahan.</p>
+                            <p><b>3. Total Nota (30%)</b> = Jumlah nota bulanan yang berhasil diinput.</p>
+                            <p><b>4. Trx Mitra (20%)</b> = Total transaksi mitra bulanan.</p>
+                            <p><b>5. Total OFF / Izin / Sakit (10%)</b> = Normal maksimal 3/bulan, lebih dari itu poin berkurang.</p>
+                        </div>
+                    </div>
+                `;
+            } finally {
+                isRenderKpiRunning = false;
+            }
         };
         window.saveDataManajemen = function() {
             const idEdit = document.getElementById('manajemen-id-edit').value;
@@ -5106,49 +5166,57 @@
                     .catch(err => alert('Gagal hapus: ' + err.message));
             }
         };
-        
-      window.renderAdminManajemen = function() {
-          const container = document.getElementById('container-admin-manajemen');
-          if (!container) return;
-      
-          container.innerHTML = '';
-      
-          const keys = Object.keys(cloudManajemenList || {});
-          if (keys.length === 0) {
-              container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data.</div>';
-              return;
-          }
-      
-          keys.forEach(key => {
-              const d = cloudManajemenList[key];
-              const statusColor = d.status === 'aktif' ? 'bg-emerald-500' : 'bg-rose-500';
-      
-              container.innerHTML += `
-                  <div class="bg-white dark:bg-darkCard p-3.5 rounded-xl border dark:border-slate-800 shadow-sm space-y-2 text-xs">
-                      <div class="flex justify-between items-center">
-                          <div class="flex items-center gap-2">
-                              <span class="w-2.5 h-2.5 rounded-full ${statusColor}"></span>
-                              <span class="font-bold text-sm dark:text-white">${d.nama || '-'}</span>
-                          </div>
-                          <span class="text-[10px] text-slate-400">${d.kategori || '-'}</span>
-                      </div>
-      
-                      <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg grid grid-cols-1 gap-1 font-mono text-[11px]">
-                          <div class="dark:text-slate-300">User: <span class="text-primary font-bold">${d.username || '-'}</span></div>
-                          <div class="dark:text-slate-300">Pass: <span class="text-amber-500 font-bold">${d.password || '-'}</span></div>
-                          <div class="dark:text-slate-300">Status: <span class="font-bold ${d.status === 'aktif' ? 'text-emerald-500' : 'text-rose-500'}">${d.status || '-'}</span></div>
-                      </div>
-      
-                      <div class="flex justify-end space-x-2 pt-1">
-                          <button onclick="editDataManajemen('${key}')" class="px-2.5 py-1 bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-white rounded-md font-semibold">Edit</button>
-                          <button onclick="hapusDataManajemen('${key}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 rounded-md font-semibold">Hapus</button>
-                      </div>
-                  </div>
-              `;
-          });
-      
-          if (typeof lucide !== 'undefined') lucide.createIcons();
-      };
+        window.renderAdminManajemen = function() {
+            const container = document.getElementById('container-admin-manajemen');
+            if (!container) return;
+
+            const isOpen = ensureSectionToggleState('container-admin-manajemen', false);
+            const keys = Object.keys(cloudManajemenList || {});
+
+            container.innerHTML = `
+                <div class="flex items-center gap-2 mb-2">
+                    <button type="button" onclick="toggleSectionList('container-admin-manajemen')" class="flex-1 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
+                        ${isOpen ? 'Tutup' : 'Buka'}
+                    </button>
+                </div>
+                <div id="container-admin-manajemen-inner" class="${isOpen ? '' : 'hidden'} space-y-2.5"></div>
+            `;
+
+            const inner = document.getElementById('container-admin-manajemen-inner');
+            if (!inner || !isOpen) return;
+
+            if (!keys.length) {
+                inner.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data.</div>';
+                return;
+            }
+
+            inner.innerHTML = keys.map(key => {
+                const d = cloudManajemenList[key];
+                const statusColor = d.status === 'aktif' ? 'bg-emerald-500' : 'bg-rose-500';
+                return `
+                    <div class="bg-white dark:bg-darkCard p-3.5 rounded-xl border dark:border-slate-800 shadow-sm space-y-2 text-xs">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="w-2.5 h-2.5 rounded-full ${statusColor} shrink-0"></span>
+                                <span class="font-bold text-sm dark:text-white truncate">${d.nama || '-'}</span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 shrink-0">${d.kategori || '-'}</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg grid grid-cols-1 gap-1 font-mono text-[11px]">
+                            <div class="dark:text-slate-300">User: <span class="text-primary font-bold">${d.username || '-'}</span></div>
+                            <div class="dark:text-slate-300">Pass: <span class="text-amber-500 font-bold">${d.password || '-'}</span></div>
+                            <div class="dark:text-slate-300">Status: <span class="font-bold ${d.status === 'aktif' ? 'text-emerald-500' : 'text-rose-500'}">${d.status || '-'}</span></div>
+                        </div>
+                        <div class="flex justify-end gap-2 pt-1">
+                            <button onclick="editDataManajemen('${key}')" class="px-2.5 py-1 bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-white rounded-md font-semibold">Edit</button>
+                            <button onclick="hapusDataManajemen('${key}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 rounded-md font-semibold">Hapus</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        };
       window.applyManajemenAccess = function(kategori) {
           const kategoriFixed = (kategori || '').trim();
           const badge = document.getElementById('badge-admin-role');
@@ -5685,6 +5753,7 @@
           if (dropdown) dropdown.innerHTML = html;
           if (dropdownEdit) dropdownEdit.innerHTML = html;
       }
+      
       function populateAnggotaDropdownLeader() {
           const select = document.getElementById('leader-anggota');
           if (!select) return;
@@ -5859,59 +5928,16 @@
           `;
           box.classList.remove('hidden');
       }
+      
       onValue(ref(db, 'notifications_admin'), (snapshot) => {
           cloudNotificationList = snapshot.val() || {};
+          queueUiRefresh();
       });
-
       window.dismissKurirNotification = function(notifId) {
           hideNotifForCurrentUser(notifId);
           renderKurirNotifications();
       };
 
-      function renderAdminNotificationHistory() {
-          const container = document.getElementById('container-admin-notification-history');
-          if (!container) return;
-      
-          const items = Object.entries(cloudNotificationList || {})
-              .sort((a, b) => {
-                  const ta = a[1]?.createdAt || '';
-                  const tb = b[1]?.createdAt || '';
-                  return tb.localeCompare(ta);
-              });
-      
-          container.innerHTML = '';
-      
-          if (!items.length) {
-              container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada notifikasi.</div>';
-              return;
-          }
-      
-          items.forEach(([key, n]) => {
-              const targetText = n.target === 'all'
-                  ? 'Semua Kurir'
-                  : `Kurir Terpilih (${(n.targetList || []).length})`;
-      
-              container.innerHTML += `
-                    <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border text-xs space-y-2">
-                        <div class="flex justify-between items-start gap-2">
-                            <div class="min-w-0 flex-1">
-                                <div class="font-bold text-[11px] sm:text-sm leading-snug break-words">${n.message || '-'}</div>
-                                <div class="text-[10px] text-slate-400 mt-1">${targetText}</div>
-                                <div class="text-[10px] text-slate-400">${n.createdAt ? new Date(n.createdAt).toLocaleString('id-ID') : '-'}</div>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button onclick="resendNotification('${key}')" class="w-full py-2 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-bold uppercase">
-                                Kirim Lagi
-                            </button>
-                            <button onclick="deleteNotification('${key}')" class="w-full py-2 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-bold uppercase">
-                                Hapus
-                            </button>
-                        </div>
-                    </div>
-              `;
-          });
-      }
       window.resendNotification = function(key) {
           const n = cloudNotificationList[key];
           if (!n) return;
