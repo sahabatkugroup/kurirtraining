@@ -342,24 +342,18 @@
                 populateLeaderDropdown();
                 populateAnggotaDropdownLeader();
                 renderAdminLogMitra();
-        
                 if (pendingAutoLoginCheck && userSession && userSession.role === 'kurir') {
                     const currentKurir = cloudKurirList[userSession.id];
                     if (currentKurir && currentKurir.status === 'aktif') {
                         launchApplicationSession("screen-dashboard");
                         if (typeof startLiveLocationTracking === "function") startLiveLocationTracking();
-                        setTimeout(() => {
-                            renderKurirNotifications();
-                        }, 300);
                     } else if (currentKurir && currentKurir.status !== 'aktif') {
                         alert("Sesi berakhir. Akun Anda telah dinonaktifkan oleh Admin.");
                         handleLogout();
                     }
                     pendingAutoLoginCheck = false;
                 }
-                setTimeout(() => {
-                    renderKurirNotifications();
-                }, 300);
+
             });
         
             onValue(ref(db, 'nota'), (snapshot) => {
@@ -392,10 +386,6 @@
         
             onValue(ref(db, 'live_locations'), (snapshot) => {
                 liveLocations = snapshot.val() || {};
-                if (userSession && userSession.role === 'admin' && currentScreen === 'screen-admin-tracking') {
-                    renderTrackingKurirList();
-                    if (selectedKurirTracking) renderTrackingMap(selectedKurirTracking);
-                }
             });
         
             onValue(ref(db, 'log_mitra'), (snapshot) => {
@@ -584,11 +574,11 @@
                 const box = document.getElementById('suggest-absensi-kurir');
                 const input = document.getElementById('absensi-filter-nama');
                 if (!box || !input) return;
-        
+
                 if (!box.contains(e.target) && e.target !== input) {
                     box.classList.add('hidden');
                 }
-            });cleanupDailyLiveLocations();
+            });
         });
         
         window.handleLogin = function(e) {
@@ -2949,30 +2939,18 @@
         
         document.addEventListener('DOMContentLoaded', () => {
             const anBulanEl = document.getElementById('an-filter-bulan');
-            if (anBulanEl && !anBulanEl.value) {
-                anBulanEl.value = getWibRawDate().substring(0, 7);
-            }
+            if (anBulanEl && !anBulanEl.value) anBulanEl.value = getWibRawDate().substring(0, 7);
+
             const tglSkrgWib = getWibRawDate();
-            const daftarInputTgl = ['an-filter-tgl', 'riwayat-filter-tgl', 'am-log-tgl', 'm-filter-tgl-kurir'];
-            daftarInputTgl.forEach(id => {
+            ['an-filter-tgl', 'riwayat-filter-tgl', 'am-log-tgl', 'm-filter-tgl-kurir'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el && !el.value) {
-                    el.value = tglSkrgWib;
-                }
+                if (el && !el.value) el.value = tglSkrgWib;
             });
-        
-            if (typeof renderKurirMitraView === 'function') {
-                renderKurirMitraView(false);
-            }
-            if (typeof sembunyikanRiwayatMitra === 'function') {
-                sembunyikanRiwayatMitra();
-            }
-            
-            if (typeof calculateMitraStats === 'function') {
-                calculateMitraStats();
-                loadNotaDraft();
-            }
+
+            if (typeof sembunyikanRiwayatMitra === 'function') sembunyikanRiwayatMitra();
+            if (typeof loadNotaDraft === 'function') loadNotaDraft();
         });
+
         window.toggleRiwayatMitraKurir = function() {
             const box = document.getElementById('box-riwayat-mitra-kurir');
             if (!box) return;
@@ -5881,12 +5859,10 @@
           `;
           box.classList.remove('hidden');
       }
-      
       onValue(ref(db, 'notifications_admin'), (snapshot) => {
           cloudNotificationList = snapshot.val() || {};
-          renderKurirNotifications();
-          renderAdminNotificationHistory();
       });
+
       window.dismissKurirNotification = function(notifId) {
           hideNotifForCurrentUser(notifId);
           renderKurirNotifications();
