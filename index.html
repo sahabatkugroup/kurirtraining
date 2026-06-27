@@ -376,11 +376,14 @@
                         <button onclick="resetFormKurir()" class="w-full py-2.5 bg-slate-100 text-slate-500 dark:bg-slate-800 text-[11px] rounded-xl">Batal</button>
                     </div>
                 </div>
-
                 <div class="space-y-2">
-                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Daftar Kurir Terdata</h4>
-                    <div id="container-admin-kurir" class="space-y-2.5">
-                        </div>
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Daftar Kurir Terdata</h4>
+                        <button onclick="toggleAdminKurirOpen()" class="w-full sm:w-auto py-2 px-4 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
+                            <span id="btn-toggle-kurir-text">Buka</span>
+                        </button>
+                    </div>
+                    <div id="container-admin-kurir" class="space-y-2.5"></div>
                 </div>
             </div>
             <div id="screen-admin-manajemen" class="screen p-4 space-y-4">
@@ -435,16 +438,22 @@
                     </div>
                 </div>
                 <div class="space-y-2">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Data yang Sudah Disimpan</h4>
-                        <div class="flex gap-2">
-                            <button onclick="openLeaderModal()" class="px-3 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-bold uppercase">
+                        <div class="w-full sm:w-auto flex gap-2">
+                            <button onclick="openLeaderModal()" class="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-bold uppercase">
                                 Daftar Leader
                             </button>
-                            <button onclick="openPopupPenilaianLeader()" class="px-3 py-2 rounded-xl bg-blue-600 text-white text-[10px] font-bold uppercase">
+                            <button onclick="openPopupPenilaianLeader()" class="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-blue-600 text-white text-[10px] font-bold uppercase">
                                 Penilaian Leader
                             </button>
                         </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mt-2">
+                        <div></div>
+                        <button onclick="toggleAdminManajemenOpen()" class="w-full sm:w-auto py-2 px-4 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
+                            <span id="btn-toggle-manajemen-text">Buka</span>
+                        </button>
                     </div>
                     <div id="container-admin-manajemen" class="space-y-2.5"></div>
                 </div>
@@ -542,14 +551,16 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="space-y-2">
-                    <div class="flex flex-col gap-2">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Daftar Semua Mitra</h4>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="month" id="am-filter-bulan" onchange="renderAdminDaftarMitra()" class="w-full px-2 py-2 border rounded-lg text-xs dark:bg-darkCard dark:border-slate-700">
-                            <input type="text" id="am-search-mitra" placeholder="Cari nama mitra..." oninput="renderAdminDaftarMitra()" class="w-full px-2 py-2 border rounded-lg text-xs dark:bg-darkCard dark:border-slate-700">
-                        </div>
+                        <button onclick="toggleAdminMitraOpen()" class="w-full sm:w-auto py-2 px-4 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
+                            <span id="btn-toggle-mitra-text">Buka</span>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="month" id="am-filter-bulan" onchange="renderAdminDaftarMitra()" class="w-full px-2 py-2 border rounded-lg text-xs dark:bg-darkCard dark:border-slate-700">
+                        <input type="text" id="am-search-mitra" placeholder="Cari nama mitra..." oninput="renderAdminDaftarMitra()" class="w-full px-2 py-2 border rounded-lg text-xs dark:bg-darkCard dark:border-slate-700">
                     </div>
                     <div id="container-admin-daftar-mitra" class="space-y-2"></div>
                 </div>
@@ -760,10 +771,14 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            
+                </div>            
                 <div class="space-y-2">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Daftar Wilayah Ongkir</h4>
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Daftar Wilayah Ongkir</h4>
+                        <button onclick="toggleAdminOngkirOpen()" class="w-full sm:w-auto py-2 px-4 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
+                            <span id="btn-toggle-ongkir-text">Buka</span>
+                        </button>
+                    </div>
                     <input type="text" id="admin-ongkir-search" oninput="filterAdminOngkirList()" placeholder="Cari wilayah..." class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
                     <div id="container-admin-ongkir" class="space-y-2"></div>
                 </div>
@@ -814,24 +829,47 @@
                 </div>
             </div>
             <div id="screen-admin-testimonial" class="screen p-4 space-y-4">
-                <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
+                <div class="space-y-3">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">
                         Data Testimoni Customer
                     </h3>
-            
+
                     <div class="grid grid-cols-1 gap-2">
                         <input type="month" id="testimonial-filter-bulan" onchange="renderAdminTestimonial()" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
                     </div>
-            
-                    <div class="flex gap-1 sm:gap-2">
-                        <button onclick="toggleTestimonialSelectMode()" class="flex-1 min-w-0 py-2 rounded-xl bg-slate-800 text-white text-[10px] sm:text-xs font-bold uppercase">
+
+                    <!-- TOMBOL AWAL: Hanya Cari -->
+                    <div id="btn-group-initial" class="flex gap-2">
+                        <button onclick="toggleTestimonialOpen()" class="flex-1 py-2 rounded-xl bg-slate-800 text-white text-[10px] sm:text-xs font-bold uppercase">
+                            Cari
+                        </button>
+                    </div>
+
+                    <!-- TOMBOL SAAT LIST TERBUKA: Tutup/Batal | Pilih | Hapus Semua -->
+                    <div id="btn-group-open" class="hidden flex flex-col sm:flex-row gap-2">
+                        <button onclick="toggleTestimonialOpen()" class="flex-1 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white text-[10px] sm:text-xs font-bold uppercase">
+                            Tutup
+                        </button>
+                        <button onclick="toggleTestimonialSelectMode()" id="btn-pilih-mode" class="flex-1 py-2 rounded-xl bg-slate-800 text-white text-[10px] sm:text-xs font-bold uppercase">
                             Pilih
                         </button>
-                        <button onclick="hapusSemuaTestimonialBulan()" class="flex-1 min-w-0 py-2 rounded-xl bg-rose-600 text-white text-[10px] sm:text-xs font-bold uppercase">
+                        <button onclick="hapusSemuaTestimonialBulan()" id="btn-hapus-semua-bulan" class="flex-1 py-2 rounded-xl bg-rose-600 text-white text-[10px] sm:text-xs font-bold uppercase">
+                            Hapus Semua Bulan Ini
+                        </button>
+                    </div>
+                    <div id="btn-group-select" class="hidden flex flex-col sm:flex-row gap-2">
+                        <button onclick="toggleTestimonialOpen()" class="flex-1 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-white text-[10px] sm:text-xs font-bold uppercase">
+                            Tutup
+                        </button>
+                        <button onclick="hapusTestimonialPilihan()" class="flex-1 py-2 rounded-xl bg-orange-600 text-white text-[10px] sm:text-xs font-bold uppercase">
+                            Hapus Pilihan
+                        </button>
+                        <button onclick="hapusSemuaTestimonialBulan()" class="flex-1 py-2 rounded-xl bg-rose-600 text-white text-[10px] sm:text-xs font-bold uppercase">
                             Hapus Semua Bulan Ini
                         </button>
                     </div>
 
+                    <!-- CONTAINER DAFTAR TESTIMONI -->
                     <div id="container-admin-testimonial" class="space-y-2"></div>
                 </div>
             </div>
@@ -879,8 +917,13 @@
                             Reset
                         </button>
                     </div>
-                    <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Riwayat Notifikasi</h3>
+                    <div class="space-y-3">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Riwayat Notifikasi</h3>
+                            <button onclick="toggleAdminNotifHistoryOpen()" class="w-full sm:w-auto py-2 px-4 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
+                                <span id="btn-toggle-notif-text">Buka</span>
+                            </button>
+                        </div>
                         <div id="container-admin-notification-history" class="space-y-2"></div>
                     </div>
                 </div>
