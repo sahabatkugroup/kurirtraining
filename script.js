@@ -1898,136 +1898,17 @@
                     .catch(err => alert('Gagal menghapus testimoni: ' + err.message));
             }
         };
-        
-        window.renderAdminTestimonial = function() {
-            const container = document.getElementById('container-admin-testimonial');
-            if (!container) return;
-
-            const isOpen = container.dataset.open === undefined ? false : container.dataset.open === '1';
-            const bulanFilter = document.getElementById('testimonial-filter-bulan')?.value || '';
-            const selectMode = document.body.dataset.testimonialSelectMode === '1';
-
-            container.innerHTML = `
-                <div class="flex items-center gap-2 mb-2">
-                    <button type="button" onclick="toggleTestimonialOpen()" class="flex-1 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
-                        ${isOpen ? 'Tutup' : 'Buka'}
-                    </button>
-                    <button type="button" onclick="toggleTestimonialSelectMode()" id="btn-testimonial-select-mode" class="flex-1 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
-                        ${selectMode ? 'Hapus Pilihan' : 'Pilih'}
-                    </button>
-                    <button type="button" id="btn-hapus-testimonial-bulan" onclick="hapusSemuaTestimonialBulan()" class="${selectMode ? '' : 'hidden'} flex-1 py-2 rounded-xl bg-rose-600 text-white text-[10px] font-bold uppercase">
-                        Hapus Semua Bulan Ini
-                    </button>
-                </div>
-                <div id="container-admin-testimonial-inner" class="${isOpen ? '' : 'hidden'} space-y-2"></div>
-            `;
-
-            const inner = document.getElementById('container-admin-testimonial-inner');
-            if (!inner || !isOpen) return;
-
-            const keys = Object.keys(cloudTestimonialList || {});
-            const filteredKeys = keys.filter(key => {
-                const t = cloudTestimonialList[key];
-                if (!t) return false;
-                const rawBulan = t.timestamp ? new Date(t.timestamp).toISOString().slice(0, 7) : (t.date ? t.date.split('/').reverse().join('-').slice(0, 7) : '');
-                return !bulanFilter || rawBulan === bulanFilter;
-            });
-
-            inner.innerHTML = filteredKeys.length ? filteredKeys.map(key => {
-                const t = cloudTestimonialList[key];
-                const statusText = t.isPublished ? 'TAMPIL' : 'SEMBUNYI';
-                const statusClass = t.isPublished ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500';
-                const createdText = t.timestamp ? new Date(t.timestamp).toLocaleString('id-ID') : `${t.date || '-'} ${t.time || '-'}`;
-
-                return `
-                    <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700 text-xs space-y-2">
-                        <div class="flex items-start justify-between gap-2">
-                            <label class="flex items-start gap-2 min-w-0 flex-1">
-                                <input type="checkbox" class="testimonial-checkbox mt-1 ${selectMode ? '' : 'hidden'}" value="${key}">
-                                <div class="min-w-0">
-                                    <div class="font-bold text-sm text-slate-800 dark:text-white">${t.fullname || '-'}</div>
-                                    <div class="text-[10px] text-slate-400">Kurir: ${t.nama || '-'}</div>
-                                    <div class="text-[10px] text-slate-400">Tanggal/Jam: ${createdText}</div>
-                                </div>
-                            </label>
-                            <span class="px-2 py-1 rounded-full text-[10px] font-bold ${statusClass}">${statusText}</span>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2 text-[10px]">
-                            <div class="bg-white dark:bg-darkCard p-2 rounded-lg"><div class="text-slate-400">Rating</div><div class="font-bold">${t.rating || 0}</div></div>
-                            <div class="bg-white dark:bg-darkCard p-2 rounded-lg"><div class="text-slate-400">Attitude</div><div class="font-bold">${t.attitude || '-'}</div></div>
-                            <div class="bg-white dark:bg-darkCard p-2 rounded-lg"><div class="text-slate-400">Speed</div><div class="font-bold">${t.speed || '-'}</div></div>
-                        </div>
-                        <div class="bg-white dark:bg-darkCard p-2 rounded-lg text-[11px] text-slate-600 dark:text-slate-300">${t.comments || '-'}</div>
-                        <div class="flex gap-2">
-                            <button onclick="toggleTestimonialPublish('${key}')" class="flex-1 py-2 rounded-lg text-[10px] font-bold uppercase ${t.isPublished ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}">
-                                ${t.isPublished ? 'Sembunyikan' : 'Tampilkan'}
-                            </button>
-                            <button onclick="hapusTestimonial('${key}')" class="px-3 py-2 rounded-lg text-[10px] font-bold uppercase bg-rose-50 text-rose-600">Hapus</button>
-                        </div>
-                    </div>
-                `;
-            }).join('') : '<div class="text-center text-xs text-slate-400 py-4">Tidak ada testimoni pada bulan ini.</div>';
-        };
-
-        window.toggleTestimonialOpen = function() {
-            const el = document.getElementById('container-admin-testimonial');
-            if (!el) return;
-            el.dataset.open = el.dataset.open === '1' ? '0' : '1';
-            renderAdminTestimonial();
-        };
-
         window.toggleTestimonialSelectMode = function() {
             const active = document.body.dataset.testimonialSelectMode === '1';
             document.body.dataset.testimonialSelectMode = active ? '0' : '1';
+            
+            if (document.body.dataset.testimonialSelectMode === '1') {
+                const checkboxes = document.querySelectorAll('.testimonial-checkbox');
+                checkboxes.forEach(cb => cb.checked = false);
+            }
+            
             renderAdminTestimonial();
         };
-
-        window.hapusTestimonialTerpilih = function() {
-            const checks = document.querySelectorAll('.testimonial-checkbox:checked');
-            if (!checks.length) return alert('Pilih minimal 1 testimoni.');
-            if (!confirm(`Hapus ${checks.length} testimoni terpilih?`)) return;
-            checks.forEach(cb => remove(ref(db, `testimonials/${cb.value}`)));
-            document.body.dataset.testimonialSelectMode = '0';
-            renderAdminTestimonial();
-        };
-        window.toggleTestimonialSelectMode = function() {
-            const boxes = document.querySelectorAll('.testimonial-select-box');
-            const btnHapus = document.getElementById('btn-hapus-testimonial-terpilih');
-        
-            const isHidden = boxes.length > 0 ? boxes[0].classList.contains('hidden') : true;
-        
-            boxes.forEach(cb => {
-                cb.classList.toggle('hidden');
-                cb.checked = false;
-            });
-        
-            if (btnHapus) {
-                btnHapus.classList.toggle('hidden');
-            }
-        
-            if (!isHidden) {
-                boxes.forEach(cb => cb.checked = false);
-            }
-        };
-        
-        window.hapusTestimonialTerpilih = function() {
-            const checks = document.querySelectorAll('.testimonial-checkbox:checked');
-            if (!checks.length) {
-                alert('Pilih minimal 1 testimoni.');
-                return;
-            }
-        
-            if (!confirm(`Hapus ${checks.length} testimoni terpilih?`)) return;
-        
-            checks.forEach(cb => {
-                remove(ref(db, `testimonials/${cb.value}`));
-            });
-        
-            setTimeout(() => {
-                toggleTestimonialSelectMode();
-            }, 300);
-        };
-        
         window.hapusSemuaTestimonialBulan = function() {
             const bulanFilter = document.getElementById('testimonial-filter-bulan')?.value || '';
             if (!bulanFilter) return alert('Pilih bulan terlebih dahulu.');
@@ -2043,7 +1924,197 @@
             if (!confirm(`Hapus semua ${keys.length} testimoni pada bulan ini?`)) return;
 
             keys.forEach(key => remove(ref(db, `testimonials/${key}`)));
-        };  
+            
+            alert('Testimoni sedang dihapus...');
+            
+            setTimeout(() => {
+                renderAdminTestimonial();
+            }, 800);
+        };
+        window.hapusTestimonialPilihan = function() {
+            const checkboxes = document.querySelectorAll('.testimonial-checkbox:checked');
+            if (!checkboxes.length) {
+                alert('Pilih minimal 1 testimoni untuk dihapus!');
+                return;
+            }
+
+            const jumlah = checkboxes.length;
+            const konfirmasi = confirm(`Apakah Anda YAKIN ingin menghapus ${jumlah} testimoni yang dipilih?\n\nTindakan ini TIDAK BISA DIBATALKAN!`);
+            
+            if (!konfirmasi) {
+                alert('Penghapusan dibatalkan. Data testimoni aman.');
+                return;
+            }
+
+            const konfirmasi2 = confirm(`Hapus ${jumlah} testimoni secara PERMANEN?`);
+            if (!konfirmasi2) {
+                alert('Penghapusan dibatalkan. Data testimoni aman.');
+                return;
+            }
+
+            const keysToDelete = [];
+            checkboxes.forEach(cb => {
+                keysToDelete.push(cb.value);
+            });
+
+            keysToDelete.forEach(key => {
+                remove(ref(db, `testimonials/${key}`)).catch(err => {
+                    console.error('Error deleting:', err);
+                });
+            });
+
+            alert(`${jumlah} testimoni sedang dihapus dari server...`);
+            
+            setTimeout(() => {
+                document.body.dataset.testimonialSelectMode = '0';
+                renderAdminTestimonial();
+            }, 1000);
+        };
+        window.renderAdminTestimonial = function() {
+            const container = document.getElementById('container-admin-testimonial');
+            if (!container) return;
+
+            const isOpen = container.dataset.open === '1';
+            const bulanFilter = document.getElementById('testimonial-filter-bulan')?.value || '';
+            const selectMode = document.body.dataset.testimonialSelectMode === '1';
+
+            const btnGroupInitial = document.getElementById('btn-group-initial');
+            const btnGroupOpen = document.getElementById('btn-group-open');
+            const btnGroupSelect = document.getElementById('btn-group-select');
+
+            if (btnGroupInitial) {
+                if (isOpen) btnGroupInitial.classList.add('hidden');
+                else btnGroupInitial.classList.remove('hidden');
+            }
+
+            if (btnGroupOpen) {
+                if (isOpen && !selectMode) btnGroupOpen.classList.remove('hidden');
+                else btnGroupOpen.classList.add('hidden');
+            }
+
+            if (btnGroupSelect) {
+                if (isOpen && selectMode) btnGroupSelect.classList.remove('hidden');
+                else btnGroupSelect.classList.add('hidden');
+            }
+
+            if (!isOpen) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const keys = Object.keys(cloudTestimonialList || {});
+            const filteredKeys = keys.filter(key => {
+                const t = cloudTestimonialList[key];
+                if (!t) return false;
+                const rawBulan = t.timestamp 
+                    ? new Date(t.timestamp).toISOString().slice(0, 7) 
+                    : (t.date ? t.date.split('/').reverse().join('-').slice(0, 7) : '');
+                return !bulanFilter || rawBulan === bulanFilter;
+            });
+
+            if (!filteredKeys.length) {
+                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Tidak ada testimoni pada bulan ini.</div>';
+                return;
+            }
+
+            container.innerHTML = filteredKeys.map(key => {
+                const t = cloudTestimonialList[key];
+                const statusText = t.isPublished ? 'TAMPIL' : 'SEMBUNYI';
+                const statusClass = t.isPublished 
+                    ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300' 
+                    : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400';
+                const createdText = t.timestamp 
+                    ? new Date(t.timestamp).toLocaleString('id-ID') 
+                    : `${t.date || '-'} ${t.time || '-'}`;
+
+                return `
+                    <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700 text-xs space-y-2">
+                        <div class="flex items-start justify-between gap-2">
+                            ${selectMode ? `
+                                <label class="flex items-start gap-2 min-w-0 flex-1">
+                                    <input type="checkbox" class="testimonial-checkbox mt-1" value="${key}">
+                                    <div class="min-w-0">
+                                        <div class="font-bold text-sm text-slate-800 dark:text-white">${t.fullname || '-'}</div>
+                                        <div class="text-[10px] text-slate-400">Kurir: ${t.nama || '-'}</div>
+                                        <div class="text-[10px] text-slate-400">Tanggal: ${createdText}</div>
+                                    </div>
+                                </label>
+                            ` : `
+                                <div class="min-w-0 flex-1">
+                                    <div class="font-bold text-sm text-slate-800 dark:text-white">${t.fullname || '-'}</div>
+                                    <div class="text-[10px] text-slate-400">Kurir: ${t.nama || '-'}</div>
+                                    <div class="text-[10px] text-slate-400">Tanggal: ${createdText}</div>
+                                </div>
+                            `}
+                            
+                            <span class="px-2 py-1 rounded-full text-[10px] font-bold ${statusClass} shrink-0">${statusText}</span>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2 text-[10px]">
+                            <div class="bg-white dark:bg-darkCard p-2 rounded-lg">
+                                <div class="text-slate-400">Rating</div>
+                                <div class="font-bold">${t.rating || 0}</div>
+                            </div>
+                            <div class="bg-white dark:bg-darkCard p-2 rounded-lg">
+                                <div class="text-slate-400">Attitude</div>
+                                <div class="font-bold">${t.attitude || '-'}</div>
+                            </div>
+                            <div class="bg-white dark:bg-darkCard p-2 rounded-lg">
+                                <div class="text-slate-400">Speed</div>
+                                <div class="font-bold">${t.speed || '-'}</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-darkCard p-2 rounded-lg text-[11px] text-slate-600 dark:text-slate-300">${t.comments || '-'}</div>
+
+                        ${!selectMode ? `
+                            <div class="flex gap-2">
+                                <button onclick="toggleTestimonialPublish('${key}')" class="flex-1 py-2 rounded-lg text-[10px] font-bold uppercase ${t.isPublished ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40' : 'bg-blue-50 text-blue-600 dark:bg-blue-950/40'}">
+                                    ${t.isPublished ? 'Sembunyikan' : 'Tampilkan'}
+                                </button>
+                                <button onclick="hapusTestimonial('${key}')" class="px-3 py-2 rounded-lg text-[10px] font-bold uppercase bg-rose-50 text-rose-600 dark:bg-rose-950/40">
+                                    Hapus
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        };
+
+        window.toggleTestimonialOpen = function() {
+            const el = document.getElementById('container-admin-testimonial');
+            if (!el) return;
+            el.dataset.open = el.dataset.open === '1' ? '0' : '1';
+            
+            if (el.dataset.open === '0') {
+                document.body.dataset.testimonialSelectMode = '0';
+            }
+            
+            renderAdminTestimonial();
+        };
+
+        window.toggleTestimonialPublish = function(key) {
+            const item = cloudTestimonialList[key];
+            if (!item) return;
+
+            update(ref(db, `testimonials/${key}`), {
+                isPublished: !item.isPublished
+            }).then(() => {
+                alert(item.isPublished ? 'Testimoni disembunyikan.' : 'Testimoni ditampilkan.');
+            }).catch(err => {
+                alert('Gagal update testimoni: ' + err.message);
+            });
+        };
+
+        window.hapusTestimonial = function(key) {
+            if (confirm('Hapus testimoni ini secara permanen?')) {
+                remove(ref(db, `testimonials/${key}`))
+                    .then(() => alert('Testimoni berhasil dihapus.'))
+                    .catch(err => alert('Gagal menghapus testimoni: ' + err.message));
+            }
+        };
+
         window.openModulNota = function() {
             document.getElementById('nota-kurir').value = userSession.nama;
             
@@ -5981,3 +6052,77 @@
           if (!list.includes(notifId)) list.push(notifId);
           localStorage.setItem('hidden_notif_ids', JSON.stringify(list));
       }
+      window.toggleAdminKurirOpen = function() {
+          const container = document.getElementById('container-admin-kurir');
+          const btn = document.getElementById('btn-toggle-kurir-text');
+          const isOpen = container.dataset.open === '1';
+          
+          container.dataset.open = isOpen ? '0' : '1';
+          btn.innerText = isOpen ? 'Buka' : 'Tutup';
+          
+          if (!isOpen) {
+              renderAdminKurirList();
+          } else {
+              container.innerHTML = '';
+          }
+      };
+
+      window.toggleAdminManajemenOpen = function() {
+          const container = document.getElementById('container-admin-manajemen');
+          const btn = document.getElementById('btn-toggle-manajemen-text');
+          const isOpen = container.dataset.open === '1';
+          
+          container.dataset.open = isOpen ? '0' : '1';
+          btn.innerText = isOpen ? 'Buka' : 'Tutup';
+          
+          if (!isOpen) {
+              renderAdminManajemen();
+          } else {
+              container.innerHTML = '';
+          }
+      };
+
+      window.toggleAdminMitraOpen = function() {
+          const container = document.getElementById('container-admin-daftar-mitra');
+          const btn = document.getElementById('btn-toggle-mitra-text');
+          const isOpen = container.dataset.open === '1';
+          
+          container.dataset.open = isOpen ? '0' : '1';
+          btn.innerText = isOpen ? 'Buka' : 'Tutup';
+          
+          if (!isOpen) {
+              renderAdminDaftarMitra();
+          } else {
+              container.innerHTML = '';
+          }
+      };
+
+      window.toggleAdminOngkirOpen = function() {
+          const container = document.getElementById('container-admin-ongkir');
+          const btn = document.getElementById('btn-toggle-ongkir-text');
+          const isOpen = container.dataset.open === '1';
+          
+          container.dataset.open = isOpen ? '0' : '1';
+          btn.innerText = isOpen ? 'Buka' : 'Tutup';
+          
+          if (!isOpen) {
+              renderAdminOngkirList();
+          } else {
+              container.innerHTML = '';
+          }
+      };
+
+      window.toggleAdminNotifHistoryOpen = function() {
+          const container = document.getElementById('container-admin-notification-history');
+          const btn = document.getElementById('btn-toggle-notif-text');
+          const isOpen = container.dataset.open === '1';
+          
+          container.dataset.open = isOpen ? '0' : '1';
+          btn.innerText = isOpen ? 'Buka' : 'Tutup';
+          
+          if (!isOpen) {
+              renderAdminNotificationHistory();
+          } else {
+              container.innerHTML = '';
+          }
+      };
