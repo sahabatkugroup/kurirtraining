@@ -1750,43 +1750,45 @@
             document.getElementById('am-target').value = '';
             document.getElementById('title-form-mitra').innerText = "Tambah / Edit Data Mitra";
         }
-
         window.renderAdminLogMitra = function() {
             const container = document.getElementById('container-admin-log-mitra');
             if (!container) return;
-        
+
             const logTgl = document.getElementById('am-log-tgl')?.value || '';
             const logBulan = document.getElementById('am-log-bulan')?.value || '';
             const logSearch = document.getElementById('am-log-search')?.value.toLowerCase();
             const elFilterKurir = document.getElementById('am-log-filter-kurir');
             const logFilterKurir = elFilterKurir ? elFilterKurir.value : 'semua';
-        
+
             container.innerHTML = '';
-        
             let adaData = false;
-        
+
             for (let k in cloudLogMitra) {
                 const log = cloudLogMitra[k];
                 if (!log) continue;
-        
+
                 if (logFilterKurir !== 'semua' && log.kurirNama !== logFilterKurir) continue;
                 if (logSearch && !(log.mitraNama || '').toLowerCase().includes(logSearch)) continue;
                 if (logTgl && log.tglRaw !== logTgl) continue;
                 if (logBulan && (!log.tglRaw || log.tglRaw.substring(0, 7) !== logBulan)) continue;
-        
+
                 adaData = true;
-        
+
                 container.innerHTML += `
-                    <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-2 rounded-lg text-[11px]">
+                    <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-2 rounded-lg text-[11px] border border-slate-100 dark:border-slate-700/50 mb-1" data-log-key="${k}">
                         <div>
                             <span class="font-bold text-slate-800 dark:text-white">${log.mitraNama}</span> (${log.trxInput} Trx)
-                            <p class="text-[9px] text-slate-400">Input: ${log.kurirNama} - ${log.tglRaw} ${log.waktu}</p>
+                            <p class="text-[9px] text-slate-400">
+                                Input: ${log.kurirNama} - ${log.tglRaw} ${log.waktu}
+                            </p>
                         </div>
-                        <button onclick="hapusLogMitra('${k}')" class="text-danger font-bold px-1">X</button>
+                        <button onclick="hapusLogMitra('${k}')" class="text-danger font-bold px-2 py-1 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-950/30 transition">
+                            ✕
+                        </button>
                     </div>
                 `;
             }
-        
+
             if (!adaData) {
                 container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Tidak ada data ditemukan.</div>';
             }
@@ -1807,12 +1809,23 @@
             }
             dropdown.value = currentSelection;
         }
-
         window.hapusLogMitra = function(key) {
-            if(confirm("Hapus record log transaksi input ini?")) {
-                remove(ref(db, `log_mitra/${key}`));
+            if (confirm('Hapus riwayat transaksi input ini?')) {
+                remove(ref(db, `log_mitra/${key}`)).then(() => {
+                    // Gunakan alert atau implementasi toast yang sudah ada
+                    if (typeof toast === 'function') {
+                        toast('Riwayat transaksi dihapus');
+                    } else {
+                        alert('Riwayat transaksi dihapus');
+                    }
+                    // Refresh list tanpa tutup popup
+                    renderAdminLogMitra();
+                }).catch(err => {
+                    alert('Gagal hapus riwayat: ' + err.message);
+                });
             }
-        }
+        };
+
         window.renderAdminDaftarMitra = function() {
             if (isRenderMitraRunning) return;
             isRenderMitraRunning = true;
@@ -1827,7 +1840,7 @@
                 container.innerHTML = `
                     <div class="flex items-center gap-2 mb-2">
                     </div>
-                    <div id="container-admin-daftar-mitra-inner" class="${isOpen ? '' : 'hidden'} space-y-2"></div>
+                    <div id="container-admin-daftar-mitra-inner" class="${isOpen ? '' : 'hidden'} space-y-2\"></div>
                 `;
 
                 const inner = document.getElementById('container-admin-daftar-mitra-inner');
@@ -1874,20 +1887,20 @@
                                         Alamat: ${m.alamat || 'Belum Diisi'}
                                     </a>
                                 </div>
-                                <a href="${waLink}" target="_blank" class="px-2.5 py-1 bg-emerald-50 text-success rounded font-bold text-[10px] border border-emerald-100">WhatsApp</a>
+                                <a href="${waLink}" target="_blank" class="px-2.5 py-1 bg-emerald-50 text-success rounded font-bold text-[10px] border border-emerald-100 shrink-0">WhatsApp</a>
                             </div>
                             <div class="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg text-[11px] border border-slate-100 dark:border-slate-800">
                                 <div><span class="text-slate-400 block text-[9px] uppercase">Total Transaksi</span><span class="font-extrabold text-slate-700 dark:text-slate-200">${filterBulan ? totalTrxFilterBulan : totalTrxMenyeluruh} Trx</span></div>
                                 <div><span class="text-slate-400 block text-[9px] uppercase">Target Bulanan</span><span class="font-extrabold text-amber-500">${targetMitra} Trx</span></div>
                             </div>
-                            <div class="flex gap-1.5 pt-0.5">
-                                <button onclick="bukaInputTransaksiMitra('${m.nama}')" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[10px] uppercase">Input Trx</button>
-                                <button onclick="lihatRiwayatMitraOtomatis('${m.nama}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-lg text-[10px] uppercase border border-slate-200/50">Lihat</button>
+                            <div class="grid grid-cols-3 gap-2 pt-0.5">
+                                <button onclick="bukaInputTransaksiMitra('${m.nama}')" class="py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[10px] uppercase">Input Trx</button>
+                                <button onclick="lihatRiwayatMitraOtomatis('${m.nama}')" class="py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-lg text-[10px] uppercase border border-slate-200/50">Lihat</button>
+                                <button onclick="hapusMitra('${key}')" class="py-2 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 font-bold rounded-lg text-[10px] uppercase">Hapus</button>
                             </div>
                             ${isOwner ? `
-                            <div class="flex justify-end gap-2 pt-1">
-                                <button onclick="editDataMitra('${key}')" class="px-2.5 py-1 bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-white rounded-md font-semibold">Edit</button>
-                                <button onclick="hapusMitra('${key}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 rounded-md font-semibold">Hapus</button>
+                            <div class="flex justify-end gap-2 pt-1 border-t border-slate-100 dark:border-slate-700">
+                                <button onclick="editDataMitra('${key}')" class="px-2.5 py-1 bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-white rounded-md font-semibold text-xs">Edit</button>
                             </div>` : ''}
                         </div>
                     `);
@@ -1899,6 +1912,7 @@
                 isRenderMitraRunning = false;
             }
         };
+
         window.cleanupDailyLiveLocations = async function() {
             try {
                 const snap = await get(ref(db, 'live_locations'));
@@ -2858,70 +2872,73 @@
 
             const selectMitra = document.getElementById('m-input-pilih');
             if (selectMitra && selectMitra.options.length <= 1) {
-                selectMitra.innerHTML = '<option value="">-- Pilih Mitra --</option>';
-                for (let k in cloudMitraList) {
-                    if (cloudMitraList[k] && cloudMitraList[k].nama) {
-                        selectMitra.innerHTML += `<option value="${cloudMitraList[k].nama}">${cloudMitraList[k].nama}</option>`;
+                selectMitra.innerHTML = '<option value="\">-- Pilih Mitra --</option>';
+                Object.entries(cloudMitraList || {}).forEach(([k, m]) => {
+                    if (m && m.nama) {
+                        selectMitra.innerHTML += `<option value="${m.nama}">${m.nama}</option>`;
                     }
-                }
+                });
             }
 
-            let nomorUrut = 1;
-            for (let k in cloudMitraList) {
-                const m = cloudMitraList[k];
-                if (!m || !m.nama) continue;
+            // Hitung stat global untuk semua mitra
+            const mitraStats = {};
+            Object.entries(cloudMitraList || {}).forEach(([k, m]) => {
+                if (!m || !m.nama) return;
+                mitraStats[m.nama] = { totalTrx: 0, target: m.target || 0, hp: m.hp || '', alamat: m.alamat || '' };
+            });
 
-                const namaKey = normalizeNama(m.nama);
-                let totalTrxMenyeluruh = 0;
-
-                for (let logKey in cloudLogMitra) {
-                    const log = cloudLogMitra[logKey];
-                    if (!log || !log.mitraNama) continue;
-                    if (normalizeNama(log.mitraNama) === namaKey) {
-                        totalTrxMenyeluruh += (parseInt(log.trxInput) || 0);
-                    }
+            Object.entries(cloudLogMitra || {}).forEach(([_, log]) => {
+                if (!log || !log.mitraNama) return;
+                const nama = log.mitraNama;
+                if (mitraStats[nama]) {
+                    mitraStats[nama].totalTrx += parseInt(log.trxInput) || 0;
                 }
+            });
 
-                const targetMitra = m.target || 0;
-                let cleanPhone = (m.hp || '').toString().trim().replace(/[^0-9+]/g, '');
-                if (cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.substring(1);
-                else if (cleanPhone.startsWith('+')) cleanPhone = cleanPhone.substring(1);
+            // Render semua mitra sekaligus
+            const allMitraHtml = Object.entries(cloudMitraList || {})
+                .filter(([_, m]) => m && m.nama)
+                .map(([k, m], idx) => {
+                    const stats = mitraStats[m.nama] || { totalTrx: 0, target: 0, hp: '', alamat: '' };
+                    const target = stats.target || 0;
+                    const totalTrx = stats.totalTrx || 0;
 
-                const waLink = cleanPhone ? `https://wa.me/${cleanPhone}` : '#';
-                const mapsLink = m.alamat ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.alamat)}` : '#';
+                    let cleanPhone = (m.hp || '').toString().trim().replace(/[^0-9+]/g, '');
+                    if (cleanPhone.startsWith('0')) cleanPhone = '62' + cleanPhone.substring(1);
+                    else if (cleanPhone.startsWith('+')) cleanPhone = cleanPhone.substring(1);
 
-                container.innerHTML += `
-                    <div class="bg-white dark:bg-darkCard p-3 rounded-xl border text-xs space-y-2.5 shadow-sm">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h5 class="font-bold text-slate-800 dark:text-white">${nomorUrut}. ${m.nama}</h5>
-                                <a href="${mapsLink}" target="_blank" class="text-[10px] text-blue-600 dark:text-blue-400 hover:underline block mt-0.5">
-                                    Alamat: ${m.alamat || 'Belum Diisi'}
+                    const waLink = cleanPhone ? `https://wa.me/${cleanPhone}` : '#';
+                    const mapsLink = m.alamat ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.alamat)}` : '#';
+
+                    return `
+                        <div class="bg-white dark:bg-darkCard p-3 rounded-xl border text-xs space-y-2.5 shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h5 class="font-bold text-slate-800 dark:text-white">${idx + 1}. ${m.nama}</h5>
+                                    <a href="${mapsLink}" target="_blank" class="text-[10px] text-blue-600 dark:text-blue-400 hover:underline block mt-0.5">
+                                        Alamat: ${m.alamat || 'Belum Diisi'}
+                                    </a>
+                                </div>
+                                <a href="${waLink}" target="_blank" class="px-2.5 py-1 bg-emerald-50 text-success rounded font-bold text-[10px] border border-emerald-100">
+                                    WhatsApp
                                 </a>
                             </div>
-                            <a href="${waLink}" target="_blank" class="px-2.5 py-1 bg-emerald-50 text-success rounded font-bold text-[10px] border border-emerald-100">WhatsApp</a>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg text-[11px] border border-slate-100 dark:border-slate-800">
-                            <div>
-                                <span class="text-slate-400 block text-[9px] uppercase">Total Transaksi</span>
-                                <span class="font-extrabold text-slate-700 dark:text-slate-200">${totalTrxMenyeluruh} Trx</span>
+                            <div class="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg text-[11px] border border-slate-100 dark:border-slate-800">
+                                <div><span class="text-slate-400 block text-[9px] uppercase">Total Trx</span><span class="font-extrabold text-slate-700 dark:text-slate-200">${totalTrx} Trx</span></div>
+                                <div><span class="text-slate-400 block text-[9px] uppercase">Target</span><span class="font-extrabold text-amber-500">${target} Trx</span></div>
                             </div>
-                            <div>
-                                <span class="text-slate-400 block text-[9px] uppercase">Target Bulanan</span>
-                                <span class="font-extrabold text-amber-500">${targetMitra} Trx</span>
+                            <div class="flex gap-1.5 pt-0.5">
+                                <button onclick="bukaInputTransaksiMitra('${m.nama}')" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[10px] uppercase">Input Trx</button>
+                                <button onclick="lihatRiwayatMitraOtomatis('${m.nama}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-lg text-[10px] uppercase border border-slate-200/50">Lihat</button>
                             </div>
                         </div>
+                    `;
+                })
+                .join('');
 
-                        <div class="flex gap-1.5 pt-0.5">
-                            <button onclick="bukaInputTransaksiMitra('${m.nama}')" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-[10px] uppercase">Input Trx</button>
-                            <button onclick="lihatRiwayatMitraOtomatis('${m.nama}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-lg text-[10px] uppercase border border-slate-200/50">Lihat</button>
-                        </div>
-                    </div>
-                `;
-                nomorUrut++;
-            }
+            container.innerHTML = allMitraHtml || '<div class="text-center text-xs text-slate-400 py-4">Belum ada data mitra.</div>';
         };
+
         window.toggleMitraList = function() {
             const box = document.getElementById('container-mitra-list');
             if (!box) return;
@@ -3190,6 +3207,10 @@
             if (!el.dataset.open) el.dataset.open = defaultOpen ? '1' : '0';
             return el.dataset.open === '1';
         }
+        window.toggleSection = function(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('hidden');
+        };
 
         window.toggleSectionList = function(id) {
             const el = document.getElementById(id);
