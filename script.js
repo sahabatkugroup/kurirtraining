@@ -2059,14 +2059,21 @@
             }
 
             const keys = Object.keys(cloudTestimonialList || {});
-            const filteredKeys = keys.filter(key => {
-                const t = cloudTestimonialList[key];
-                if (!t) return false;
-                const rawBulan = t.timestamp 
-                    ? new Date(t.timestamp).toISOString().slice(0, 7) 
-                    : (t.date ? t.date.split('/').reverse().join('-').slice(0, 7) : '');
-                return !bulanFilter || rawBulan === bulanFilter;
-            });
+            // SORT: Urutan dari timestamp terbaru ke terlama
+            const filteredKeys = keys
+                .sort((a, b) => {
+                    const timestampA = cloudTestimonialList[a]?.timestamp || 0;
+                    const timestampB = cloudTestimonialList[b]?.timestamp || 0;
+                    return timestampB - timestampA; // Terbaru di atas
+                })
+                .filter(key => {
+                    const t = cloudTestimonialList[key];
+                    if (!t) return false;
+                    const rawBulan = t.timestamp 
+                        ? new Date(t.timestamp).toISOString().slice(0, 7) 
+                        : (t.date ? t.date.split('/').reverse().join('-').slice(0, 7) : '');
+                    return !bulanFilter || rawBulan === bulanFilter;
+                });
 
             if (!filteredKeys.length) {
                 container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Tidak ada testimoni pada bulan ini.</div>';
@@ -2132,8 +2139,7 @@
                                     Hapus
                                 </button>
                             </div>
-                        ` : ''}
-                    </div>
+                        ` : ''}\n            </div>
                 `;
             }).join('');
         };
