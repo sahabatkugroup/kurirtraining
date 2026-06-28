@@ -449,6 +449,7 @@
             }
             onValue(ref(db, 'users'), (snapshot) => {
                 cloudKurirList = snapshot.val() || {};
+                populateKurirDropdownFilter();  // Tambahkan baris ini
                 queueUiRefresh();
                 if (pendingAutoLoginCheck && userSession && userSession.role === 'kurir') {
                     const currentKurir = cloudKurirList[userSession.id];
@@ -490,6 +491,7 @@
             });
             onValue(ref(db, 'leader_list'), (snapshot) => {
                 cloudLeaderList = snapshot.val() || {};
+                populateLeaderDropdown();
                 queueUiRefresh();
             });
             onValue(ref(db, 'jadwal_off'), (snapshot) => {
@@ -1824,9 +1826,6 @@
 
                 container.innerHTML = `
                     <div class="flex items-center gap-2 mb-2">
-                        <button type="button" onclick="toggleSectionList('container-admin-daftar-mitra')" class="flex-1 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
-                            ${isOpen ? 'Tutup' : 'Buka'}
-                        </button>
                     </div>
                     <div id="container-admin-daftar-mitra-inner" class="${isOpen ? '' : 'hidden'} space-y-2"></div>
                 `;
@@ -2964,9 +2963,6 @@
 
             container.innerHTML = `
                 <div class="flex items-center gap-2 mb-2">
-                    <button type="button" onclick="toggleSectionList('container-admin-kurir')" class="flex-1 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
-                        ${isOpen ? 'Tutup' : 'Buka'}
-                    </button>
                 </div>
                 <div id="container-admin-kurir-inner" class="${isOpen ? '' : 'hidden'} space-y-2"></div>
             `;
@@ -4100,9 +4096,6 @@
 
             container.innerHTML = `
                 <div class="flex items-center gap-2 mb-2">
-                    <button type="button" onclick="toggleSectionList('container-admin-ongkir')" class="flex-1 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
-                        ${isOpen ? 'Tutup' : 'Buka'}
-                    </button>
                 </div>
                 <div id="container-admin-ongkir-inner" class="${isOpen ? '' : 'hidden'} space-y-2"></div>
             `;
@@ -5272,7 +5265,68 @@
             document.getElementById('manajemen-status').value = 'aktif';
             document.getElementById('title-form-manajemen').innerText = 'Tambah / Edit Data Manajemen';
         };
+        function populateNotifKurirList() {
+        const tbody = document.getElementById('notif-kurir-table-body');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
         
+        const kurirList = Object.entries(cloudKurirList || {})
+            .filter(([_, u]) => u && u.role === 'kurir' && u.status === 'aktif')
+            .map(([id, u]) => ({ id, nama: u.nama || u.username || id, leader: u.leader || '-' }));
+
+        kurirList.forEach((kurir, idx) => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer';
+            tr.innerHTML = `
+            <td class="p-2.5 text-slate-700 dark:text-slate-300 font-semibold">${idx + 1}</td>
+            <td class="p-2.5">
+                <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" class="notif-kurir-check accent-primary" value="${kurir.nama}">
+                <span class="text-slate-800 dark:text-white font-medium">${kurir.nama}</span>
+                </label>
+            </td>
+            <td class="p-2.5 text-slate-500 dark:text-slate-400">${kurir.leader}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+        }
+        window.saveNotification = function() {
+        const target = document.getElementById('notif-target').value;
+        const message = document.getElementById('notif-message').value.trim();
+
+        if (!message) {
+            alert('Isi pesan notifikasi wajib diisi!');
+            return;
+        }
+
+        let targetList = [];
+        if (target === 'selected') {
+            const checkboxes = document.querySelectorAll('.notif-kurir-check:checked');
+            targetList = Array.from(checkboxes).map(checkbox => checkbox.value);
+            if (!targetList.length) {
+            alert('Pilih minimal 1 kurir!');
+            return;
+            }
+        }
+
+        const payload = {
+            target,
+            targetList,
+            message,
+            type: 'warning',
+            active: true,
+            createdAt: new Date().toISOString()
+        };
+
+        push(ref(db, 'notifications_admin'), payload)
+            .then(() => {
+            alert('Notifikasi berhasil dikirim!');
+            resetNotifForm();
+            })
+            .catch(err => alert('Gagal kirim notifikasi: ' + err.message));
+        };
+                
         window.hapusDataManajemen = function(key) {
             if (confirm('Hapus data ini?')) {
                 remove(ref(db, `manajemen_sahabatku/${key}`))
@@ -5289,9 +5343,6 @@
 
             container.innerHTML = `
                 <div class="flex items-center gap-2 mb-2">
-                    <button type="button" onclick="toggleSectionList('container-admin-manajemen')" class="flex-1 py-2 rounded-xl bg-slate-800 text-white text-[10px] font-bold uppercase">
-                        ${isOpen ? 'Tutup' : 'Buka'}
-                    </button>
                 </div>
                 <div id="container-admin-manajemen-inner" class="${isOpen ? '' : 'hidden'} space-y-2.5"></div>
             `;
@@ -5923,17 +5974,6 @@
           else box.classList.add('hidden');
       };
       
-      function populateNotifKurirList() {
-          const select = document.getElementById('notif-target-list');
-          if (!select) return;
-      
-          select.innerHTML = '';
-          Object.values(cloudKurirList || {}).forEach(user => {
-              if (user && user.role === 'kurir' && user.status === 'aktif') {
-                  select.innerHTML += `<option value="${user.username}">${user.nama}</option>`;
-              }
-          });
-      }
       
       window.fillNotifTemplate = function() {
           const val = document.getElementById('notif-template').value;
@@ -5966,42 +6006,7 @@
           const select = document.getElementById('notif-target-list');
           if (select) Array.from(select.options).forEach(o => o.selected = false);
       };
-      
-      window.saveNotification = function() {
-          const target = document.getElementById('notif-target').value;
-          const message = document.getElementById('notif-message').value.trim();
-      
-          if (!message) {
-              alert('Isi pesan notifikasi wajib diisi!');
-              return;
-          }
-      
-          let targetList = [];
-          if (target === 'selected') {
-              const select = document.getElementById('notif-target-list');
-              targetList = Array.from(select.selectedOptions).map(opt => opt.value);
-              if (!targetList.length) {
-                  alert('Pilih minimal 1 kurir!');
-                  return;
-              }
-          }
-      
-          const payload = {
-              target,
-              targetList,
-              message,
-              type: 'warning',
-              active: true,
-              createdAt: new Date().toISOString()
-          };
-      
-          push(ref(db, 'notifications_admin'), payload)
-              .then(() => {
-                  alert('Notifikasi berhasil dikirim!');
-                  resetNotifForm();
-              })
-              .catch(err => alert('Gagal kirim notifikasi: ' + err.message));
-      };
+
       function renderKurirNotifications() {
           if (!userSession || userSession.role !== 'kurir') return;
       
