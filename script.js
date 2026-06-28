@@ -1620,7 +1620,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        ${itemRows || `<tr><td colspan="4" class="text-center italic text-slate-400 py-2">- Tidak ada rincian barang -</td></tr>`}
+                        ${itemRows || `<tr><td colspan="4" class="text-center italic text-slate-400 py-2">- Tidak ada rincian -</td></tr>`}
                     </tbody>
                 </table>
         
@@ -3368,7 +3368,7 @@
                 });
         
                 if (!adaData) {
-                    tabelBody.innerHTML = `<tr><td colspan="4" class="text-center text-slate-400 py-4 italic">Belum ada aktivitas pengiriman di bulan ini.</td></tr>`;
+                    tabelBody.innerHTML = `<tr><td colspan="4" class="text-center text-slate-400 py-4 italic">Belum ada aktivitas di bulan ini.</td></tr>`;
                 }
             }
             loadChartJs().then(() => {
