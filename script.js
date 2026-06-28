@@ -355,16 +355,19 @@
             trackingMarker = L.marker([loc.lat, loc.lng], { icon: customIcon })
                 .addTo(trackingMap)
                 .bindPopup(`
-                    <div style="text-align: center; font-size: 12px;">
-                        <b>${user?.nama || 'Kurir'}</b><br>
-                        <span style="font-size: 10px; color: #666;">
-                            ${loc.alamatLengkap || `${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`}
-                        </span><br>
-                        <span style="font-size: 10px; color: #999;">
+                    <div style="text-align: center; font-size: 11px; line-height: 1.3; max-width: 160px;">
+                        <b style="font-size: 12px;">${user?.nama || 'Kurir'}</b><br>
+                        <span style="font-size: 9px; color: #666; display: block; margin: 2px 0;">
+                            ${loc.alamatLengkap ? loc.alamatLengkap.substring(0, 40) + (loc.alamatLengkap.length > 40 ? '...' : '') : `${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`}
+                        </span>
+                        <span style="font-size: 9px; color: #999;">
                             ${loc.jamTracking || '-'} WIB
                         </span>
                     </div>
-                `)
+                `, {
+                    minWidth: 140,
+                    maxWidth: 180
+                })
                 .openPopup();
 
             trackingMap.setView([loc.lat, loc.lng], 16);
