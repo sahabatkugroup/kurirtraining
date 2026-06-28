@@ -46,19 +46,6 @@
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
-        /* Continuous Marquee Slider Animation */
-        @keyframes marquee {
-            0% { transform: translateX(0%); }
-            100% { transform: translateX(-50%); }
-        }
-        .animate-marquee {
-            display: flex;
-            width: max-content;
-            animation: marquee 30s linear infinite;
-        }
-        .animate-marquee:hover {
-            animation-play-state: paused;
-        }
         /* Custom Rating Radio styling */
         .rating-star:checked ~ .star-label,
         .rating-star:checked ~ .star-label ~ .star-label {
@@ -90,6 +77,16 @@
         .no-scrollbar {
             -ms-overflow-style: none;
             scrollbar-width: none;
+        }
+        /* Marquee Container Styling */
+        .marquee-container {
+            mask-image: linear-gradient(90deg, transparent 0%, black 5%, black 95%, transparent 100%);
+            -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 5%, black 95%, transparent 100%);
+            scroll-behavior: smooth;
+        }
+        /* Smooth scroll untuk marquee */
+        #marquee-track {
+            scroll-behavior: smooth;
         }
     </style>
 </head>
@@ -213,21 +210,21 @@
         </section>
 
         <!-- URUTAN 2: APA KATA MEREKA? -->
-        <section class="overflow-hidden">
-            <div class="text-center mb-6">
-                <h2 class="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Apa Kata Mereka?</h2>
-                <p class="text-slate-500 text-xs md:text-sm">Ulasan pilihan dari pelanggan setia kami yang berjalan otomatis.</p>
+        <section class="w-full">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Apa Kata Mereka?</h2>
+                <p class="text-slate-500 text-sm md:text-base mt-2">Ulasan pilihan dari pelanggan setia kami.</p>
             </div>
 
-            <div class="w-full relative py-4 overflow-x-auto overflow-y-hidden whitespace-nowrap scroll-smooth no-scrollbar">
-                <div id="marquee-track" class="flex gap-6 py-2 w-max">
-                    <div class="text-center text-slate-400 w-full py-8">Sedang memuat review pilihan...</div>
+            <div id="marquee-container" class="marquee-container w-full rounded-2xl py-6 overflow-x-auto no-scrollbar bg-white/40">
+                <div id="marquee-track" class="flex gap-4 py-2 w-max">
+                    <div class="text-center text-slate-400 w-full py-12 text-sm flex items-center justify-center">Sedang memuat review pilihan...</div>
                 </div>
             </div>
         </section>
 
         <!-- URUTAN 3: TOMBOL UTAMA DASHBOARD LIVE (DESAIN UT ULTRA-PREMIUM & INTERAKTIF) -->
-        <section class="max-w-xl mx-auto pt-4">
+        <section class="max-w-xl mx-auto pt-8">
             <button onclick="openDashboardPopup()" class="dashboard-trigger-card w-full rounded-2xl p-5 flex items-center justify-between group relative text-left outline-none overflow-hidden">
                 
                 <!-- Sorot Sinar Latar Belakang -->
@@ -325,7 +322,7 @@
                     </div>
                     <div>
                         <h3 id="stat-satisfied" class="text-xl font-bold text-slate-900">0</h3>
-                        <p class="text-[10px] text-green-600 font-medium mt-0.5"><i class="fa-solid fa-arrow-up mr-0.5"></i>99% Rating &ge; 4</p>
+                        <p class="text-[10px] text-green-600 font-medium mt-0.5"><i class="fa-solid fa-arrow-up mr-0.5"></i>99% Rating ≥ 4</p>
                     </div>
                 </div>
                 <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col justify-between">
@@ -424,8 +421,7 @@
         
             courierSuggestions.innerHTML = filtered.map(name => `
                 <div class="px-4 py-3 hover:bg-slate-50 cursor-pointer text-sm text-slate-700"
-                     onclick="selectCourier('${name.replace(/'/g, "\\'")}')">
-                    ${name}
+                     onclick="selectCourier('${name.replace(/'/g, "\\'")}')">\n                    ${name}
                 </div>
             `).join('');
         
@@ -505,43 +501,44 @@
                             uniqueCouriers.add(item.nama.toLowerCase().trim());
                         }
             
-                        let badgeHTML = '<span class="px-2 py-0.5 bg-blue-50 text-premium rounded text-[10px] font-bold flex items-center gap-1"><i class="fa-solid fa-user-check"></i> Verified Customer</span>';
+                        let badgeHTML = '<span class="px-2 py-0.5 bg-blue-50 text-premium rounded text-[10px] font-bold flex items-center gap-1"><i class="fa-solid fa-user-check"></i> Verified</span>';
                         if (item.rating === 5 && item.comments.length > 50) {
-                            badgeHTML += '<span class="px-2 py-0.5 bg-amber-50 text-amber-600 rounded text-[10px] font-bold flex items-center gap-1"><i class="fa-solid fa-crown"></i> Top Review</span>';
+                            badgeHTML += '<span class="px-2 py-0.5 bg-amber-50 text-amber-600 rounded text-[10px] font-bold flex items-center gap-1"><i class="fa-solid fa-crown"></i> Top</span>';
                         } else if (item.comments.includes("selalu") || item.comments.includes("langganan")) {
-                            badgeHTML += '<span class="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-[10px] font-bold flex items-center gap-1"><i class="fa-solid fa-heart"></i> Pelanggan Setia</span>';
+                            badgeHTML += '<span class="px-2 py-0.5 bg-purple-50 text-purple-600 rounded text-[10px] font-bold flex items-center gap-1"><i class="fa-solid fa-heart"></i> Loyal</span>';
                         }
-            
+
                         let starsHTML = '';
                         for(let i=1; i<=5; i++) {
                             starsHTML += `<i class="fa-solid fa-star ${i <= item.rating ? 'text-amber-400' : 'text-slate-200'} text-xs"></i>`;
                         }
-            
+
+                        // Truncate comments to 120 characters with ellipsis
+                        const truncatedComments = item.comments.length > 120 ? item.comments.substring(0, 120) + '...' : item.comments;
+
                         const cardTemplate = `
-                            <div class="w-[300px] md:w-[360px] bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex-shrink-0 flex flex-col justify-between mx-3">
-                                <div>
-                                    <div class="flex items-start justify-between gap-2 mb-3">
-                                        <div>
-                                            <h4 class="font-bold text-sm text-slate-900">${item.fullname}</h4>
-                                            <p class="text-[11px] text-slate-400">Kurir: <span class="text-slate-600 font-medium">${item.nama}</span></p>
-                                        </div>
-                                        <div class="flex items-center gap-0.5">
-                                            ${starsHTML}
+                            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300 h-full">
+                                <div class="mb-3">
+                                    <div class="flex items-start justify-between gap-2 mb-2">
+                                        <div class="flex-1">
+                                            <h4 class="font-bold text-sm text-slate-900 truncate">${item.fullname}</h4>
+                                            <p class="text-[11px] text-slate-400 truncate">Kurir: <span class="text-slate-600 font-medium">${item.nama}</span></p>
                                         </div>
                                     </div>
-                                    <p class="text-xs text-slate-600 leading-relaxed italic mb-4">"${item.comments}"</p>
+                                    <div class="flex items-center gap-0.5 mb-2">
+                                        ${starsHTML}
+                                    </div>
+                                    <p class="text-xs text-slate-600 leading-relaxed line-clamp-3 italic">"${truncatedComments}"</p>
                                 </div>
-                                <div class="pt-3 border-t border-slate-50 flex flex-col gap-2">
-                                    <div class="flex flex-wrap gap-1">
+                                <div class="pt-3 border-t border-slate-50 space-y-2">
+                                    <div class="flex items-center justify-between gap-1 flex-wrap">
+                                        <span class="px-2 py-1 rounded-full bg-blue-50 text-blue-600 font-semibold text-[9px] whitespace-nowrap">
+                                            <i class="fa-solid fa-gauge-high mr-0.5"></i> ${item.speed}
+                                        </span>
+                                        <span class="px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 font-semibold text-[9px] whitespace-nowrap">
+                                            <i class="fa-solid fa-smile mr-0.5"></i> ${item.attitude}
+                                        </span>
                                         ${badgeHTML}
-                                    </div>
-                                    <div class="flex items-center justify-between text-[10px] pt-1">
-                                        <span class="px-2 py-1 rounded-full bg-blue-50 text-blue-600 font-semibold">
-                                            <i class="fa-solid fa-gauge-high mr-1"></i> ${item.speed}
-                                        </span>
-                                        <span class="px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 font-semibold">
-                                            <i class="fa-solid fa-smile mr-1"></i> ${item.attitude}
-                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -566,13 +563,56 @@
 
             const marqueeTrack = document.getElementById('marquee-track');
             if (publishedCardsHTML === '') {
-                marqueeTrack.innerHTML = '<div class="text-center text-slate-400 w-full py-8 text-xs">Belum ada review.</div>';
+                marqueeTrack.innerHTML = '<div class="text-center text-slate-400 w-full py-12 text-sm">Belum ada review.</div>';
             } else {
                 marqueeTrack.innerHTML = publishedCardsHTML;
+                initMarqueeScroll();
             }
         });
     </script>
     <script>
+        let marqueeScrollInterval;
+        let isMarqueeHovering = false;
+
+        function initMarqueeScroll() {
+            const marqueeContainer = document.getElementById('marquee-container');
+            const marqueeTrack = document.getElementById('marquee-track');
+
+            if (!marqueeContainer || !marqueeTrack) return;
+
+            // Clear interval jika sudah ada
+            if (marqueeScrollInterval) clearInterval(marqueeScrollInterval);
+
+            // Reset scroll
+            marqueeContainer.scrollLeft = 0;
+
+            // Auto scroll interval
+            marqueeScrollInterval = setInterval(() => {
+                if (!isMarqueeHovering && marqueeContainer.scrollLeft + marqueeContainer.clientWidth < marqueeContainer.scrollWidth) {
+                    marqueeContainer.scrollLeft += 2;
+                } else if (marqueeContainer.scrollLeft + marqueeContainer.clientWidth >= marqueeContainer.scrollWidth) {
+                    marqueeContainer.scrollLeft = 0;
+                }
+            }, 40);
+        }
+
+        // Pause on hover
+        document.addEventListener('DOMContentLoaded', () => {
+            const marqueeContainer = document.getElementById('marquee-container');
+            
+            if (marqueeContainer) {
+                marqueeContainer.addEventListener('mouseenter', () => {
+                    isMarqueeHovering = true;
+                    if (marqueeScrollInterval) clearInterval(marqueeScrollInterval);
+                });
+
+                marqueeContainer.addEventListener('mouseleave', () => {
+                    isMarqueeHovering = false;
+                    initMarqueeScroll();
+                });
+            }
+        });
+
         function closeWelcomePopup() {
             const popup = document.getElementById('welcomePopup');
             popup.classList.add('opacity-0');
@@ -610,28 +650,6 @@
             popup.classList.add('opacity-0');
             setTimeout(() => { popup.classList.add('hidden'); }, 300);
         }
-        const marqueeWrapper = document.querySelector('.no-scrollbar');
-        let autoScrollInterval = setInterval(() => {
-            if (marqueeWrapper) {
-                marqueeWrapper.scrollLeft += 1;
-                if (marqueeWrapper.scrollLeft + marqueeWrapper.clientWidth >= marqueeWrapper.scrollWidth) {
-                    marqueeWrapper.scrollLeft = 0;
-                }
-            }
-        }, 20);
-        
-        marqueeWrapper.addEventListener('mouseenter', () => clearInterval(autoScrollInterval));
-        marqueeWrapper.addEventListener('mouseleave', () => {
-            autoScrollInterval = setInterval(() => {
-                if (marqueeWrapper) {
-                    marqueeWrapper.scrollLeft += 1;
-                    if (marqueeWrapper.scrollLeft + marqueeWrapper.clientWidth >= marqueeWrapper.scrollWidth) {
-                        marqueeWrapper.scrollLeft = 0;
-                    }
-                }
-            }, 20);
-        });
-        
     </script>
 </body>
 </html>
