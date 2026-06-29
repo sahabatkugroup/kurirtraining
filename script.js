@@ -687,7 +687,7 @@
                         const adminUser = (adminData.username || "").trim().toLowerCase();
                         const adminPass = (adminData.password || "").trim();
                         if (userIn === adminUser && passIn === adminPass) {
-                            userSession = { username: "admin", nama: "Super Admin", role: "owner" };
+                            userSession = { username: "admin", nama: "Super Admin", role: "owner", kategori: "Owner" };
                             localStorage.setItem('sahabatku_session', JSON.stringify(userSession));
                         
                             document.querySelectorAll('.session-fullname').forEach(el => el.innerText = userSession.nama);
@@ -732,7 +732,10 @@
                                 document.querySelectorAll('.session-fullname').forEach(el => el.innerText = userSession.nama);
         
                                 launchApplicationSession("screen-admin-dashboard");
-                                applyManajemenAccess(m.kategori || "-");
+                                // PENTING: Terapkan akses manajemen sesuai kategori
+                                setTimeout(() => {
+                                    applyManajemenAccess(m.kategori || "-");
+                                }, 100);
         
                                 if (btnSubmit) {
                                     btnSubmit.disabled = false;
@@ -956,10 +959,10 @@
                 else kurirBox.classList.add('hidden');
             }
             if (adminBox) {
-                if (userSession && (userSession.role === 'admin' || userSession.role === 'manajemen')) {
+                if (userSession && (userSession.role === 'owner' || userSession.role === 'manajemen')) {
                     adminBox.classList.remove('hidden');
             
-                    if (userSession.role === 'admin') {
+                    if (userSession.role === 'owner') {
                         get(ref(db, 'loginadmin')).then((snap) => {
                             if (snap.exists()) {
                                 const data = snap.val() || {};
@@ -987,7 +990,7 @@
                 }
             }
 
-            // Sembunyikan / tampilkan menu admin sesuai kategori manajemen
+            // Tampilkan menu admin sesuai kategori manajemen
             const adminMenus = [
                 'screen-admin-kurir',
                 'screen-admin-manajemen',
@@ -1012,78 +1015,8 @@
                 }
             });
         
-            // Default: sembunyikan semua menu admin kalau login manajemen
-            if (userSession && userSession.role === 'manajemen') {
-                const hideAllMenus = () => {
-                    adminMenus.forEach(id => {
-                        const screen = document.getElementById(id);
-                        if (!screen) return;
-                        screen.querySelectorAll('button').forEach(btn => {
-                            btn.classList.add('hidden');
-                        });
-                    });
-                };
-        
-                const showMenuByText = (text) => {
-                    document.querySelectorAll('button').forEach(btn => {
-                        const t = (btn.innerText || '').trim();
-                        if (t.includes(text)) {
-                            btn.classList.remove('hidden');
-                        }
-                    });
-                };
-        
-                hideAllMenus();
-        
-                const kategori = (userSession.kategori || '').trim();
-        
-                // wajib tetap tampil
-                showMenuByText('Sistem Global');
-        
-                if (kategori === 'Head Operasional') {
-                    showMenuByText('Monitoring Omset Hari Ini');
-                    showMenuByText('Data Akun Kurir');
-                    showMenuByText('Semua Nota Kurir');
-                    showMenuByText('Manajemen Mitra');
-                    showMenuByText('Laporan Data');
-                    showMenuByText('Tracking Kurir');
-                    showMenuByText('KPI Kurir');
-                    showMenuByText('Testimoni Customer');
-                    showMenuByText('Absensi Harian Kurir');
-                }
-        
-                if (kategori === 'HRD') {
-                    showMenuByText('Data Akun Kurir');
-                    showMenuByText('Tracking Kurir');
-                    showMenuByText('KPI Kurir');
-                    showMenuByText('Absensi Harian Kurir');
-                    showMenuByText('Testimoni Customer');
-                }
-        
-                if (kategori === 'Korlap') {
-                    showMenuByText('Semua Nota Kurir');
-                    showMenuByText('KPI Kurir');
-                    showMenuByText('Testimoni Customer');
-                }
-        
-                if (kategori === 'Leader') {
-                    showMenuByText('Data Akun Kurir');
-                    showMenuByText('Semua Nota Kurir');
-                    showMenuByText('Manajemen Mitra');
-                    showMenuByText('Laporan Data');
-                    showMenuByText('Tracking Kurir');
-                    showMenuByText('KPI Kurir');
-                    showMenuByText('Testimoni Customer');
-                    showMenuByText('Absensi Harian Kurir');
-                }
-        
-                // sembunyikan form registrasi kurir untuk semua manajemen
-                const formKurir = document.querySelector('#screen-admin-kurir .bg-white');
-                if (formKurir) formKurir.classList.add('hidden');
-            }
-        
-            // kalau login admin utama, semua tombol admin tetap tampil
-                if (userSession && userSession.role === 'owner') {
+            // Jika login Owner, semua menu admin tetap tampil
+            if (userSession && userSession.role === 'owner') {
                 const formKurir = document.querySelector('#screen-admin-kurir .bg-white');
                 if (formKurir) formKurir.classList.remove('hidden');
                 adminMenus.forEach(id => {
@@ -1092,6 +1025,11 @@
                     screen.classList.remove('hidden');
                     screen.querySelectorAll('button').forEach(btn => btn.classList.remove('hidden'));
                 });
+            }
+        
+            // Jika login Manajemen, terapkan akses sesuai kategori
+            if (userSession && userSession.role === 'manajemen') {
+                applyManajemenAccess(userSession.kategori || '-');
             }
         
             navigateTo(targetDashboard);
@@ -2998,6 +2936,8 @@
                 return;
             }
 
+            const isHeadOperasional = userSession && userSession.role === 'manajemen' && (userSession.kategori || '').trim() === 'Head Operasional';
+
             inner.innerHTML = keys.map(key => {
                 const item = cloudKurirList[key];
                 const dotStatus = item.status === 'aktif' ? 'bg-emerald-500' : 'bg-rose-500';
@@ -3031,16 +2971,17 @@
                                 </button>
                             </div>
                         </div>
+                        ${isHeadOperasional ? '' : `
                         <div class="flex justify-end gap-2 pt-1">
                             <button onclick="editAkunKurir('${key}')" class="px-2.5 py-1 bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-white rounded-md font-semibold">Edit</button>
                             <button onclick="hapusAkunKurir('${key}')" class="px-2.5 py-1 bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 rounded-md font-semibold">Hapus</button>
-                        </div>
+                        </div>`}
                     </div>
                 `;
             }).join('');
 
             if (typeof lucide !== 'undefined') lucide.createIcons();
-        };        
+        };       
         window.sembunyikanRiwayatMitraAdmin = function() {
             const box = document.getElementById('box-riwayat-trx-inputan');
             const container = document.getElementById('container-admin-log-mitra');
@@ -5414,795 +5355,780 @@
 
             if (typeof lucide !== 'undefined') lucide.createIcons();
         };
-      window.applyManajemenAccess = function(kategori) {
-          const kategoriFixed = (kategori || '').trim();
-          const badge = document.getElementById('badge-admin-role');
-          const kurirForm = document.querySelector('#screen-admin-kurir > .bg-white');
-          const navDashboardBtn = document.getElementById('nav-dashboard-btn');
-          const navNotaBtn = document.getElementById('nav-nota-btn');
-          const navSistemBtn = document.getElementById('nav-sistem-btn');
-      
-          const allMenuScreens = [
-              'screen-admin-kurir',
-              'screen-admin-manajemen',
-              'screen-admin-nota',
-              'screen-admin-mitra',
-              'screen-admin-laporan',
-              'screen-admin-tracking',
-              'screen-admin-kpi',
-              'screen-admin-testimonial',
-              'screen-admin-absensi',
-              'screen-admin-ongkir',
-              'screen-pengaturan',
-              'screen-admin-dashboard'
-          ];
-      
-          const showAllButtonsInScreen = (screenId) => {
-              const screen = document.getElementById(screenId);
-              if (!screen) return;
-              screen.classList.remove('hidden');
-              screen.querySelectorAll('button').forEach(btn => btn.classList.remove('hidden'));
-          };
-      
-          const hideButtonsByText = (text) => {
-              document.querySelectorAll('button').forEach(btn => {
-                  const t = (btn.innerText || '').trim();
-                  if (t.includes(text)) btn.classList.add('hidden');
-              });
-          };
-      
-          const showButtonsByText = (text) => {
-              document.querySelectorAll('button').forEach(btn => {
-                  const t = (btn.innerText || '').trim();
-                  if (t.includes(text)) btn.classList.remove('hidden');
-              });
-          };
-      
-          // default: sembunyikan semua menu admin dulu
-          allMenuScreens.forEach(screenId => {
-              const screen = document.getElementById(screenId);
-              if (!screen) return;
-              screen.querySelectorAll('button').forEach(btn => btn.classList.add('hidden'));
-          });
-      
-          if (kurirForm) kurirForm.classList.add('hidden');
-      
-          [navDashboardBtn, navNotaBtn, navSistemBtn].forEach(btn => {
-              if (btn) btn.classList.add('hidden', 'opacity-0', 'pointer-events-none');
-          });
-      
-          // badge role
-          if (badge) {
-              if (kategoriFixed === 'Owner') badge.innerText = 'Owner';
-              else if (kategoriFixed === 'Head Operasional') badge.innerText = 'Head Operasional';
-              else if (kategoriFixed === 'HRD') badge.innerText = 'HRD';
-              else badge.innerText = kategoriFixed || 'Manajemen';
-          }
-      
-          // selalu tampil
-          showButtonsByText('Sistem Global');
-          showButtonsByText('Kirim Notifikasi');
-          showButtonsByText('Logout / Keluar');
-          showButtonsByText('Keluar Dari Akun');
-          if (kategoriFixed === 'Owner') {
-              allMenuScreens.forEach(screenId => {
-                  const screen = document.getElementById(screenId);
-                  if (!screen) return;
-                  screen.classList.remove('hidden');
-                  screen.querySelectorAll('button').forEach(btn => {
-                      btn.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
-                  });
-              });
-          
-              if (kurirForm) kurirForm.classList.remove('hidden');
-          
-              // paksa tampilkan tombol notifikasi
-              showButtonsByText('Kirim Notifikasi');
-          
-              [navDashboardBtn, navNotaBtn, navSistemBtn].forEach(btn => {
-                  if (btn) btn.classList.add('hidden', 'opacity-0', 'pointer-events-none');
-              });
-          
-              return;
-          }
+        window.applyManajemenAccess = function(kategori) {
+            const kategoriFixed = (kategori || '').trim();
+            const badge = document.getElementById('badge-admin-role');
+            const kurirForm = document.querySelector('#screen-admin-kurir > .bg-white');
+            const manajemenScreen = document.getElementById('screen-admin-manajemen');
+            const manajemenCardBtn = document.querySelector('#screen-admin-dashboard button[onclick*="screen-admin-manajemen"]');
+            const ongkirCardBtn = document.querySelector('#screen-admin-dashboard button[onclick*="screen-admin-ongkir"]');
+            const mitraForm = document.querySelector('#screen-admin-mitra > .bg-white');
+            
+            if (badge) {
+                if (kategoriFixed === 'Owner') badge.innerText = 'Owner';
+                else if (kategoriFixed === 'Head Operasional') badge.innerText = 'Head Operasional';
+                else if (kategoriFixed === 'HRD') badge.innerText = 'HRD';
+                else badge.innerText = kategoriFixed || 'Manajemen';
+            }
 
-          // Head Operasional
-          if (kategoriFixed === 'Head Operasional') {
-              showButtonsByText('Monitoring Omset Hari Ini');
-              showButtonsByText('Data Akun Kurir');
-              showButtonsByText('Semua Nota Kurir');
-              showButtonsByText('Pantau & hapus seluruh nota');            
-              showButtonsByText('Manajemen Mitra');
-              showButtonsByText('Laporan Data');
-              showButtonsByText('Tracking Kurir');
-              showButtonsByText('Absensi Harian Kurir');
-              showButtonsByText('KPI Kurir');
-              showButtonsByText('Testimoni Customer');
-              showButtonsByText('Sistem Global');
-              showButtonsByText('Logout / Keluar');
-              return;
-          }
-      
-          // HRD
-          if (kategoriFixed === 'HRD') {
-              showButtonsByText('Data Akun Kurir');
-              showButtonsByText('Tracking Kurir');
-              showButtonsByText('Absensi Harian Kurir');
-              showButtonsByText('KPI Kurir');
-              showButtonsByText('Testimoni Customer');
-              showButtonsByText('Sistem Global');
-              showButtonsByText('Logout / Keluar');
-              return;
-          }
-      
-          // fallback: tampilkan minimal
-          showButtonsByText('Sistem Global');
-          showButtonsByText('Logout / Keluar');
-      };
-      window.openPopupPenilaianLeader = function() {
-          const modal = document.getElementById('modal-penilaian-leader');
-          const bulan = document.getElementById('leader-penilaian-bulan');
-          if (!modal || !bulan) return;
-      
-          bulan.value = getWibRawDate().substring(0, 7);
-          modal.classList.remove('hidden');
-          renderPenilaianLeader();
-      };
+            if (kategoriFixed === 'Owner' || kategoriFixed === 'Head Operasional') {
+                const allScreenIds = [
+                    'screen-admin-kurir', 'screen-admin-manajemen', 'screen-admin-nota',
+                    'screen-admin-mitra', 'screen-admin-laporan', 'screen-admin-tracking',
+                    'screen-admin-kpi', 'screen-admin-testimonial', 'screen-admin-notifikasi',
+                    'screen-admin-absensi', 'screen-admin-ongkir', 'screen-pengaturan'
+                ];
 
-      window.closePopupPenilaianLeader = function() {
-          const modal = document.getElementById('modal-penilaian-leader');
-          if (modal) modal.classList.add('hidden');
-      };
-      function getLeaderScore(namaLeader, bulan) {
-          const leaderName = (namaLeader || '').trim();
-          if (!leaderName) return null;
-      
-          const leaderItem = Object.values(cloudLeaderList || {}).find(u =>
-              u && (u.nama || '').trim() === leaderName
-          );
-      
-          const anggotaData = Object.values(cloudKurirList || {}).filter(u => {
-              return u &&
-                  u.role === 'kurir' &&
-                  u.status === 'aktif' &&
-                  (u.leader || '').trim() === leaderName;
-          });
-      
-          if (!anggotaData.length) {
-              return {
-                  namaLeader: leaderName,
-                  leaderUsername: leaderItem?.username || '-',
-                  anggotaCount: 0,
-                  leaderRating: 0,
-                  bonusTopRanking: 0,
-                  skorAkhir: 0,
-                  totalKehadiranAnggota: 0,
-                  totalPenghasilanAnggota: 0,
-                  totalNotaAnggota: 0,
-                  totalTrxMitraAnggota: 0,
-                  totalOffAnggota: 0,
-                  anggotaRanking: [],
-                  terbaik: null,
-                  sedang: null,
-                  beban: null
-              };
-          }
-      
-          const anggotaRanking = anggotaData.map(u => {
-              const namaAnggota = (u.nama || u.username || '-').trim();
-              const stat = calcKpiForKurir(namaAnggota, bulan) || {
-                  rating: 0,
-                  hadir: 0,
-                  totalNota: 0,
-                  trxMitra: 0,
-                  totalPenghasilan: 0,
-                  off: 0
-              };
-      
-              const badge = getRatingBadge(stat.rating || 0);
-      
-              return {
-                  nama: namaAnggota,
-                  rating: stat.rating || 0,
-                  hadir: stat.hadir || 0,
-                  totalNota: stat.totalNota || 0,
-                  trxMitra: stat.trxMitra || 0,
-                  totalPenghasilan: stat.totalPenghasilan || 0,
-                  off: stat.off || 0,
-                  badgeLabel: badge.label,
-                  badgeEmoji: badge.emoji
-              };
-          }).sort((a, b) => b.rating - a.rating);
-      
-          const top1 = anggotaRanking[0] || null;
-          const top2 = anggotaRanking[1] || null;
-          const top3 = anggotaRanking[2] || null;
-      
-          // Total semua komponen rating anggota
-          const totalRatingAnggota = anggotaRanking.reduce((acc, a) => acc + (a.rating || 0), 0);
-      
-          // Normalisasi: rata-rata rating semua anggota
-          const leaderRating = Math.round(totalRatingAnggota / anggotaRanking.length);
-      
-          const bonusTopRanking =
-              (top1 ? 5 : 0) +
-              (top2 ? 3 : 0) +
-              (top3 ? 1 : 0);
-      
-          const skorAkhir = Math.min(100, Math.round(leaderRating + bonusTopRanking));
-      
-          return {
-              namaLeader: leaderName,
-              leaderUsername: leaderItem?.username || '-',
-              anggotaCount: anggotaRanking.length,
-              leaderRating,
-              bonusTopRanking,
-              skorAkhir,
-              totalKehadiranAnggota: anggotaRanking.reduce((a, b) => a + (b.hadir || 0), 0),
-              totalPenghasilanAnggota: anggotaRanking.reduce((a, b) => a + (b.totalPenghasilan || 0), 0),
-              totalNotaAnggota: anggotaRanking.reduce((a, b) => a + (b.totalNota || 0), 0),
-              totalTrxMitraAnggota: anggotaRanking.reduce((a, b) => a + (b.trxMitra || 0), 0),
-              totalOffAnggota: anggotaRanking.reduce((a, b) => a + (b.off || 0), 0),
-              anggotaRanking,
-              terbaik: top1,
-              sedang: anggotaRanking.length ? anggotaRanking[Math.floor(anggotaRanking.length / 2)] : null,
-              beban: anggotaRanking[anggotaRanking.length - 1] || null
-          };
-      }
-      window.renderPenilaianLeader = function() {
-          const container = document.getElementById('container-penilaian-leader');
-          const bulan = document.getElementById('leader-penilaian-bulan')?.value || getWibRawDate().substring(0, 7);
-          if (!container) return;
-      
-          const leaderNames = new Set();
-      
-          Object.values(cloudLeaderList || {}).forEach(item => {
-              if (item && item.nama) leaderNames.add(item.nama.trim());
-          });
-      
-          Object.values(cloudKurirList || {}).forEach(u => {
-              if (u && u.leader) leaderNames.add(u.leader.trim());
-          });
-      
-          const data = Array.from(leaderNames)
-              .filter(Boolean)
-              .map(namaLeader => getLeaderScore(namaLeader, bulan))
-              .filter(Boolean)
-              .sort((a, b) => b.skorAkhir - a.skorAkhir);
-      
-          if (!data.length) {
-              container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data leader.</div>';
-              return;
-          }
-      
-          container.innerHTML = data.map((d, i) => {
-              const badge = getRatingBadge(d.skorAkhir);
-              const anggotaList = d.anggotaRanking || [];
-      
-              return `
-                  <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
-                      <div class="flex items-start justify-between gap-3">
-                          <div class="min-w-0">
-                              <div class="flex items-center gap-2">
-                                  <div class="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-950 flex items-center justify-center text-violet-600 dark:text-violet-300 font-black text-xs">
-                                      ${i + 1}
-                                  </div>
-                                  <div class="min-w-0">
-                                      <div class="font-bold text-sm truncate">${d.namaLeader}</div>
-                                      <div class="text-[10px] text-slate-400 truncate">Username: ${d.leaderUsername}</div>
-                                  </div>
-                              </div>
-                          </div>
-      
-                          <div class="text-right shrink-0">
-                              <div class="text-lg font-black text-primary">${d.skorAkhir}%</div>
-                              <div class="text-[10px] font-bold ${badge.color || 'text-slate-500'}">
-                                  ${badge.emoji} ${badge.label}
-                              </div>
-                          </div>
-                      </div>
-      
-                      <div class="grid grid-cols-2 gap-2 text-xs">
-                          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
-                              <div class="text-[10px] text-slate-400 uppercase">Skor Dasar Leader</div>
-                              <div class="font-black mt-1">${d.leaderRating}</div>
-                          </div>
-                          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
-                              <div class="text-[10px] text-slate-400 uppercase">Bonus Top Ranking</div>
-                              <div class="font-black mt-1">+${d.bonusTopRanking}</div>
-                          </div>
-                          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 col-span-2">
-                              <div class="text-[10px] text-slate-400 uppercase">Total Anggota Aktif</div>
-                              <div class="font-black mt-1">${d.anggotaCount}</div>
-                          </div>
-                      </div>
-      
-                      <div class="grid grid-cols-4 gap-2 text-xs">
-                          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
-                              <div class="text-[10px] text-slate-400 uppercase">Kehadiran</div>
-                              <div class="font-black mt-1">${d.totalKehadiranAnggota}</div>
-                          </div>
-                          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
-                              <div class="text-[10px] text-slate-400 uppercase">Penghasilan</div>
-                              <div class="font-black mt-1 text-emerald-600 dark:text-emerald-400">
-                                  Rp ${d.totalPenghasilanAnggota.toLocaleString('id-ID')}
-                              </div>
-                          </div>
-                          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
-                              <div class="text-[10px] text-slate-400 uppercase">Total Nota</div>
-                              <div class="font-black mt-1">${d.totalNotaAnggota}</div>
-                          </div>
-                          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
-                              <div class="text-[10px] text-slate-400 uppercase">Trx Mitra</div>
-                              <div class="font-black mt-1">${d.totalTrxMitraAnggota}</div>
-                          </div>
-                      </div>
-      
-                      <div class="grid grid-cols-1 gap-2 text-xs">
-                          <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
-                              <div class="text-[10px] text-slate-400 uppercase">Total OFF / Izin / Sakit</div>
-                              <div class="font-black mt-1">${d.totalOffAnggota}</div>
-                          </div>
-                      </div>
-                      <div>
-                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
-                          Anggota & Badge
+                allScreenIds.forEach(id => {
+                    const screen = document.getElementById(id);
+                    if (!screen) return;
+                    screen.classList.remove('hidden');
+                    screen.querySelectorAll('button').forEach(btn => {
+                        btn.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+                    });
+                });
+
+                if (kurirForm) kurirForm.classList.remove('hidden');
+                if (mitraForm) mitraForm.classList.remove('hidden');
+                if (manajemenCardBtn) manajemenCardBtn.classList.remove('hidden');
+                if (ongkirCardBtn) ongkirCardBtn.classList.remove('hidden');
+
+                if (kategoriFixed === 'Head Operasional') {
+                    if (manajemenScreen) {
+                        manajemenScreen.classList.add('hidden');
+                        manajemenScreen.querySelectorAll('button').forEach(btn => {
+                            btn.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+                        });
+                    }
+                    if (manajemenCardBtn) manajemenCardBtn.classList.add('hidden');
+                    if (ongkirCardBtn) ongkirCardBtn.classList.add('hidden');
+
+                    const kurirScreen = document.getElementById('screen-admin-kurir');
+                    if (kurirScreen) {
+                        const kurirFormBox = kurirScreen.querySelector('.bg-white');
+                        if (kurirFormBox) kurirFormBox.classList.add('hidden');
+
+                        kurirScreen.querySelectorAll('.bg-white button').forEach(btn => {
+                            const text = (btn.innerText || '').trim().toUpperCase();
+                            if (text === 'SIMPAN' || text === 'BATAL' || text === 'EDIT' || text === 'HAPUS') {
+                                btn.classList.add('hidden');
+                            }
+                        });
+                    }
+                } else {
+                    if (manajemenScreen) manajemenScreen.classList.remove('hidden');
+                }
+
+                const mitraScreen = document.getElementById('screen-admin-mitra');
+                if (mitraScreen && kategoriFixed === 'Head Operasional') {
+                    mitraScreen.querySelectorAll('button').forEach(btn => {
+                        btn.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+                    });
+                }
+
+                return;
+            }
+
+            if (kategoriFixed === 'HRD') {
+                const hrdScreens = [
+                    'screen-admin-kurir', 'screen-admin-tracking', 'screen-admin-kpi',
+                    'screen-admin-testimonial', 'screen-admin-absensi'
+                ];
+
+                hrdScreens.forEach(id => {
+                    const screen = document.getElementById(id);
+                    if (!screen) return;
+                    screen.classList.remove('hidden');
+                    screen.querySelectorAll('button').forEach(btn => {
+                        btn.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+                    });
+                });
+
+                const hiddenForHRD = [
+                    'screen-admin-manajemen', 'screen-admin-nota', 'screen-admin-mitra',
+                    'screen-admin-laporan', 'screen-admin-notifikasi', 'screen-admin-ongkir'
+                ];
+                hiddenForHRD.forEach(id => {
+                    const screen = document.getElementById(id);
+                    if (!screen) return;
+                    screen.classList.add('hidden');
+                    screen.querySelectorAll('button').forEach(btn => {
+                        btn.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+                    });
+                });
+
+                if (kurirForm) kurirForm.classList.add('hidden');
+                if (manajemenCardBtn) manajemenCardBtn.classList.add('hidden');
+                if (ongkirCardBtn) ongkirCardBtn.classList.add('hidden');
+                return;
+            }
+
+            console.log('Kategori manajemen tidak dikenali:', kategoriFixed);
+        };
+        window.openPopupPenilaianLeader = function() {
+            const modal = document.getElementById('modal-penilaian-leader');
+            const bulan = document.getElementById('leader-penilaian-bulan');
+            if (!modal || !bulan) return;
+        
+            bulan.value = getWibRawDate().substring(0, 7);
+            modal.classList.remove('hidden');
+            renderPenilaianLeader();
+        };
+
+        window.closePopupPenilaianLeader = function() {
+            const modal = document.getElementById('modal-penilaian-leader');
+            if (modal) modal.classList.add('hidden');
+        };
+        function getLeaderScore(namaLeader, bulan) {
+            const leaderName = (namaLeader || '').trim();
+            if (!leaderName) return null;
+        
+            const leaderItem = Object.values(cloudLeaderList || {}).find(u =>
+                u && (u.nama || '').trim() === leaderName
+            );
+        
+            const anggotaData = Object.values(cloudKurirList || {}).filter(u => {
+                return u &&
+                    u.role === 'kurir' &&
+                    u.status === 'aktif' &&
+                    (u.leader || '').trim() === leaderName;
+            });
+        
+            if (!anggotaData.length) {
+                return {
+                    namaLeader: leaderName,
+                    leaderUsername: leaderItem?.username || '-',
+                    anggotaCount: 0,
+                    leaderRating: 0,
+                    bonusTopRanking: 0,
+                    skorAkhir: 0,
+                    totalKehadiranAnggota: 0,
+                    totalPenghasilanAnggota: 0,
+                    totalNotaAnggota: 0,
+                    totalTrxMitraAnggota: 0,
+                    totalOffAnggota: 0,
+                    anggotaRanking: [],
+                    terbaik: null,
+                    sedang: null,
+                    beban: null
+                };
+            }
+        
+            const anggotaRanking = anggotaData.map(u => {
+                const namaAnggota = (u.nama || u.username || '-').trim();
+                const stat = calcKpiForKurir(namaAnggota, bulan) || {
+                    rating: 0,
+                    hadir: 0,
+                    totalNota: 0,
+                    trxMitra: 0,
+                    totalPenghasilan: 0,
+                    off: 0
+                };
+        
+                const badge = getRatingBadge(stat.rating || 0);
+        
+                return {
+                    nama: namaAnggota,
+                    rating: stat.rating || 0,
+                    hadir: stat.hadir || 0,
+                    totalNota: stat.totalNota || 0,
+                    trxMitra: stat.trxMitra || 0,
+                    totalPenghasilan: stat.totalPenghasilan || 0,
+                    off: stat.off || 0,
+                    badgeLabel: badge.label,
+                    badgeEmoji: badge.emoji
+                };
+            }).sort((a, b) => b.rating - a.rating);
+        
+            const top1 = anggotaRanking[0] || null;
+            const top2 = anggotaRanking[1] || null;
+            const top3 = anggotaRanking[2] || null;
+        
+            // Total semua komponen rating anggota
+            const totalRatingAnggota = anggotaRanking.reduce((acc, a) => acc + (a.rating || 0), 0);
+        
+            // Normalisasi: rata-rata rating semua anggota
+            const leaderRating = Math.round(totalRatingAnggota / anggotaRanking.length);
+        
+            const bonusTopRanking =
+                (top1 ? 5 : 0) +
+                (top2 ? 3 : 0) +
+                (top3 ? 1 : 0);
+        
+            const skorAkhir = Math.min(100, Math.round(leaderRating + bonusTopRanking));
+        
+            return {
+                namaLeader: leaderName,
+                leaderUsername: leaderItem?.username || '-',
+                anggotaCount: anggotaRanking.length,
+                leaderRating,
+                bonusTopRanking,
+                skorAkhir,
+                totalKehadiranAnggota: anggotaRanking.reduce((a, b) => a + (b.hadir || 0), 0),
+                totalPenghasilanAnggota: anggotaRanking.reduce((a, b) => a + (b.totalPenghasilan || 0), 0),
+                totalNotaAnggota: anggotaRanking.reduce((a, b) => a + (b.totalNota || 0), 0),
+                totalTrxMitraAnggota: anggotaRanking.reduce((a, b) => a + (b.trxMitra || 0), 0),
+                totalOffAnggota: anggotaRanking.reduce((a, b) => a + (b.off || 0), 0),
+                anggotaRanking,
+                terbaik: top1,
+                sedang: anggotaRanking.length ? anggotaRanking[Math.floor(anggotaRanking.length / 2)] : null,
+                beban: anggotaRanking[anggotaRanking.length - 1] || null
+            };
+        }
+        window.renderPenilaianLeader = function() {
+            const container = document.getElementById('container-penilaian-leader');
+            const bulan = document.getElementById('leader-penilaian-bulan')?.value || getWibRawDate().substring(0, 7);
+            if (!container) return;
+        
+            const leaderNames = new Set();
+        
+            Object.values(cloudLeaderList || {}).forEach(item => {
+                if (item && item.nama) leaderNames.add(item.nama.trim());
+            });
+        
+            Object.values(cloudKurirList || {}).forEach(u => {
+                if (u && u.leader) leaderNames.add(u.leader.trim());
+            });
+        
+            const data = Array.from(leaderNames)
+                .filter(Boolean)
+                .map(namaLeader => getLeaderScore(namaLeader, bulan))
+                .filter(Boolean)
+                .sort((a, b) => b.skorAkhir - a.skorAkhir);
+        
+            if (!data.length) {
+                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data leader.</div>';
+                return;
+            }
+        
+            container.innerHTML = data.map((d, i) => {
+                const badge = getRatingBadge(d.skorAkhir);
+                const anggotaList = d.anggotaRanking || [];
+        
+                return `
+                    <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-full bg-violet-100 dark:bg-violet-950 flex items-center justify-center text-violet-600 dark:text-violet-300 font-black text-xs">
+                                        ${i + 1}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="font-bold text-sm truncate">${d.namaLeader}</div>
+                                        <div class="text-[10px] text-slate-400 truncate">Username: ${d.leaderUsername}</div>
+                                    </div>
+                                </div>
+                            </div>
+        
+                            <div class="text-right shrink-0">
+                                <div class="text-lg font-black text-primary">${d.skorAkhir}%</div>
+                                <div class="text-[10px] font-bold ${badge.color || 'text-slate-500'}">
+                                    ${badge.emoji} ${badge.label}
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex flex-wrap gap-1">
-                          ${anggotaList.length
-                            ? anggotaList.map(a => {
-                                const badgeA = getRatingBadge(a.rating);
-                                return `
-                                  <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border text-[9px] font-semibold whitespace-nowrap leading-none">
-                                    <span>${a.nama}</span>
-                                    <span class="text-slate-400">•</span>
-                                    <span>${a.rating}%</span>
-                                    <span class="text-slate-400">•</span>
-                                    <span>${badgeA.emoji} ${badgeA.label}</span>
-                                  </span>
-                                `;
-                              }).join('')
-                            : '<span class="text-[10px] text-slate-400">Belum ada anggota.</span>'
-                          }
+        
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+                                <div class="text-[10px] text-slate-400 uppercase">Skor Dasar Leader</div>
+                                <div class="font-black mt-1">${d.leaderRating}</div>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+                                <div class="text-[10px] text-slate-400 uppercase">Bonus Top Ranking</div>
+                                <div class="font-black mt-1">+${d.bonusTopRanking}</div>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 col-span-2">
+                                <div class="text-[10px] text-slate-400 uppercase">Total Anggota Aktif</div>
+                                <div class="font-black mt-1">${d.anggotaCount}</div>
+                            </div>
                         </div>
-                      </div>
+        
+                        <div class="grid grid-cols-4 gap-2 text-xs">
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+                                <div class="text-[10px] text-slate-400 uppercase">Kehadiran</div>
+                                <div class="font-black mt-1">${d.totalKehadiranAnggota}</div>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+                                <div class="text-[10px] text-slate-400 uppercase">Penghasilan</div>
+                                <div class="font-black mt-1 text-emerald-600 dark:text-emerald-400">
+                                    Rp ${d.totalPenghasilanAnggota.toLocaleString('id-ID')}
+                                </div>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+                                <div class="text-[10px] text-slate-400 uppercase">Total Nota</div>
+                                <div class="font-black mt-1">${d.totalNotaAnggota}</div>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+                                <div class="text-[10px] text-slate-400 uppercase">Trx Mitra</div>
+                                <div class="font-black mt-1">${d.totalTrxMitraAnggota}</div>
+                            </div>
+                        </div>
+        
+                        <div class="grid grid-cols-1 gap-2 text-xs">
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+                                <div class="text-[10px] text-slate-400 uppercase">Total OFF / Izin / Sakit</div>
+                                <div class="font-black mt-1">${d.totalOffAnggota}</div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                            Anggota & Badge
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                            ${anggotaList.length
+                                ? anggotaList.map(a => {
+                                    const badgeA = getRatingBadge(a.rating);
+                                    return `
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border text-[9px] font-semibold whitespace-nowrap leading-none">
+                                        <span>${a.nama}</span>
+                                        <span class="text-slate-400">•</span>
+                                        <span>${a.rating}%</span>
+                                        <span class="text-slate-400">•</span>
+                                        <span>${badgeA.emoji} ${badgeA.label}</span>
+                                    </span>
+                                    `;
+                                }).join('')
+                                : '<span class="text-[10px] text-slate-400">Belum ada anggota.</span>'
+                            }
+                            </div>
+                        </div>
 
-                      <div class="space-y-2">
-                          <div class="flex justify-between text-[10px] font-bold uppercase text-slate-400">
-                              <span>Progress Leader</span>
-                              <span>${d.skorAkhir}%</span>
-                          </div>
-                          <div class="h-2.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
-                              <div class="h-full bg-primary rounded-full" style="width:${d.skorAkhir}%"></div>
-                          </div>
-                      </div>
-      
-                      <div class="text-[11px] text-slate-600 dark:text-slate-300 space-y-1 leading-relaxed">
-                          <p><b>Leader Score</b> diambil dari total rating seluruh anggota + bonus Top 3 anggota.</p>
-                          <p>Badge tiap anggota tetap mengikuti KPI kurir masing-masing.</p>
-                          <p>Anggota nonaktif/blokir tidak dihitung.</p>
-                      </div>
-                  </div>
-              `;
-          }).join('');
-      };
-      window.openLeaderModal = function() {
-          resetLeaderForm();
-          document.getElementById('modal-leader').classList.remove('hidden');
-          renderLeaderList();
-      };
-      window.resetLeaderForm = function() {
-          document.getElementById('leader-id-edit').value = '';
-          document.getElementById('leader-nama').value = '';
-          const select = document.getElementById('leader-anggota');
-          if (select) Array.from(select.options).forEach(o => o.selected = false);
-      };
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-[10px] font-bold uppercase text-slate-400">
+                                <span>Progress Leader</span>
+                                <span>${d.skorAkhir}%</span>
+                            </div>
+                            <div class="h-2.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                                <div class="h-full bg-primary rounded-full" style="width:${d.skorAkhir}%"></div>
+                            </div>
+                        </div>
+        
+                        <div class="text-[11px] text-slate-600 dark:text-slate-300 space-y-1 leading-relaxed">
+                            <p><b>Leader Score</b> diambil dari total rating seluruh anggota + bonus Top 3 anggota.</p>
+                            <p>Badge tiap anggota tetap mengikuti KPI kurir masing-masing.</p>
+                            <p>Anggota nonaktif/blokir tidak dihitung.</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+        window.openLeaderModal = function() {
+            resetLeaderForm();
+            document.getElementById('modal-leader').classList.remove('hidden');
+            renderLeaderList();
+        };
+        window.resetLeaderForm = function() {
+            document.getElementById('leader-id-edit').value = '';
+            document.getElementById('leader-nama').value = '';
+            const select = document.getElementById('leader-anggota');
+            if (select) Array.from(select.options).forEach(o => o.selected = false);
+        };
 
-      window.renderLeaderList = function() {
-          const container = document.getElementById('container-leader-list');
-          if (!container) return;
-      
-          const keys = Object.keys(cloudLeaderList || {});
-          if (!keys.length) {
-              container.innerHTML = '<div class="text-center text-xs text-slate-400 py-3">Belum ada leader tersimpan.</div>';
-              return;
-          }
-      
-          const bulan = getWibRawDate().substring(0, 7);
-      
-          container.innerHTML = keys.map(key => {
-              const item = cloudLeaderList[key];
-              const anggota = Array.isArray(item.anggota) ? item.anggota : [];
-      
-              const hasilAnggota = anggota.map(nama => {
-                  const stat = calcKpiForKurir(nama, bulan);
-                  return { nama, rating: stat.rating };
-              }).sort((a, b) => b.rating - a.rating);
-      
-              const terbaik = hasilAnggota[0] || null;
-              const sedang = hasilAnggota.length ? hasilAnggota[Math.floor(hasilAnggota.length / 2)] : null;
-              const beban = hasilAnggota[hasilAnggota.length - 1] || null;
-      
-              return `
-                  <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border text-xs space-y-2">
-                      <div class="flex justify-between items-start">
-                          <div>
-                              <div class="font-bold text-sm">${item.nama || '-'}</div>
-                              <div class="text-[10px] text-slate-400">Anggota: ${anggota.length}</div>
-                          </div>
-                          <div class="flex gap-2">
-                              <button onclick="editLeaderData('${key}')" class="px-2 py-1 rounded-md bg-blue-50 text-blue-600 text-[10px] font-bold">Edit</button>
-                              <button onclick="hapusLeaderData('${key}')" class="px-2 py-1 rounded-md bg-rose-50 text-rose-600 text-[10px] font-bold">Hapus</button>
-                          </div>
-                      </div>
-      
-                      <div class="space-y-1 text-[10px]">
-                          <div class="font-semibold text-slate-500">Daftar Anggota:</div>
-                          <div class="flex flex-wrap gap-1">
-                              ${anggota.map(a => `<span class="px-2 py-1 rounded-full bg-white dark:bg-darkBg border">${a}</span>`).join('') || '-'}
-                          </div>
-                      </div>
-      
-                      <div class="grid grid-cols-3 gap-2 text-[10px]">
-                          <div class="p-2 rounded-lg bg-emerald-50 text-emerald-700">
-                              <div class="font-bold">Terbaik</div>
-                              <div>${terbaik ? terbaik.nama : '-'}</div>
-                              <div>Rating: ${terbaik ? terbaik.rating : 0}%</div>
-                          </div>
-                          <div class="p-2 rounded-lg bg-amber-50 text-amber-700">
-                              <div class="font-bold">Sedang</div>
-                              <div>${sedang ? sedang.nama : '-'}</div>
-                              <div>Rating: ${sedang ? sedang.rating : 0}%</div>
-                          </div>
-                          <div class="p-2 rounded-lg bg-rose-50 text-rose-700">
-                              <div class="font-bold">Beban</div>
-                              <div>${beban ? beban.nama : '-'}</div>
-                              <div>Rating: ${beban ? beban.rating : 0}%</div>
-                          </div>
-                      </div>
-                  </div>
-              `;
-          }).join('');
-      };
-      window.editLeaderData = function(key) {
-          const d = cloudLeaderList[key];
-          if (!d) return;
-      
-          document.getElementById('leader-id-edit').value = key;
-          document.getElementById('leader-nama').value = d.nama || '';
-      
-          populateAnggotaDropdownLeader();
-          const select = document.getElementById('leader-anggota');
-          if (select && Array.isArray(d.anggota)) {
-              Array.from(select.options).forEach(opt => {
-                  opt.selected = d.anggota.includes(opt.value);
-              });
-          }
-      };
+        window.renderLeaderList = function() {
+            const container = document.getElementById('container-leader-list');
+            if (!container) return;
+        
+            const keys = Object.keys(cloudLeaderList || {});
+            if (!keys.length) {
+                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-3">Belum ada leader tersimpan.</div>';
+                return;
+            }
+        
+            const bulan = getWibRawDate().substring(0, 7);
+        
+            container.innerHTML = keys.map(key => {
+                const item = cloudLeaderList[key];
+                const anggota = Array.isArray(item.anggota) ? item.anggota : [];
+        
+                const hasilAnggota = anggota.map(nama => {
+                    const stat = calcKpiForKurir(nama, bulan);
+                    return { nama, rating: stat.rating };
+                }).sort((a, b) => b.rating - a.rating);
+        
+                const terbaik = hasilAnggota[0] || null;
+                const sedang = hasilAnggota.length ? hasilAnggota[Math.floor(hasilAnggota.length / 2)] : null;
+                const beban = hasilAnggota[hasilAnggota.length - 1] || null;
+        
+                return `
+                    <div class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border text-xs space-y-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="font-bold text-sm">${item.nama || '-'}</div>
+                                <div class="text-[10px] text-slate-400">Anggota: ${anggota.length}</div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="editLeaderData('${key}')" class="px-2 py-1 rounded-md bg-blue-50 text-blue-600 text-[10px] font-bold">Edit</button>
+                                <button onclick="hapusLeaderData('${key}')" class="px-2 py-1 rounded-md bg-rose-50 text-rose-600 text-[10px] font-bold">Hapus</button>
+                            </div>
+                        </div>
+        
+                        <div class="space-y-1 text-[10px]">
+                            <div class="font-semibold text-slate-500">Daftar Anggota:</div>
+                            <div class="flex flex-wrap gap-1">
+                                ${anggota.map(a => `<span class="px-2 py-1 rounded-full bg-white dark:bg-darkBg border">${a}</span>`).join('') || '-'}
+                            </div>
+                        </div>
+        
+                        <div class="grid grid-cols-3 gap-2 text-[10px]">
+                            <div class="p-2 rounded-lg bg-emerald-50 text-emerald-700">
+                                <div class="font-bold">Terbaik</div>
+                                <div>${terbaik ? terbaik.nama : '-'}</div>
+                                <div>Rating: ${terbaik ? terbaik.rating : 0}%</div>
+                            </div>
+                            <div class="p-2 rounded-lg bg-amber-50 text-amber-700">
+                                <div class="font-bold">Sedang</div>
+                                <div>${sedang ? sedang.nama : '-'}</div>
+                                <div>Rating: ${sedang ? sedang.rating : 0}%</div>
+                            </div>
+                            <div class="p-2 rounded-lg bg-rose-50 text-rose-700">
+                                <div class="font-bold">Beban</div>
+                                <div>${beban ? beban.nama : '-'}</div>
+                                <div>Rating: ${beban ? beban.rating : 0}%</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+        window.editLeaderData = function(key) {
+            const d = cloudLeaderList[key];
+            if (!d) return;
+        
+            document.getElementById('leader-id-edit').value = key;
+            document.getElementById('leader-nama').value = d.nama || '';
+        
+            populateAnggotaDropdownLeader();
+            const select = document.getElementById('leader-anggota');
+            if (select && Array.isArray(d.anggota)) {
+                Array.from(select.options).forEach(opt => {
+                    opt.selected = d.anggota.includes(opt.value);
+                });
+            }
+        };
 
-      window.hapusLeaderData = function(key) {
-          if (confirm('Hapus data leader ini?')) {
-              remove(ref(db, `leader_list/${key}`))
-                  .then(() => alert('Leader berhasil dihapus!'))
-                  .catch(err => alert('Gagal hapus leader: ' + err.message));
-          }
-      };
+        window.hapusLeaderData = function(key) {
+            if (confirm('Hapus data leader ini?')) {
+                remove(ref(db, `leader_list/${key}`))
+                    .then(() => alert('Leader berhasil dihapus!'))
+                    .catch(err => alert('Gagal hapus leader: ' + err.message));
+            }
+        };
 
-      window.closeLeaderModal = function() {
-          document.getElementById('modal-leader').classList.add('hidden');
-      };
-      
-      window.saveLeaderData = function() {
-          const idEdit = document.getElementById('leader-id-edit').value;
-          const nama = document.getElementById('leader-nama').value.trim();
-          const select = document.getElementById('leader-anggota');
-          const anggota = Array.from(select.selectedOptions).map(opt => opt.value.trim()).filter(Boolean);
-      
-          if (!nama) return alert('Nama leader wajib diisi!');
-          if (!anggota.length) return alert('Pilih minimal 1 anggota!');
-      
-          const payload = { nama, anggota };
-      
-          const syncKeKurir = async () => {
-              for (const [key, user] of Object.entries(cloudKurirList || {})) {
-                  if (!user) continue;
-                  if (anggota.includes(user.nama)) {
-                      await update(ref(db, `users/${key}`), { leader: nama });
-                  } else if ((user.leader || '').trim() === nama) {
-                      await update(ref(db, `users/${key}`), { leader: '' });
-                  }
-              }
-          };
-      
-          if (idEdit) {
-              update(ref(db, `leader_list/${idEdit}`), payload)
-                  .then(async () => {
-                      await syncKeKurir();
-                      alert('Data leader berhasil disimpan!');
-                      closeLeaderModal();
-                  })
-                  .catch(err => alert('Gagal update leader: ' + err.message));
-          } else {
-              push(ref(db, 'leader_list'), payload)
-                  .then(async () => {
-                      await syncKeKurir();
-                      alert('Data leader berhasil disimpan!');
-                      closeLeaderModal();
-                  })
-                  .catch(err => alert('Gagal simpan leader: ' + err.message));
-          }
-      };
+        window.closeLeaderModal = function() {
+            document.getElementById('modal-leader').classList.add('hidden');
+        };
+        
+        window.saveLeaderData = function() {
+            const idEdit = document.getElementById('leader-id-edit').value;
+            const nama = document.getElementById('leader-nama').value.trim();
+            const select = document.getElementById('leader-anggota');
+            const anggota = Array.from(select.selectedOptions).map(opt => opt.value.trim()).filter(Boolean);
+        
+            if (!nama) return alert('Nama leader wajib diisi!');
+            if (!anggota.length) return alert('Pilih minimal 1 anggota!');
+        
+            const payload = { nama, anggota };
+        
+            const syncKeKurir = async () => {
+                for (const [key, user] of Object.entries(cloudKurirList || {})) {
+                    if (!user) continue;
+                    if (anggota.includes(user.nama)) {
+                        await update(ref(db, `users/${key}`), { leader: nama });
+                    } else if ((user.leader || '').trim() === nama) {
+                        await update(ref(db, `users/${key}`), { leader: '' });
+                    }
+                }
+            };
+        
+            if (idEdit) {
+                update(ref(db, `leader_list/${idEdit}`), payload)
+                    .then(async () => {
+                        await syncKeKurir();
+                        alert('Data leader berhasil disimpan!');
+                        closeLeaderModal();
+                    })
+                    .catch(err => alert('Gagal update leader: ' + err.message));
+            } else {
+                push(ref(db, 'leader_list'), payload)
+                    .then(async () => {
+                        await syncKeKurir();
+                        alert('Data leader berhasil disimpan!');
+                        closeLeaderModal();
+                    })
+                    .catch(err => alert('Gagal simpan leader: ' + err.message));
+            }
+        };
 
-      function populateLeaderDropdown() {
-          const dropdown = document.getElementById('ak-leader');
-          const dropdownEdit = document.getElementById('edit-kurir-leader');
-          if (!dropdown && !dropdownEdit) return;
-      
-          const options = ['<option value="">-- Pilih Leader --</option>'];
-      
-          Object.values(cloudLeaderList || {}).forEach(item => {
-              if (item && item.nama) {
-                  options.push(`<option value="${item.nama}">${item.nama}</option>`);
-              }
-          });
-      
-          const html = options.join('');
-          if (dropdown) dropdown.innerHTML = html;
-          if (dropdownEdit) dropdownEdit.innerHTML = html;
-      }
-      
-      function populateAnggotaDropdownLeader() {
-          const select = document.getElementById('leader-anggota');
-          if (!select) return;
-      
-          select.innerHTML = '';
-      
-          Object.values(cloudKurirList || {}).forEach(user => {
-              if (user && user.role === 'kurir' && user.status === 'aktif') {
-                  const leaderName = (user.leader || '').trim();
-                  const label = leaderName
-                      ? `🔒 ${user.nama} — Leader: ${leaderName}`
-                      : `✅ ${user.nama} — Belum punya leader`;
-      
-                  select.innerHTML += `<option value="${user.nama}">${label}</option>`;
-              }
-          });
-      }
-      window.openLeaderModal = function() {
-          resetLeaderForm();
-          document.getElementById('modal-leader').classList.remove('hidden');
-          populateAnggotaDropdownLeader();
-          renderLeaderList();
-      };
-      function isLeaderExist(namaLeader) {
-          const target = (namaLeader || '').trim().toLowerCase();
-          if (!target) return false;
-      
-          return Object.values(cloudLeaderList || {}).some(item => {
-              return item && (item.nama || '').trim().toLowerCase() === target;
-          });
-      }
-      function syncLeaderName(oldName, newName) {
-          const oldLeader = (oldName || '').trim();
-          const newLeader = (newName || '').trim();
-      
-          if (!oldLeader || !newLeader || oldLeader === newLeader) return;
-      
-          Object.entries(cloudKurirList || {}).forEach(([key, user]) => {
-              if ((user.leader || '').trim() === oldLeader) {
-                  update(ref(db, `users/${key}`), {
-                      leader: newLeader
-                  });
-              }
-          });
-      }
-      let cloudNotificationList = {};
-      
-      window.toggleNotifTarget = function() {
-          const target = document.getElementById('notif-target').value;
-          const box = document.getElementById('notif-selected-box');
-          if (!box) return;
-          if (target === 'selected') box.classList.remove('hidden');
-          else box.classList.add('hidden');
-      };
-      
-      
-      window.fillNotifTemplate = function() {
-          const val = document.getElementById('notif-template').value;
-          const msg = document.getElementById('notif-message');
-          if (!msg) return;
-      
-          const templates = {
-              trx: 'Kurir hari ini belum input trx mitra. Mohon segera input agar data harian lengkap.',
-              nota: 'Nota hari ini masih sedikit. Mohon tingkatkan input nota untuk target harian.',
-              absen_masuk: 'Anda belum absen masuk hari ini. Mohon segera lakukan absensi.',
-              absen_pulang: 'Anda belum absen pulang hari ini. Mohon segera lakukan absensi pulang.',
-              kpi: 'Peringkat KPI Anda perlu ditingkatkan. Mohon perhatikan performa kerja hari ini.'
-          };
-      
-          if (val === 'custom') {
-              msg.value = '';
-              msg.focus();
-              return;
-          }
-      
-          if (templates[val]) msg.value = templates[val];
-      };
-      
-      window.resetNotifForm = function() {
-          document.getElementById('notif-target').value = 'all';
-          document.getElementById('notif-template').value = '';
-          document.getElementById('notif-message').value = '';
-          const box = document.getElementById('notif-selected-box');
-          if (box) box.classList.add('hidden');
-          const select = document.getElementById('notif-target-list');
-          if (select) Array.from(select.options).forEach(o => o.selected = false);
-      };
+        function populateLeaderDropdown() {
+            const dropdown = document.getElementById('ak-leader');
+            const dropdownEdit = document.getElementById('edit-kurir-leader');
+            if (!dropdown && !dropdownEdit) return;
+        
+            const options = ['<option value="">-- Pilih Leader --</option>'];
+        
+            Object.values(cloudLeaderList || {}).forEach(item => {
+                if (item && item.nama) {
+                    options.push(`<option value="${item.nama}">${item.nama}</option>`);
+                }
+            });
+        
+            const html = options.join('');
+            if (dropdown) dropdown.innerHTML = html;
+            if (dropdownEdit) dropdownEdit.innerHTML = html;
+        }
+        
+        function populateAnggotaDropdownLeader() {
+            const select = document.getElementById('leader-anggota');
+            if (!select) return;
+        
+            select.innerHTML = '';
+        
+            Object.values(cloudKurirList || {}).forEach(user => {
+                if (user && user.role === 'kurir' && user.status === 'aktif') {
+                    const leaderName = (user.leader || '').trim();
+                    const label = leaderName
+                        ? `🔒 ${user.nama} — Leader: ${leaderName}`
+                        : `✅ ${user.nama} — Belum punya leader`;
+        
+                    select.innerHTML += `<option value="${user.nama}">${label}</option>`;
+                }
+            });
+        }
+        window.openLeaderModal = function() {
+            resetLeaderForm();
+            document.getElementById('modal-leader').classList.remove('hidden');
+            populateAnggotaDropdownLeader();
+            renderLeaderList();
+        };
+        function isLeaderExist(namaLeader) {
+            const target = (namaLeader || '').trim().toLowerCase();
+            if (!target) return false;
+        
+            return Object.values(cloudLeaderList || {}).some(item => {
+                return item && (item.nama || '').trim().toLowerCase() === target;
+            });
+        }
+        function syncLeaderName(oldName, newName) {
+            const oldLeader = (oldName || '').trim();
+            const newLeader = (newName || '').trim();
+        
+            if (!oldLeader || !newLeader || oldLeader === newLeader) return;
+        
+            Object.entries(cloudKurirList || {}).forEach(([key, user]) => {
+                if ((user.leader || '').trim() === oldLeader) {
+                    update(ref(db, `users/${key}`), {
+                        leader: newLeader
+                    });
+                }
+            });
+        }
+        let cloudNotificationList = {};
+        
+        window.toggleNotifTarget = function() {
+            const target = document.getElementById('notif-target').value;
+            const box = document.getElementById('notif-selected-box');
+            if (!box) return;
+            if (target === 'selected') box.classList.remove('hidden');
+            else box.classList.add('hidden');
+        };
+        
+        
+        window.fillNotifTemplate = function() {
+            const val = document.getElementById('notif-template').value;
+            const msg = document.getElementById('notif-message');
+            if (!msg) return;
+        
+            const templates = {
+                trx: 'Kurir hari ini belum input trx mitra. Mohon segera input agar data harian lengkap.',
+                nota: 'Nota hari ini masih sedikit. Mohon tingkatkan input nota untuk target harian.',
+                absen_masuk: 'Anda belum absen masuk hari ini. Mohon segera lakukan absensi.',
+                absen_pulang: 'Anda belum absen pulang hari ini. Mohon segera lakukan absensi pulang.',
+                kpi: 'Peringkat KPI Anda perlu ditingkatkan. Mohon perhatikan performa kerja hari ini.'
+            };
+        
+            if (val === 'custom') {
+                msg.value = '';
+                msg.focus();
+                return;
+            }
+        
+            if (templates[val]) msg.value = templates[val];
+        };
+        
+        window.resetNotifForm = function() {
+            document.getElementById('notif-target').value = 'all';
+            document.getElementById('notif-template').value = '';
+            document.getElementById('notif-message').value = '';
+            const box = document.getElementById('notif-selected-box');
+            if (box) box.classList.add('hidden');
+            const select = document.getElementById('notif-target-list');
+            if (select) Array.from(select.options).forEach(o => o.selected = false);
+        };
 
-      function renderKurirNotifications() {
-          if (!userSession || userSession.role !== 'kurir') return;
-      
-          const box = document.getElementById('kurir-notif-box');
-          const text = document.getElementById('kurir-notif-text');
-          if (!box || !text) return;
-      
-          const username = userSession.username;
-          const hiddenIds = getHiddenNotifIds();
-      
-          const found = Object.entries(cloudNotificationList || {})
-              .sort((a, b) => (b[1]?.createdAt || '').localeCompare(a[1]?.createdAt || ''))
-              .find(([id, n]) => {
-                  if (!n || !n.active) return false;
-                  if (hiddenIds.includes(id)) return false;
-                  if (n.target === 'all') return true;
-                  if (n.target === 'selected' && Array.isArray(n.targetList)) {
-                      return n.targetList.includes(username);
-                  }
-                  return false;
-              });
-      
-          if (!found) {
-              box.classList.add('hidden');
-              text.innerHTML = '';
-              return;
-          }
-      
-          const [notifId, notif] = found;
-          text.innerHTML = `
-              <div class="relative pr-7 leading-snug text-[10px]">
-                  ${notif.message || ''}
-                  <button onclick="dismissKurirNotification('${notifId}')"
-                      class="absolute top-0 right-0 w-5 h-5 flex items-center justify-center rounded-full bg-white/90 text-rose-500 text-[10px] font-bold shadow-sm">
-                      ✕
-                  </button>
-              </div>
-          `;
-          box.classList.remove('hidden');
-      }
-      
-      onValue(ref(db, 'notifications_admin'), (snapshot) => {
-          cloudNotificationList = snapshot.val() || {};
-          queueUiRefresh();
-      });
-      window.dismissKurirNotification = function(notifId) {
-          hideNotifForCurrentUser(notifId);
-          renderKurirNotifications();
-      };
+        function renderKurirNotifications() {
+            if (!userSession || userSession.role !== 'kurir') return;
+        
+            const box = document.getElementById('kurir-notif-box');
+            const text = document.getElementById('kurir-notif-text');
+            if (!box || !text) return;
+        
+            const username = userSession.username;
+            const hiddenIds = getHiddenNotifIds();
+        
+            const found = Object.entries(cloudNotificationList || {})
+                .sort((a, b) => (b[1]?.createdAt || '').localeCompare(a[1]?.createdAt || ''))
+                .find(([id, n]) => {
+                    if (!n || !n.active) return false;
+                    if (hiddenIds.includes(id)) return false;
+                    if (n.target === 'all') return true;
+                    if (n.target === 'selected' && Array.isArray(n.targetList)) {
+                        return n.targetList.includes(username);
+                    }
+                    return false;
+                });
+        
+            if (!found) {
+                box.classList.add('hidden');
+                text.innerHTML = '';
+                return;
+            }
+        
+            const [notifId, notif] = found;
+            text.innerHTML = `
+                <div class="relative pr-7 leading-snug text-[10px]">
+                    ${notif.message || ''}
+                    <button onclick="dismissKurirNotification('${notifId}')"
+                        class="absolute top-0 right-0 w-5 h-5 flex items-center justify-center rounded-full bg-white/90 text-rose-500 text-[10px] font-bold shadow-sm">
+                        ✕
+                    </button>
+                </div>
+            `;
+            box.classList.remove('hidden');
+        }
+        
+        onValue(ref(db, 'notifications_admin'), (snapshot) => {
+            cloudNotificationList = snapshot.val() || {};
+            queueUiRefresh();
+        });
+        window.dismissKurirNotification = function(notifId) {
+            hideNotifForCurrentUser(notifId);
+            renderKurirNotifications();
+        };
 
-      window.resendNotification = function(key) {
-          const n = cloudNotificationList[key];
-          if (!n) return;
-      
-          const payload = {
-              target: n.target || 'all',
-              targetList: Array.isArray(n.targetList) ? n.targetList : [],
-              message: n.message || '',
-              type: n.type || 'warning',
-              active: true,
-              createdAt: new Date().toISOString()
-          };
-      
-          set(ref(db, `notifications_admin/${key}`), payload)
-              .then(() => {
-                  const hiddenIds = getHiddenNotifIds().filter(id => id !== key);
-                  localStorage.setItem('hidden_notif_ids', JSON.stringify(hiddenIds));
-      
-                  alert('Notifikasi berhasil dikirim ulang!');
-                  renderAdminNotificationHistory();
-                  renderKurirNotifications();
-              })
-              .catch(err => alert('Gagal kirim ulang notifikasi: ' + err.message));
-      };
-      window.deleteNotification = function(key) {
-          if (!confirm('Hapus notifikasi ini?')) return;
-          remove(ref(db, `notifications_admin/${key}`))
-              .then(() => alert('Notifikasi berhasil dihapus!'))
-              .catch(err => alert('Gagal menghapus notifikasi: ' + err.message));
-      };
-      function getHiddenNotifIds() {
-          try {
-              return JSON.parse(localStorage.getItem('hidden_notif_ids') || '[]');
-          } catch (e) {
-              return [];
-          }
-      }
-      
-      function hideNotifForCurrentUser(notifId) {
-          const list = getHiddenNotifIds();
-          if (!list.includes(notifId)) list.push(notifId);
-          localStorage.setItem('hidden_notif_ids', JSON.stringify(list));
-      }
-      window.toggleAdminKurirOpen = function() {
-          const container = document.getElementById('container-admin-kurir');
-          const btn = document.getElementById('btn-toggle-kurir-text');
-          const isOpen = container.dataset.open === '1';
-          
-          container.dataset.open = isOpen ? '0' : '1';
-          btn.innerText = isOpen ? 'Buka' : 'Tutup';
-          
-          if (!isOpen) {
-              renderAdminKurirList();
-          } else {
-              container.innerHTML = '';
-          }
-      };
+        window.resendNotification = function(key) {
+            const n = cloudNotificationList[key];
+            if (!n) return;
+        
+            const payload = {
+                target: n.target || 'all',
+                targetList: Array.isArray(n.targetList) ? n.targetList : [],
+                message: n.message || '',
+                type: n.type || 'warning',
+                active: true,
+                createdAt: new Date().toISOString()
+            };
+        
+            set(ref(db, `notifications_admin/${key}`), payload)
+                .then(() => {
+                    const hiddenIds = getHiddenNotifIds().filter(id => id !== key);
+                    localStorage.setItem('hidden_notif_ids', JSON.stringify(hiddenIds));
+        
+                    alert('Notifikasi berhasil dikirim ulang!');
+                    renderAdminNotificationHistory();
+                    renderKurirNotifications();
+                })
+                .catch(err => alert('Gagal kirim ulang notifikasi: ' + err.message));
+        };
+        window.deleteNotification = function(key) {
+            if (!confirm('Hapus notifikasi ini?')) return;
+            remove(ref(db, `notifications_admin/${key}`))
+                .then(() => alert('Notifikasi berhasil dihapus!'))
+                .catch(err => alert('Gagal menghapus notifikasi: ' + err.message));
+        };
+        function getHiddenNotifIds() {
+            try {
+                return JSON.parse(localStorage.getItem('hidden_notif_ids') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+        
+        function hideNotifForCurrentUser(notifId) {
+            const list = getHiddenNotifIds();
+            if (!list.includes(notifId)) list.push(notifId);
+            localStorage.setItem('hidden_notif_ids', JSON.stringify(list));
+        }
+        window.toggleAdminKurirOpen = function() {
+            const container = document.getElementById('container-admin-kurir');
+            const btn = document.getElementById('btn-toggle-kurir-text');
+            const isOpen = container.dataset.open === '1';
+            
+            container.dataset.open = isOpen ? '0' : '1';
+            btn.innerText = isOpen ? 'Buka' : 'Tutup';
+            
+            if (!isOpen) {
+                renderAdminKurirList();
+            } else {
+                container.innerHTML = '';
+            }
+        };
 
-      window.toggleAdminManajemenOpen = function() {
-          const container = document.getElementById('container-admin-manajemen');
-          const btn = document.getElementById('btn-toggle-manajemen-text');
-          const isOpen = container.dataset.open === '1';
-          
-          container.dataset.open = isOpen ? '0' : '1';
-          btn.innerText = isOpen ? 'Buka' : 'Tutup';
-          
-          if (!isOpen) {
-              renderAdminManajemen();
-          } else {
-              container.innerHTML = '';
-          }
-      };
+        window.toggleAdminManajemenOpen = function() {
+            const container = document.getElementById('container-admin-manajemen');
+            const btn = document.getElementById('btn-toggle-manajemen-text');
+            const isOpen = container.dataset.open === '1';
+            
+            container.dataset.open = isOpen ? '0' : '1';
+            btn.innerText = isOpen ? 'Buka' : 'Tutup';
+            
+            if (!isOpen) {
+                renderAdminManajemen();
+            } else {
+                container.innerHTML = '';
+            }
+        };
 
-      window.toggleAdminMitraOpen = function() {
-          const container = document.getElementById('container-admin-daftar-mitra');
-          const btn = document.getElementById('btn-toggle-mitra-text');
-          const isOpen = container.dataset.open === '1';
-          
-          container.dataset.open = isOpen ? '0' : '1';
-          btn.innerText = isOpen ? 'Buka' : 'Tutup';
-          
-          if (!isOpen) {
-              renderAdminDaftarMitra();
-          } else {
-              container.innerHTML = '';
-          }
-      };
+        window.toggleAdminMitraOpen = function() {
+            const container = document.getElementById('container-admin-daftar-mitra');
+            const btn = document.getElementById('btn-toggle-mitra-text');
+            const isOpen = container.dataset.open === '1';
+            
+            container.dataset.open = isOpen ? '0' : '1';
+            btn.innerText = isOpen ? 'Buka' : 'Tutup';
+            
+            if (!isOpen) {
+                renderAdminDaftarMitra();
+            } else {
+                container.innerHTML = '';
+            }
+        };
 
-      window.toggleAdminOngkirOpen = function() {
-          const container = document.getElementById('container-admin-ongkir');
-          const btn = document.getElementById('btn-toggle-ongkir-text');
-          const isOpen = container.dataset.open === '1';
-          
-          container.dataset.open = isOpen ? '0' : '1';
-          btn.innerText = isOpen ? 'Buka' : 'Tutup';
-          
-          if (!isOpen) {
-              renderAdminOngkirList();
-          } else {
-              container.innerHTML = '';
-          }
-      };
+        window.toggleAdminOngkirOpen = function() {
+            const container = document.getElementById('container-admin-ongkir');
+            const btn = document.getElementById('btn-toggle-ongkir-text');
+            const isOpen = container.dataset.open === '1';
+            
+            container.dataset.open = isOpen ? '0' : '1';
+            btn.innerText = isOpen ? 'Buka' : 'Tutup';
+            
+            if (!isOpen) {
+                renderAdminOngkirList();
+            } else {
+                container.innerHTML = '';
+            }
+        };
 
-      window.toggleAdminNotifHistoryOpen = function() {
-          const container = document.getElementById('container-admin-notification-history');
-          const btn = document.getElementById('btn-toggle-notif-text');
-          const isOpen = container.dataset.open === '1';
-          
-          container.dataset.open = isOpen ? '0' : '1';
-          btn.innerText = isOpen ? 'Buka' : 'Tutup';
-          
-          if (!isOpen) {
-              renderAdminNotificationHistory();
-          } else {
-              container.innerHTML = '';
-          }
-      };
+        window.toggleAdminNotifHistoryOpen = function() {
+            const container = document.getElementById('container-admin-notification-history');
+            const btn = document.getElementById('btn-toggle-notif-text');
+            const isOpen = container.dataset.open === '1';
+            
+            container.dataset.open = isOpen ? '0' : '1';
+            btn.innerText = isOpen ? 'Buka' : 'Tutup';
+            
+            if (!isOpen) {
+                renderAdminNotificationHistory();
+            } else {
+                container.innerHTML = '';
+            }
+        };
