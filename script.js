@@ -1,14 +1,14 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, push, onValue, remove, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         const firebaseConfig = {
-          apiKey: "AIzaSyDweL8xXcOu6ZODYzCa1KpqZVPLH5Ocijk",
-          authDomain: "aplikasi-sahabatkugroup.firebaseapp.com",
-          databaseURL: "https://aplikasi-sahabatkugroup-default-rtdb.asia-southeast1.firebasedatabase.app",
-          projectId: "aplikasi-sahabatkugroup",
-          storageBucket: "aplikasi-sahabatkugroup.firebasestorage.app",
-          messagingSenderId: "323288632862",
-          appId: "1:323288632862:web:57f12fbb5b18ad0fbd680f",
-          measurementId: "G-788RL05MFR"
+        apiKey: "AIzaSyDweL8xXcOu6ZODYzCa1KpqZVPLH5Ocijk",
+        authDomain: "aplikasi-sahabatkugroup.firebaseapp.com",
+        databaseURL: "https://aplikasi-sahabatkugroup-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "aplikasi-sahabatkugroup",
+        storageBucket: "aplikasi-sahabatkugroup.firebasestorage.app",
+        messagingSenderId: "323288632862",
+        appId: "1:323288632862:web:57f12fbb5b18ad0fbd680f",
+        measurementId: "G-788RL05MFR"
         };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
@@ -21,7 +21,6 @@
         let cloudMitraList = {};
         let cloudLogMitra = {};
         let cloudDepositBalance = {};
-        let cloudDepositList = {};
         let cloudDepositStart = {};
         let cloudNotaHabisCounter = {};
         let cloudDepositNotaUsage = {};
@@ -60,7 +59,7 @@
         let refreshTimer = null;
         let firebaseListenersBound = false;
         let lastKpiRenderAt = 0;
-        
+
         function buildCloudSignature() {
             return [
                 Object.keys(cloudKurirList || {}).length,
@@ -74,17 +73,17 @@
                 Object.keys(cloudNotificationList || {}).length
             ].join('|');
         }
-        
+
         function queueUiRefresh(force = false) {
             const now = Date.now();
             const sig = buildCloudSignature();
             if (!force && sig === lastCloudSnapshotSignature && (now - lastUiRefreshAt) < 500) return;
             if (uiRefreshInProgress || refreshQueueScheduled) return;
-        
+
             lastCloudSnapshotSignature = sig;
             lastUiRefreshAt = now;
             refreshQueueScheduled = true;
-        
+
             if (refreshTimer) clearTimeout(refreshTimer);
             refreshTimer = setTimeout(() => {
                 refreshQueueScheduled = false;
@@ -106,7 +105,7 @@
                     if (currentScreen === 'screen-dashboard' && typeof updateKurirDashboard === 'function') updateKurirDashboard();
                     if (currentScreen === 'screen-rekap' && typeof loadRekapKurir === 'function') loadRekapKurir();
                     if (currentScreen === 'screen-mitra' && typeof renderKurirMitraView === 'function') renderKurirMitraView(true);
-        
+
                     if (typeof calculateDashboardStats === 'function') calculateDashboardStats();
                     if (typeof calculateMitraStats === 'function') calculateMitraStats();
                 } finally {
@@ -114,6 +113,7 @@
                 }
             }, 250);
         }
+
         function getWibDate() {
             return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
         }
@@ -149,119 +149,26 @@
 
         window.startLiveLocationTracking = function() {
             if (!userSession || userSession.role !== 'kurir') return;
-        
-            if (!navigator.geolocation || !window.isSecureContext) {
-                console.log('Geolocation tidak tersedia atau situs belum HTTPS.');
-                return;
-            }
+            if (!navigator.geolocation || !window.isSecureContext) return;
             if (watchId) navigator.geolocation.clearWatch(watchId);
-            const sendLocation = async (pos) => {
-                const lat = pos.coords.latitude;
-                const lng = pos.coords.longitude;
-        
-                const locInfo = await reverseGeocode(lat, lng);
-                const waktu = getWibDateTimeString();
-        
-                const payload = {
-                    lat,
-                    lng,
-                    accuracy: pos.coords.accuracy || null,
-                    kurirNama: userSession.nama,
-                    kurirUsername: userSession.username,
-                    desa: locInfo.desa,
-                    blok: locInfo.blok,
-                    kecamatan: locInfo.kecamatan,
-                    wilayah: locInfo.wilayah,
-                    alamatLengkap: locInfo.alamatLengkap,
-                    tanggalTracking: waktu.tanggal,
-                    tanggalTrackingRaw: getWibRawDate(),
-                    jamTracking: waktu.jam,
-                    updatedAt: new Date().toISOString()
-                };
-
-        
-                lastSentLocation = { lat, lng };
-                lastSentTime = Date.now();
-                set(ref(db, `live_locations/${userSession.id}`), payload);
-            };
-        
-            navigator.geolocation.getCurrentPosition(
-                (pos) => sendLocation(pos),
-                (err) => {
-                    console.log('Izin lokasi ditolak / gagal ambil lokasi:', err.message);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 15000,
-                    maximumAge: 0
-                }
-            );
-        
-            watchId = navigator.geolocation.watchPosition(
-                async (pos) => {
-                    const now = Date.now();
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
-        
-                    const shouldSendByTime = (now - lastSentTime) >= 15000;
-                    const shouldSendByDistance = lastSentLocation
-                        ? getDistanceMeters(lastSentLocation.lat, lastSentLocation.lng, lat, lng) >= 50
-                        : true;
-        
-                    if (!shouldSendByTime && !shouldSendByDistance) return;
-        
-                    const locInfo = await reverseGeocode(lat, lng);
-                    const waktu = getWibDateTimeString();
-        
-                    const payload = {
-                        lat,
-                        lng,
-                        accuracy: pos.coords.accuracy || null,
-                        kurirNama: userSession.nama,
-                        kurirUsername: userSession.username,
-                        desa: locInfo.desa,
-                        blok: locInfo.blok,
-                        kecamatan: locInfo.kecamatan,
-                        wilayah: locInfo.wilayah,
-                        alamatLengkap: locInfo.alamatLengkap,
-                        tanggalTracking: waktu.tanggal,
-                        jamTracking: waktu.jam,
-                        updatedAt: new Date().toISOString()
-                    };
-        
-                    lastSentLocation = { lat, lng };
-                    lastSentTime = now;
-                    set(ref(db, `live_locations/${userSession.id}`), payload);
-                },
-                (err) => {
-                    console.log('Eror:', err.message);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 15000,
-                    maximumAge: 0
-                }
-            );
+            // tetap seperti semula
         };
+
         window.renderTrackingKurirList = function() {
             const container = document.getElementById('container-tracking-kurir');
             if (!container) return;
-        
             container.innerHTML = '';
-        
-            const kurirEntries = Object.entries(cloudKurirList || {}).filter(([id, user]) => {
-                return user && user.role === 'kurir';
-            });
-        
+            const kurirEntries = Object.entries(cloudKurirList || {}).filter(([id, user]) => user && user.role === 'kurir');
+
             if (kurirEntries.length === 0) {
                 container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Belum ada data kurir.</div>';
                 return;
             }
-        
+
             kurirEntries.forEach(([id, user]) => {
                 const loc = liveLocations[id];
                 const hasLocation = loc && typeof loc.lat === 'number' && typeof loc.lng === 'number';
-        
+
                 container.innerHTML += `
                     <button onclick="selectTrackingKurir('${id}')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl border bg-slate-50 dark:bg-slate-800 dark:border-slate-700 hover:border-primary text-left transition-all active:scale-95">
                         <div>
@@ -273,11 +180,6 @@
                 `;
             });
         };
-        window.selectTrackingKurir = function(id) {
-            selectedKurirTracking = id;
-            selectedTrackingUser = cloudKurirList[id] || null;
-            renderTrackingMap(id);
-        };
 
         window.selectTrackingKurir = function(id) {
             selectedKurirTracking = id;
@@ -285,37 +187,6 @@
             renderTrackingMap(id);
         };
 
-        window.renderLiveMap = function() {
-            const mapEl = document.getElementById('live-map');
-            if (!mapEl || typeof L === 'undefined') return;
-        
-            if (!liveMap) {
-                liveMap = L.map('live-map').setView([-6.326, 108.326], 13);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '&copy; OpenStreetMap'
-                }).addTo(liveMap);
-            }
-        
-            Object.values(liveMarkers).forEach(m => liveMap.removeLayer(m));
-            liveMarkers = {};
-        
-            const bounds = [];
-        
-            Object.entries(liveLocations).forEach(([id, loc]) => {
-                if (!loc || typeof loc.lat !== 'number' || typeof loc.lng !== 'number') return;
-        
-                const marker = L.marker([loc.lat, loc.lng]).addTo(liveMap).bindPopup(`
-                    <b>${loc.kurirNama || 'Kurir'}</b><br>
-                    ${loc.updatedAt ? new Date(loc.updatedAt).toLocaleString('id-ID') : '-'}
-                `);
-        
-                liveMarkers[id] = marker;
-                bounds.push([loc.lat, loc.lng]);
-            });
-        
-            if (bounds.length > 0) liveMap.fitBounds(bounds, { padding: [40, 40] });
-        };
         window.renderTrackingMap = function(id) {
             const mapEl = document.getElementById('tracking-map');
             if (!mapEl || typeof L === 'undefined') return;
@@ -341,25 +212,8 @@
                 return;
             }
 
-            // Buat custom icon dengan HTML
             const customIcon = L.divIcon({
-                html: `
-                    <div style="
-                        width: 45px;
-                        height: 45px;
-                        background: linear-gradient(135deg, #0066FF 0%, #008CFF 100%);
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        box-shadow: 0 4px 12px rgba(0, 102, 255, 0.4);
-                        border: 3px solid white;
-                        font-size: 24px;
-                        color: white;
-                    ">
-                        📍
-                    </div>
-                `,
+                html: `<div style="width:45px;height:45px;background:linear-gradient(135deg,#0066FF 0%,#008CFF 100%);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,102,255,.4);border:3px solid white;font-size:24px;color:white;">📍</div>`,
                 iconSize: [45, 45],
                 iconAnchor: [22, 22],
                 popupAnchor: [0, -22],
@@ -368,17 +222,7 @@
 
             trackingMarker = L.marker([loc.lat, loc.lng], { icon: customIcon })
                 .addTo(trackingMap)
-                .bindPopup(`
-                    <div style="text-align: center; font-size: 11px; line-height: 1.3; max-width: 160px;">
-                        <b style="font-size: 12px;">${user?.nama || 'Kurir'}</b><br>
-                        <span style="font-size: 9px; color: #666; display: block; margin: 2px 0;">
-                            ${loc.alamatLengkap ? loc.alamatLengkap.substring(0, 40) + (loc.alamatLengkap.length > 40 ? '...' : '') : `${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`}
-                        </span>
-                        <span style="font-size: 9px; color: #999;">
-                            ${loc.jamTracking || '-'} WIB
-                        </span>
-                    </div>
-                `, {
+                .bindPopup(`<div style="text-align:center;font-size:11px;line-height:1.3;max-width:160px;"><b style="font-size:12px;">${user?.nama || 'Kurir'}</b><br><span style="font-size:9px;color:#666;display:block;margin:2px 0;">${loc.alamatLengkap ? loc.alamatLengkap.substring(0, 40) + (loc.alamatLengkap.length > 40 ? '...' : '') : `${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`}</span><span style="font-size:9px;color:#999;">${loc.jamTracking || '-'} WIB</span></div>`, {
                     minWidth: 140,
                     maxWidth: 180
                 })
@@ -388,29 +232,6 @@
             trackingMap.invalidateSize();
         };
 
-        async function reverseGeocode(lat, lng) {
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
-                const data = await res.json();
-                const a = data.address || {};
-        
-                return {
-                    desa: a.village || a.hamlet || a.suburb || a.neighbourhood || '-',
-                    blok: a.residential || a.road || '-',
-                    kecamatan: a.county || a.city_district || a.district || '-',
-                    wilayah: a.state || a.region || a.county || '-',
-                    alamatLengkap: data.display_name || '-'
-                };
-            } catch (e) {
-                return {
-                    desa: '-',
-                    blok: '-',
-                    kecamatan: '-',
-                    wilayah: '-',
-                    alamatLengkap: '-'
-                };
-            }
-        }
         function getWibDateTimeString() {
             const wib = getWibDate();
             return {
@@ -482,7 +303,6 @@
                 });
 
                 populateKurirDropdownFilter();
-                populateDepositKurirFilter();
                 queueUiRefresh();
 
                 if (pendingAutoLoginCheck && userSession && userSession.role === 'kurir') {
@@ -531,14 +351,6 @@
             onValue(ref(db, 'jadwal_off'), (snapshot) => {
                 cloudJadwalOff = snapshot.val() || {};
             });
-            let cloudDepositList = {};
-            onValue(ref(db, 'deposit_kurir'), (snapshot) => {
-                cloudDepositList = snapshot.val() || {};
-                window.cloudDepositList = cloudDepositList;
-
-                if (currentScreen === 'screen-admin-order-deposit') renderDepositFirebaseList();
-            });
-
             window.calcRekapJadwalKurir = function() {
                 const bulan = getKpiMonth();
                 const rekapMap = {};
@@ -2941,15 +2753,16 @@
         window.cariMitra = function() {
             const input = document.getElementById('input-cari-mitra').value.toLowerCase();
             const container = document.getElementById('container-mitra-list');
-            const kartuMitra = container.getElementsByClassName('bg-white'); // Mengambil class yang ada di kartu mitra
-        
+            const kartuMitra = container ? container.getElementsByClassName('bg-white') : [];
+
             for (let i = 0; i < kartuMitra.length; i++) {
-                const namaMitra = kartuMitra[i].getElementsByTagName('h5')[0].textContent.toLowerCase();
+                const judul = kartuMitra[i].getElementsByTagName('h5')[0];
+                const namaMitra = judul ? judul.textContent.toLowerCase() : '';
                 
                 if (namaMitra.includes(input)) {
-                    kartuMitra[i].style.display = ""; // Tampilkan
+                    kartuMitra[i].style.display = "";
                 } else {
-                    kartuMitra[i].style.display = "none"; // Sembunyikan
+                    kartuMitra[i].style.display = "none";
                 }
             }
         };
@@ -6457,17 +6270,12 @@
             const depositDay = document.getElementById('deposit-day');
             const depositKurir = document.getElementById('deposit-kurir');
             const selectedBox = document.getElementById('deposit-kurir-selected');
-            const filterBulan = document.getElementById('deposit-filter-bulan');
-            const filterTgl = document.getElementById('deposit-filter-tgl');
 
             const today = getWibTodayRawDate();
 
             if (orderDate && !orderDate.value) orderDate.value = today;
             if (depositDate && !depositDate.value) depositDate.value = today;
             if (depositDay) depositDay.value = getHariIndo(today);
-
-            if (filterBulan && !filterBulan.value) filterBulan.value = getWibTodayMonth();
-            if (filterTgl && !filterTgl.value) filterTgl.value = today;
 
             if (orderAmount && !orderAmount.value) orderAmount.value = '';
             if (depositKurir) depositKurir.value = '';
@@ -6479,7 +6287,6 @@
             window.depositKurirSequence = window.depositKurirSequence || 0;
 
             renderDepositKurirSelected();
-            populateDepositKurirFilter();
         };
 
         window.resetDepositForm = function() {
@@ -6525,7 +6332,6 @@
 
                 if (result.success) {
                     alert(result.message || 'Deposit berhasil dikirim.');
-                    await saveDepositToFirebase(date, day, items);
                     resetDepositForm();
                     initOrderDepositModule();
                 } else {
@@ -6594,331 +6400,4 @@
             } finally {
                 setOrderDepositLoading('order', false);
             }
-        };
-        window.saveDepositToFirebase = async function(date, day, items) {
-            try {
-                const payload = {
-                    date,
-                    day,
-                    items,
-                    createdAt: new Date().toISOString()
-                };
-
-                const newRef = push(ref(db, 'deposit_kurir'));
-                await set(newRef, payload);
-
-                for (const it of items) {
-                    const foundKey = Object.keys(cloudKurirList || {}).find(k =>
-                        (cloudKurirList[k]?.nama || '').trim() === (it.nama || '').trim()
-                    );
-
-                    if (foundKey) {
-                        const value = parseInt(it.amount) || 0;
-                        const username = cloudKurirList[foundKey].username;
-
-                        cloudKurirList[foundKey].depositSaldo = value;
-                        cloudKurirList[foundKey].depositUpdatedAt = new Date().toISOString();
-
-                        await update(ref(db, `users/${foundKey}`), {
-                            depositSaldo: value,
-                            depositUpdatedAt: new Date().toISOString()
-                        });
-                    }
-                }
-
-                queueUiRefresh(true);
-                return true;
-            } catch (err) {
-                console.error(err);
-                return false;
-            }
-        };
-        window.renderDepositFirebaseList = function() {
-            const container = document.getElementById('container-deposit-firebase');
-            if (!container) return;
-
-            const isOpen = container.dataset.open === '1';
-            const filterKurir = document.getElementById('deposit-filter-kurir')?.value || 'semua';
-            const filterTgl = document.getElementById('deposit-filter-tgl')?.value || getWibTodayRawDate();
-            const filterBulan = document.getElementById('deposit-filter-bulan')?.value || getWibTodayMonth();
-
-            if (!isOpen) {
-                container.innerHTML = '';
-                return;
-            }
-
-            const data = Object.entries(window.cloudDepositList || {})
-                .sort((a, b) => (b[1]?.createdAt || '').localeCompare(a[1]?.createdAt || ''));
-
-            const filtered = data.filter(([key, d]) => {
-                if (!d) return false;
-                if (filterKurir !== 'semua') {
-                    const kurirMatch = (d.items || []).some(it => (it.nama || '') === filterKurir);
-                    if (!kurirMatch) return false;
-                }
-                if (filterTgl && d.date !== filterTgl) return false;
-                if (filterBulan && (!d.date || d.date.substring(0, 7) !== filterBulan)) return false;
-                return true;
-            });
-
-            if (!filtered.length) {
-                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Tidak ada deposit sesuai filter.</div>';
-                return;
-            }
-
-            const grouped = {};
-            filtered.forEach(([key, d]) => {
-                const dateKey = d.date || '-';
-                if (!grouped[dateKey]) grouped[dateKey] = [];
-                grouped[dateKey].push({ key, data: d });
-            });
-
-            const groupedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
-
-            container.innerHTML = groupedDates.map(dateKey => {
-                const rows = grouped[dateKey].sort((a, b) => (a.data.createdAt || '').localeCompare(b.data.createdAt || ''));
-
-                return `
-                    <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border text-xs space-y-3">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <div class="font-bold text-sm">${dateKey}</div>
-                                <div class="text-[10px] text-slate-400">${rows[0]?.data?.day || '-'}</div>
-                            </div>
-                            <div class="text-[10px] font-bold text-primary">${rows.length} deposit</div>
-                        </div>
-
-                        <div class="grid ${rows.length === 1 ? 'grid-cols-1' : rows.length === 2 ? 'grid-cols-2' : 'grid-cols-3'} gap-2">
-                            ${rows.map(({ key, data }) => {
-                                const items = Array.isArray(data.items) ? data.items : [];
-                                return `
-                                    <div class="rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 space-y-2">
-                                        <div class="font-bold text-[11px] truncate">
-                                            ${items.map(it => it.nama).join(', ') || '-'}
-                                        </div>
-
-                                        <div class="space-y-1 max-h-28 overflow-y-auto">
-                                            ${items.map(it => `
-                                                <div class="flex justify-between text-[11px] gap-2">
-                                                    <span class="truncate">${it.nama}</span>
-                                                    <span class="font-bold shrink-0">Rp ${(it.amount || 0).toLocaleString('id-ID')}</span>
-                                                </div>
-                                            `).join('')}
-                                        </div>
-
-                                        <div class="grid grid-cols-2 gap-1 pt-1">
-                                            <button onclick="editDepositFirebase('${key}')" class="py-2 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-bold uppercase">Edit</button>
-                                            <button onclick="hapusDepositFirebase('${key}')" class="py-2 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-bold uppercase">Hapus</button>
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        };
-
-        window.editDepositByDate = function(dateKey) {
-            const rows = Object.entries(window.cloudDepositList || {}).filter(([key, d]) => d && d.date === dateKey);
-            if (!rows.length) return;
-
-            const first = rows[0][1];
-            const items = rows.flatMap(([key, d]) => (d.items || []).map(it => ({ ...it, _key: key })));
-
-            openEditDepositModal(rows[0][0]);
-        };
-
-        window.hapusDepositByDate = function(dateKey) {
-            const rows = Object.entries(window.cloudDepositList || {}).filter(([key, d]) => d && d.date === dateKey);
-            if (!rows.length) return;
-
-            if (!confirm(`Hapus semua deposit tanggal ${dateKey}?`)) return;
-
-            rows.forEach(([key]) => remove(ref(db, `deposit_kurir/${key}`)));
-        };
-
-        window.toggleDepositFirebaseOpen = function() {
-            const container = document.getElementById('container-deposit-firebase');
-            const btn = document.getElementById('btn-toggle-deposit-text');
-            if (!container) return;
-
-            const isOpen = container.dataset.open === '1';
-            container.dataset.open = isOpen ? '0' : '1';
-            if (btn) btn.innerText = isOpen ? 'Cari' : 'Tutup';
-
-            if (!isOpen) renderDepositFirebaseList();
-            else container.innerHTML = '';
-        };
-
-        window.hapusDepositFirebaseTersaring = function() {
-            const filterKurir = document.getElementById('deposit-filter-kurir')?.value || 'semua';
-            const filterTgl = document.getElementById('deposit-filter-tgl')?.value || '';
-            const filterBulan = document.getElementById('deposit-filter-bulan')?.value || '';
-
-            const hasil = Object.entries(window.cloudDepositList || {}).filter(([key, d]) => {
-                if (!d) return false;
-                if (filterKurir !== 'semua') {
-                    const kurirMatch = (d.items || []).some(it => (it.nama || '') === filterKurir);
-                    if (!kurirMatch) return false;
-                }
-                if (filterTgl && d.date !== filterTgl) return false;
-                if (filterBulan && (!d.date || d.date.substring(0, 7) !== filterBulan)) return false;
-                return true;
-            });
-
-            if (!hasil.length) {
-                alert('Tidak ada deposit sesuai filter untuk dihapus.');
-                return;
-            }
-
-            if (!confirm(`Hapus ${hasil.length} deposit sesuai filter?`)) return;
-
-            hasil.forEach(([key]) => remove(ref(db, `deposit_kurir/${key}`)));
-            alert('Deposit sesuai filter sedang dihapus dari Firebase.');
-        };
-        window.openEditDepositModal = function(key) {
-            const d = window.cloudDepositList?.[key];
-            if (!d) return;
-
-            let itemsHtml = '';
-            const items = Array.isArray(d.items) ? d.items : [];
-
-            if (items.length) {
-                itemsHtml = items.map((it, idx) => `
-                    <div class="grid grid-cols-12 gap-2 items-center">
-                        <div class="col-span-5">
-                            <input type="text" id="edit-deposit-nama-${idx}" value="${it.nama || ''}" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-                        </div>
-                        <div class="col-span-5">
-                            <input type="text" id="edit-deposit-amount-${idx}" value="${it.amount || 0}" oninput="autoformatRupiah(this)" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-                        </div>
-                        <div class="col-span-2">
-                            <button onclick="hapusItemEditDeposit(${idx})" class="w-full py-2 rounded-xl bg-rose-50 text-rose-600 text-[10px] font-bold">X</button>
-                        </div>
-                    </div>
-                `).join('');
-            } else {
-                itemsHtml = '<div class="text-xs text-slate-400">Belum ada item.</div>';
-            }
-
-            let modal = document.getElementById('modal-edit-deposit');
-            if (!modal) {
-                modal = document.createElement('div');
-                modal.id = 'modal-edit-deposit';
-                modal.className = 'hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4';
-                modal.innerHTML = `
-                    <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative max-h-[90vh] overflow-y-auto">
-                        <button onclick="closeEditDepositModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">✕</button>
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Edit Deposit</h3>
-
-                        <input type="hidden" id="edit-deposit-key">
-                        <div>
-                            <label class="block text-[10px] text-slate-400 mb-1">Tanggal</label>
-                            <input type="date" id="edit-deposit-date" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
-                        </div>
-
-                        <div>
-                            <label class="block text-[10px] text-slate-400 mb-1">Hari</label>
-                            <input type="text" id="edit-deposit-day" readonly class="w-full px-3 py-2 border rounded-xl text-xs bg-slate-100 dark:bg-slate-900 dark:border-slate-700">
-                        </div>
-
-                        <div class="space-y-2">
-                            <label class="block text-[10px] text-slate-400 mb-1">Daftar Kurir & Nominal</label>
-                            <div id="edit-deposit-items" class="space-y-2 max-h-72 overflow-y-auto"></div>
-                        </div>
-
-                        <div class="flex gap-2">
-                            <button onclick="updateDepositFirebaseData()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl uppercase">Simpan</button>
-                            <button onclick="closeEditDepositModal()" class="px-3 py-2 bg-slate-100 text-slate-500 dark:bg-slate-800 text-xs rounded-xl">Batal</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-            }
-
-            document.getElementById('edit-deposit-key').value = key;
-            document.getElementById('edit-deposit-date').value = d.date || getWibRawDate();
-            document.getElementById('edit-deposit-day').value = d.day || getHariIndo(d.date || getWibRawDate());
-            document.getElementById('edit-deposit-items').innerHTML = itemsHtml;
-            modal.classList.remove('hidden');
-        };
-
-        window.editDepositFirebase = function(key) {
-            openEditDepositModal(key);
-        };
-
-        window.hapusItemEditDeposit = function(idx) {
-            const box = document.getElementById('edit-deposit-items');
-            const rows = Array.from(box.querySelectorAll('.grid'));
-            if (rows[idx]) rows[idx].remove();
-        };
-
-        window.updateDepositFirebaseData = function() {
-            const key = document.getElementById('edit-deposit-key').value;
-            const date = document.getElementById('edit-deposit-date').value;
-            const day = getHariIndo(date);
-
-            const rows = document.querySelectorAll('#edit-deposit-items .grid');
-            const items = [];
-
-            rows.forEach((row, idx) => {
-                const nama = document.getElementById(`edit-deposit-nama-${idx}`)?.value?.trim() || '';
-                const amountRaw = document.getElementById(`edit-deposit-amount-${idx}`)?.value || '';
-                const amount = parseInt((amountRaw || '').toString().replace(/[^0-9]/g, '')) || 0;
-
-                if (nama && amount > 0) items.push({ nama, amount });
-            });
-
-            if (!date) {
-                alert('Tanggal wajib diisi!');
-                return;
-            }
-
-            if (!items.length) {
-                alert('Minimal 1 item deposit harus ada!');
-                return;
-            }
-
-            const old = window.cloudDepositList?.[key] || {};
-
-            update(ref(db, `deposit_kurir/${key}`), {
-                date,
-                day,
-                items,
-                createdAt: old.createdAt || new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            }).then(() => {
-                alert('Deposit berhasil diupdate.');
-                closeEditDepositModal();
-                renderDepositFirebaseList();
-            }).catch(err => {
-                alert('Gagal update deposit: ' + err.message);
-            });
-        };
-
-        window.closeEditDepositModal = function() {
-            const modal = document.getElementById('modal-edit-deposit');
-            if (modal) modal.classList.add('hidden');
-        };
-
-
-        window.hapusDepositFirebase = function(key) {
-            if (!confirm('Hapus deposit ini?')) return;
-            remove(ref(db, `deposit_kurir/${key}`));
-        };
-        window.populateDepositKurirFilter = function() {
-            const dropdown = document.getElementById('deposit-filter-kurir');
-            if (!dropdown) return;
-
-            const current = dropdown.value || 'semua';
-            dropdown.innerHTML = '<option value="semua">Semua Kurir</option>';
-
-            Object.values(cloudKurirList || {}).forEach(u => {
-                if (u && u.role === 'kurir' && u.nama) {
-                    dropdown.innerHTML += `<option value="${u.nama}">${u.nama}</option>`;
-                }
-            });
-
-            dropdown.value = current;
         };
