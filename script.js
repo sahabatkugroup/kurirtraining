@@ -20,6 +20,11 @@
         let cloudNotaList = {};
         let cloudMitraList = {};
         let cloudLogMitra = {};
+        let cloudDepositBalance = {};
+        let cloudDepositList = {};
+        let cloudDepositStart = {};
+        let cloudNotaHabisCounter = {};
+        let cloudDepositNotaUsage = {};
         let laporanBulanAktif = '';
         let cloudOngkirList = {};
         let adminOngkirMode = 'normal';
@@ -112,7 +117,21 @@
         function getWibDate() {
             return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
         }
-        
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxfMHYjmhM5IB683WgeQBh5FeuRunezfqxVNFWhxIIwW5F1_x4VFIaYLkne1FfcBhYNZQ/exec';
+        function getWibTodayRawDate() {
+            const now = new Date();
+            return new Intl.DateTimeFormat('en-CA', {
+                timeZone: 'Asia/Jakarta',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            }).format(now);
+        }
+
+        function getWibTodayMonth() {
+            return getWibTodayRawDate().slice(0, 7);
+        }
+
         function getWibRawDate() {
             const wib = getWibDate();
             const tahun = wib.getFullYear();
@@ -120,19 +139,14 @@
             const tanggal = String(wib.getDate()).padStart(2, '0');
             return `${tahun}-${bulan}-${tanggal}`;
         }
-        function getDistanceMeters(lat1, lon1, lat2, lon2) {
-            const R = 6371000;
-            const toRad = (v) => v * Math.PI / 180;
-            const dLat = toRad(lat2 - lat1);
-            const dLon = toRad(lon2 - lon1);
-        
-            const a =
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        
-            return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        function getHariIndo(dateStr) {
+            const d = dateStr
+                ? new Date(dateStr + 'T00:00:00')
+                : getWibDate();
+
+            return d.toLocaleDateString('id-ID', { weekday: 'long' });
         }
+
         window.startLiveLocationTracking = function() {
             if (!userSession || userSession.role !== 'kurir') return;
         
@@ -449,8 +463,28 @@
             }
             onValue(ref(db, 'users'), (snapshot) => {
                 cloudKurirList = snapshot.val() || {};
-                populateKurirDropdownFilter();  // Tambahkan baris ini
+
+                cloudDepositBalance = {};
+                cloudDepositStart = {};
+
+                Object.entries(cloudKurirList || {}).forEach(([userId, user]) => {
+                    if (!user) return;
+
+                    const saldo = parseInt(user.depositSaldo || 0) || 0;
+                    const username = (user.username || '').trim();
+
+                    if (username) {
+                        cloudDepositBalance[userId] = saldo;
+                        cloudDepositBalance[username] = saldo;
+                    }
+
+                    cloudDepositStart[userId] = saldo;
+                });
+
+                populateKurirDropdownFilter();
+                populateDepositKurirFilter();
                 queueUiRefresh();
+
                 if (pendingAutoLoginCheck && userSession && userSession.role === 'kurir') {
                     const currentKurir = cloudKurirList[userSession.id];
                     if (currentKurir && currentKurir.status === 'aktif') {
@@ -497,7 +531,14 @@
             onValue(ref(db, 'jadwal_off'), (snapshot) => {
                 cloudJadwalOff = snapshot.val() || {};
             });
-            
+            let cloudDepositList = {};
+            onValue(ref(db, 'deposit_kurir'), (snapshot) => {
+                cloudDepositList = snapshot.val() || {};
+                window.cloudDepositList = cloudDepositList;
+
+                if (currentScreen === 'screen-admin-order-deposit') renderDepositFirebaseList();
+            });
+
             window.calcRekapJadwalKurir = function() {
                 const bulan = getKpiMonth();
                 const rekapMap = {};
@@ -790,10 +831,16 @@
                             nama: foundUser.nama,
                             role: "kurir"
                         };
-        
+
+                        const saldoAwalLogin = parseInt(foundUser.depositSaldo || 0) || 0;
+                        setSaldoKurirRaw(foundKey, foundUser.username, saldoAwalLogin);
+                        window.__saldoAwalKurir = window.__saldoAwalKurir || {};
+                        if (!window.__saldoAwalKurir[foundKey]) {
+                            window.__saldoAwalKurir[foundKey] = saldoAwalLogin;
+                        }
+
                         localStorage.setItem('sahabatku_session', JSON.stringify(userSession));
-                        document.querySelectorAll('.session-fullname').forEach(el => el.innerText = userSession.nama);
-        
+                        document.querySelectorAll('.session-fullname').forEach(el => el.innerText = userSession.nama);        
                         if (document.getElementById('nota-kurir')) {
                             document.getElementById('nota-kurir').value = foundUser.nama;
                         }
@@ -879,6 +926,7 @@
                 alert("Gagal mengubah login: " + err.message);
             }
         };
+
         window.changeKurirLogin = function() {
             const newUsername = document.getElementById('new-username').value.trim().toLowerCase();
             const newPassword = document.getElementById('new-password').value.trim();
@@ -1081,6 +1129,11 @@
                         bulanEl.value = getWibRawDate().slice(0, 7);
                     }
                     renderAdminTestimonial();
+                }, 100);
+            }
+            if (screenId === 'screen-admin-order-deposit') {
+                setTimeout(() => {
+                    initOrderDepositModule();
                 }, 100);
             }
 
@@ -2160,7 +2213,57 @@
             const el = document.getElementById(id);
             if (el) el.value = (value || 0).toLocaleString('id-ID');
         }
-        
+        function getSaldoKurirRaw(userId, username) {
+            const user = cloudKurirList?.[userId];
+            return parseInt(user?.depositSaldo || 0) || 0;
+        }
+
+        function setSaldoKurirRaw(userId, username, value) {
+            const v = Math.max(0, parseInt(value) || 0);
+            if (userId) cloudDepositBalance[userId] = v;
+            if (username) cloudDepositBalance[username] = v;
+        }
+
+        function getSaldoKurirDisplay(userId, username) {
+            const user = cloudKurirList?.[userId];
+            const saldo = parseInt(user?.depositSaldo || 0) || 0;
+            const usage = parseInt(cloudNotaHabisCounter?.[userId] || 0) || 0;
+
+            const kanan = saldo > 0 ? String(Math.ceil(saldo / 1000)).padStart(2, '0') : '-';
+            const kiri = String(usage).padStart(2, '0');
+
+            return `${kiri}/${kanan}`;
+        }
+        function getPotonganKurirKoin(nota) {
+            const parseNominal = (val) => parseInt((val || '').toString().replace(/[^0-9]/g, '')) || 0;
+            const ongkir = parseNominal(nota?.ongkir);
+            const tambahan = Array.isArray(nota?.biayaTambahan) ? nota.biayaTambahan : [];
+            const totalAcuan = ongkir + tambahan.reduce((a, b) => a + parseNominal(b?.nominal), 0);
+
+            if (totalAcuan <= 0) return 0;
+            return Math.max(1, Math.ceil(totalAcuan / 10000));
+        }
+
+        function getNotaHabisCount(userId) {
+            return parseInt(cloudNotaHabisCounter?.[userId] || 0) || 0;
+        }
+
+        function setNotaHabisCount(userId, value) {
+            cloudNotaHabisCounter[userId] = Math.max(0, parseInt(value) || 0);
+        }
+        function restoreSaldoKurirFromNota(userId, username, nota) {
+            const potong = getPotonganKurirKoin(nota) * 1000;
+            const saldoSekarang = getSaldoKurirRaw(userId, username);
+            const saldoBaru = saldoSekarang + potong;
+
+            update(ref(db, `users/${userId}`), {
+                depositSaldo: saldoBaru,
+                depositUpdatedAt: new Date().toISOString()
+            });
+
+            return saldoBaru;
+        }
+
         function bersihkanAngka(teks) {
             return parseInt((teks || '').toString().replace(/\./g, '')) || 0;
         }
@@ -2368,21 +2471,42 @@
             push(ref(db, 'nota'), payload).then(() => {
                 alert("Nota kiriman berhasil disimpan!");
                 localStorage.removeItem('sahabatku_nota_draft');
+
+                const userId = userSession.id;
+                const username = userSession.username;
+                const potongSlot = getPotonganKurirKoin(payload);
+                const usageSekarang = parseInt(cloudNotaHabisCounter?.[userId] || 0) || 0;
+                const usageBaru = usageSekarang + potongSlot;
+
+                cloudNotaHabisCounter[userId] = usageBaru;
+
+                const saldoSekarang = getSaldoKurirRaw(userId, username);
+                const saldoBaru = Math.max(0, saldoSekarang - (potongSlot * 1000));
+
+                update(ref(db, `users/${userId}`), {
+                    depositSaldo: saldoBaru,
+                    depositUpdatedAt: new Date().toISOString()
+                }).then(() => {
+                    cloudKurirList[userId].depositSaldo = saldoBaru;
+                    renderSaldoKurir();
+                    updateKurirDashboard();
+                });
+
                 notaState = { items: [], biaya: [], subtotal: 0, ongkir: 6000, total: 6000 };
                 document.getElementById('container-items').innerHTML = '';
                 document.getElementById('container-biaya').innerHTML = '';
-                
-                // TAMBAHAN: Reset input Dropdown Tambahan Biaya ke kondisi awal kosong
+
                 const dropBiaya = document.getElementById('biaya-dropdown');
                 if (dropBiaya) dropBiaya.value = '';
                 if (document.getElementById('biaya-nama-manual')) document.getElementById('biaya-nama-manual').classList.add('hidden');
                 if (document.getElementById('biaya-nominal')) document.getElementById('biaya-nominal').value = '';
-                
+
                 const inputOngkir = document.getElementById('nota-ongkir');
-                if(inputOngkir) inputOngkir.value = '6.000';
-                
+                if (inputOngkir) inputOngkir.value = '6.000';
+
+                updateKurirDashboard();
                 navigateTo('screen-dashboard');
-            })
+            });
         }
         window.shareWhatsApp = function() {
             const num = document.getElementById('p-nota-num').innerText;
@@ -2634,14 +2758,47 @@
                 return false;
             }
         }
-
         window.hapusRiwayatNota = function(key) {
             const n = cloudNotaList[key];
             const idNota = n ? n.id : "Nota ini";
 
             if (confirm(`Apakah Anda yakin ingin menghapus ${idNota} secara permanen dari database cloud?`)) {
+                const userId = Object.keys(cloudKurirList || {}).find(k =>
+                    (cloudKurirList[k]?.username || '').trim() === (n?.kurirUsername || '').trim()
+                );
+                const username = n?.kurirUsername || '';
+
                 remove(ref(db, `nota/${key}`))
                     .then(() => {
+                        delete cloudNotaList[key];
+
+                        if (userId && n) {
+                            const balikin = getPotonganKurirKoin(n);
+                            const usageSekarang = parseInt(cloudNotaHabisCounter?.[userId] || 0) || 0;
+                            const usageBaru = Math.max(0, usageSekarang - balikin);
+                            cloudNotaHabisCounter[userId] = usageBaru;
+
+                            const saldoSekarang = getSaldoKurirRaw(userId, username);
+                            const saldoBaru = saldoSekarang + (balikin * 1000);
+
+                            update(ref(db, `users/${userId}`), {
+                                depositSaldo: saldoBaru,
+                                depositUpdatedAt: new Date().toISOString()
+                            }).then(() => {
+                                cloudKurirList[userId].depositSaldo = saldoBaru;
+                                renderSaldoKurir();
+                                updateKurirDashboard();
+                            });
+                        }
+
+                        if (userSession && userSession.role === 'kurir') {
+                            renderKurirRiwayatList(true);
+                            updateKurirDashboard();
+                        }
+
+                        if (currentScreen === 'screen-admin-nota') renderAdminNota();
+                        if (currentScreen === 'screen-dashboard') updateKurirDashboard();
+
                         alert("Nota sukses dihapus!");
                     })
                     .catch((error) => {
@@ -3347,57 +3504,64 @@
         };
         window.updateKurirDashboard = function() {
             if (!userSession || userSession.role !== 'kurir') return;
-        
+
             const usernameKurir = userSession.username;
             const wib = getWibDate();
-        
+
             const formatHariIni = wib.toLocaleDateString('id-ID', {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric'
             });
-        
+
             const tanggalRawHariIni = getWibRawDate();
-        
+
             const elemenTanggal = document.getElementById('dash-date');
             if (elemenTanggal) {
                 elemenTanggal.innerText = formatHariIni;
             }
-        
+
             let totalNotaHariIni = 0;
             let totalOmsetHariIni = 0;
-        
+
             for (let key in cloudNotaList) {
                 const nota = cloudNotaList[key];
                 if (!nota) continue;
-        
                 if (nota.kurirUsername !== usernameKurir) continue;
                 if (nota.tanggalRaw !== tanggalRawHariIni) continue;
-        
+
                 const nominalOngkir = parseInt(nota.ongkir) || 0;
-                let nominalTambahan = 0;
-        
-                if (nota.biayaTambahan && Array.isArray(nota.biayaTambahan)) {
-                    nota.biayaTambahan.forEach(item => {
-                        nominalTambahan += (parseInt(item.nominal) || 0);
-                    });
-                }
-        
+                const nominalTambahan = (nota.biayaTambahan || []).reduce((a, b) => a + (parseInt(b.nominal) || 0), 0);
+
                 totalNotaHariIni++;
                 totalOmsetHariIni += (nominalOngkir + nominalTambahan);
             }
-        
+
             const elTotalTrx = document.getElementById('dash-k-total-trx');
             const elTotalIncome = document.getElementById('dash-k-total-income');
             const elNextNota = document.getElementById('dash-next-nota');
-        
+
             if (elTotalTrx) elTotalTrx.innerText = totalNotaHariIni;
             if (elTotalIncome) elTotalIncome.innerText = "Rp " + totalOmsetHariIni.toLocaleString('id-ID');
-        
+
             const nextCode = `NT-${tanggalRawHariIni.replace(/-/g, '')}-${String(totalNotaHariIni + 1).padStart(4, '0')}`;
             if (elNextNota) elNextNota.innerText = nextCode;
+
             if (typeof calculateMitraStats === 'function') calculateMitraStats();
+            renderSaldoKurir();
         };
+        function renderSaldoKurir() {
+            if (!userSession || userSession.role !== 'kurir') return;
+
+            const saldoKurir = getSaldoKurirRaw(userSession.id, userSession.username);
+            const saldoDisplay = getSaldoKurirDisplay(userSession.id, userSession.username);
+
+            const elSaldo = document.getElementById('kurir-stat-saldo');
+            if (elSaldo) elSaldo.innerText = saldoDisplay;
+
+            const warn = document.getElementById('kurir-saldo-warning');
+            if (warn) warn.innerText = saldoKurir <= 0 ? 'Segera deposit' : '';
+        }
         let instanceChartRekap = null;
         
         function initChartsEngine(dataHarianSistem = {}) {
@@ -5362,6 +5526,8 @@
             const manajemenScreen = document.getElementById('screen-admin-manajemen');
             const manajemenCardBtn = document.querySelector('#screen-admin-dashboard button[onclick*="screen-admin-manajemen"]');
             const ongkirCardBtn = document.querySelector('#screen-admin-dashboard button[onclick*="screen-admin-ongkir"]');
+            const orderDepositCardBtn = document.querySelector('#screen-admin-dashboard button[onclick*="screen-admin-order-deposit"]');
+
             const mitraForm = document.querySelector('#screen-admin-mitra > .bg-white');
             
             if (badge) {
@@ -5376,7 +5542,7 @@
                     'screen-admin-kurir', 'screen-admin-manajemen', 'screen-admin-nota',
                     'screen-admin-mitra', 'screen-admin-laporan', 'screen-admin-tracking',
                     'screen-admin-kpi', 'screen-admin-testimonial', 'screen-admin-notifikasi',
-                    'screen-admin-absensi', 'screen-admin-ongkir', 'screen-pengaturan'
+                    'screen-admin-absensi', 'screen-admin-ongkir', 'screen-admin-order-deposit', 'screen-pengaturan'
                 ];
 
                 allScreenIds.forEach(id => {
@@ -5392,6 +5558,7 @@
                 if (mitraForm) mitraForm.classList.remove('hidden');
                 if (manajemenCardBtn) manajemenCardBtn.classList.remove('hidden');
                 if (ongkirCardBtn) ongkirCardBtn.classList.remove('hidden');
+                if (orderDepositCardBtn) orderDepositCardBtn.classList.remove('hidden');
 
                 if (kategoriFixed === 'Head Operasional') {
                     if (manajemenScreen) {
@@ -5402,6 +5569,17 @@
                     }
                     if (manajemenCardBtn) manajemenCardBtn.classList.add('hidden');
                     if (ongkirCardBtn) ongkirCardBtn.classList.add('hidden');
+
+                    const orderDepositCardBtn = document.querySelector('#screen-admin-dashboard button[onclick*="screen-admin-order-deposit"]');
+                    if (orderDepositCardBtn) orderDepositCardBtn.classList.add('hidden');
+
+                    const orderDepositScreen = document.getElementById('screen-admin-order-deposit');
+                    if (orderDepositScreen) {
+                        orderDepositScreen.classList.add('hidden');
+                        orderDepositScreen.querySelectorAll('button').forEach(btn => {
+                            btn.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+                        });
+                    }
 
                     const kurirScreen = document.getElementById('screen-admin-kurir');
                     if (kurirScreen) {
@@ -5431,8 +5609,11 @@
 
             if (kategoriFixed === 'HRD') {
                 const hrdScreens = [
-                    'screen-admin-kurir', 'screen-admin-tracking', 'screen-admin-kpi',
-                    'screen-admin-testimonial', 'screen-admin-absensi'
+                    'screen-admin-kurir',
+                    'screen-admin-tracking',
+                    'screen-admin-kpi',
+                    'screen-admin-testimonial',
+                    'screen-admin-absensi'
                 ];
 
                 hrdScreens.forEach(id => {
@@ -5445,9 +5626,15 @@
                 });
 
                 const hiddenForHRD = [
-                    'screen-admin-manajemen', 'screen-admin-nota', 'screen-admin-mitra',
-                    'screen-admin-laporan', 'screen-admin-notifikasi', 'screen-admin-ongkir'
+                    'screen-admin-manajemen',
+                    'screen-admin-nota',
+                    'screen-admin-mitra',
+                    'screen-admin-laporan',
+                    'screen-admin-notifikasi',
+                    'screen-admin-ongkir',
+                    'screen-admin-order-deposit'
                 ];
+
                 hiddenForHRD.forEach(id => {
                     const screen = document.getElementById(id);
                     if (!screen) return;
@@ -5457,9 +5644,14 @@
                     });
                 });
 
-                if (kurirForm) kurirForm.classList.add('hidden');
+                const manajemenCardBtn = document.querySelector('#screen-admin-dashboard button[onclick*="screen-admin-manajemen"]');
+                const ongkirCardBtn = document.querySelector('#screen-admin-dashboard button[onclick*="screen-admin-ongkir"]');
+                const orderDepositCardBtn = document.querySelector('#screen-admin-dashboard button[onclick*="screen-admin-order-deposit"]');
+
                 if (manajemenCardBtn) manajemenCardBtn.classList.add('hidden');
                 if (ongkirCardBtn) ongkirCardBtn.classList.add('hidden');
+                if (orderDepositCardBtn) orderDepositCardBtn.classList.add('hidden');
+
                 return;
             }
 
@@ -6131,4 +6323,602 @@
             } else {
                 container.innerHTML = '';
             }
+        };
+        window.depositKurirSelected = [];
+        window.depositKurirAmounts = {};
+        window.depositKurirOrder = {};
+        window.depositKurirSequence = 0;
+
+        window.updateDepositDay = function() {
+            const date = document.getElementById('deposit-date')?.value || getWibRawDate();
+            const day = getHariIndo(date);
+            const depositDay = document.getElementById('deposit-day');
+            if (depositDay) depositDay.value = day;
+        };
+
+        window.updateDepositKurirSuggestions = function() {
+            const input = document.getElementById('deposit-kurir');
+            const box = document.getElementById('suggest-deposit-kurir');
+            if (!input || !box) return;
+
+            const q = normalizeNama(input.value);
+            if (!q) {
+                box.classList.add('hidden');
+                box.innerHTML = '';
+                return;
+            }
+
+            const matches = [];
+            for (let k in cloudKurirList) {
+                const item = cloudKurirList[k];
+                if (item && item.role === 'kurir') {
+                    const nama = item.nama || item.username || '';
+                    if (normalizeNama(nama).includes(q) && !window.depositKurirSelected.includes(nama)) {
+                        matches.push(nama);
+                    }
+                }
+            }
+
+            if (!matches.length) {
+                box.classList.add('hidden');
+                box.innerHTML = '';
+                return;
+            }
+
+            box.innerHTML = matches.slice(0, 6).map(nama => `
+                <div onclick="pilihDepositKurir('${nama.replace(/'/g, "\\'")}')" class="px-3 py-2 text-xs cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
+                    ${nama}
+                </div>
+            `).join('');
+
+            box.classList.remove('hidden');
+        };
+
+        window.pilihDepositKurir = function(nama) {
+            const input = document.getElementById('deposit-kurir');
+            const box = document.getElementById('suggest-deposit-kurir');
+
+            if (!window.depositKurirSelected.includes(nama)) {
+                window.depositKurirSelected.push(nama);
+                window.depositKurirSequence += 1;
+                window.depositKurirOrder[nama] = window.depositKurirSequence;
+            }
+
+            if (input) input.value = '';
+            if (box) {
+                box.classList.add('hidden');
+                box.innerHTML = '';
+            }
+
+            renderDepositKurirSelected();
+        };
+
+        window.hapusDepositKurirSelected = function(nama) {
+            window.depositKurirSelected = window.depositKurirSelected.filter(n => n !== nama);
+            delete window.depositKurirAmounts[nama];
+            delete window.depositKurirOrder[nama];
+            renderDepositKurirSelected();
+        };
+
+        function renderDepositKurirSelected() {
+            const selected = document.getElementById('deposit-kurir-selected');
+            if (!selected) return;
+
+            const values = {};
+            document.querySelectorAll('[id^="deposit-amount-"]').forEach(el => {
+                const nama = el.dataset.nama;
+                if (nama) values[nama] = el.value;
+            });
+
+            const sortedNames = [...window.depositKurirSelected].sort((a, b) => {
+                return (window.depositKurirOrder[b] || 0) - (window.depositKurirOrder[a] || 0);
+            });
+
+            if (!sortedNames.length) {
+                selected.innerHTML = '';
+                return;
+            }
+
+            selected.innerHTML = sortedNames.map(nama => `
+                <div class="w-full p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 space-y-2">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="font-bold text-xs">${nama}</div>
+                        <button onclick="hapusDepositKurirSelected('${nama.replace(/'/g, "\\'")}')" class="text-rose-500 font-bold text-sm">×</button>
+                    </div>
+                    <input type="text"
+                        id="deposit-amount-${nama.replace(/[^a-zA-Z0-9]/g, '_')}"
+                        data-nama="${nama}"
+                        oninput="formatDepositPerKurir(this, '${nama.replace(/'/g, "\\'")}')"
+                        placeholder="Rp 0"
+                        class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                </div>
+            `).join('');
+
+            Object.entries(values).forEach(([nama, val]) => {
+                const input = document.querySelector(`[data-nama="${nama}"]`);
+                if (input) input.value = val;
+            });
+        }
+
+        window.formatDepositPerKurir = function(el, nama) {
+            let angka = (el.value || '').replace(/[^0-9]/g, '');
+            if (!angka) {
+                el.value = '';
+                window.depositKurirAmounts[nama] = 0;
+                return;
+            }
+            el.value = 'Rp ' + parseInt(angka).toLocaleString('id-ID');
+            window.depositKurirAmounts[nama] = parseInt(angka) || 0;
+        };
+        window.initOrderDepositModule = function() {
+            const orderDate = document.getElementById('order-date');
+            const orderAmount = document.getElementById('order-amount');
+            const depositDate = document.getElementById('deposit-date');
+            const depositDay = document.getElementById('deposit-day');
+            const depositKurir = document.getElementById('deposit-kurir');
+            const selectedBox = document.getElementById('deposit-kurir-selected');
+            const filterBulan = document.getElementById('deposit-filter-bulan');
+            const filterTgl = document.getElementById('deposit-filter-tgl');
+
+            const today = getWibTodayRawDate();
+
+            if (orderDate && !orderDate.value) orderDate.value = today;
+            if (depositDate && !depositDate.value) depositDate.value = today;
+            if (depositDay) depositDay.value = getHariIndo(today);
+
+            if (filterBulan && !filterBulan.value) filterBulan.value = getWibTodayMonth();
+            if (filterTgl && !filterTgl.value) filterTgl.value = today;
+
+            if (orderAmount && !orderAmount.value) orderAmount.value = '';
+            if (depositKurir) depositKurir.value = '';
+            if (selectedBox && !selectedBox.innerHTML) selectedBox.innerHTML = '';
+
+            window.depositKurirSelected = window.depositKurirSelected || [];
+            window.depositKurirAmounts = window.depositKurirAmounts || {};
+            window.depositKurirOrder = window.depositKurirOrder || {};
+            window.depositKurirSequence = window.depositKurirSequence || 0;
+
+            renderDepositKurirSelected();
+            populateDepositKurirFilter();
+        };
+
+        window.resetDepositForm = function() {
+            window.depositKurirSelected = [];
+            window.depositKurirAmounts = {};
+            window.depositKurirOrder = {};
+            window.depositKurirSequence = 0;
+
+            const depositDate = document.getElementById('deposit-date');
+            const depositDay = document.getElementById('deposit-day');
+            const depositKurir = document.getElementById('deposit-kurir');
+            const selectedBox = document.getElementById('deposit-kurir-selected');
+
+            if (depositDate) depositDate.value = getWibRawDate();
+            if (depositDay) depositDay.value = getHariIndo(getWibRawDate());
+            if (depositKurir) depositKurir.value = '';
+            if (selectedBox) selectedBox.innerHTML = '';
+
+            renderDepositKurirSelected();
+        };
+        window.sendDepositToSheet = async function() {
+            const date = document.getElementById('deposit-date')?.value || getWibTodayRawDate();
+            const day = getHariIndo(date);
+
+            const items = (window.depositKurirSelected || []).map(nama => ({
+                nama,
+                amount: parseInt(window.depositKurirAmounts?.[nama]) || 0
+            })).filter(x => x.amount > 0);
+
+            if (!date || !items.length) {
+                alert('Lengkapi data deposit.');
+                return;
+            }
+
+            try {
+                setOrderDepositLoading('deposit', true);
+                const result = await sendToSpreadsheet('saveDeposit', {
+                    date,
+                    day,
+                    items,
+                    timezone: 'Asia/Jakarta'
+                });
+
+                if (result.success) {
+                    alert(result.message || 'Deposit berhasil dikirim.');
+                    await saveDepositToFirebase(date, day, items);
+                    resetDepositForm();
+                    initOrderDepositModule();
+                } else {
+                    alert(result.message || 'Gagal kirim deposit.');
+                }
+            } catch (err) {
+                alert('Gagal kirim deposit: ' + err.message);
+            } finally {
+                setOrderDepositLoading('deposit', false);
+            }
+        };
+
+        async function sendToSpreadsheet(action, payload) {
+            try {
+                const res = await fetch(`${API_URL}?action=${encodeURIComponent(action)}`, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                return { success: true, message: 'DATA TERKIRIM BERHASIL!.' };
+            } catch (err) {
+                return { success: false, message: 'GAGAL KIRIM DATA: ' + err.message };
+            }
+        }
+        function setOrderDepositLoading(type, isLoading) {
+            const orderBtn = document.querySelector('#screen-admin-order-deposit button[onclick="sendOrderToSheet()"]');
+            const depositBtn = document.querySelector('#screen-admin-order-deposit button[onclick="sendDepositToSheet()"]');
+
+            if (type === 'order' && orderBtn) {
+                orderBtn.disabled = isLoading;
+                orderBtn.innerText = isLoading ? 'MENGIRIM...' : 'Kirim';
+            }
+
+            if (type === 'deposit' && depositBtn) {
+                depositBtn.disabled = isLoading;
+                depositBtn.innerText = isLoading ? 'MENGIRIM...' : 'Kirim';
+            }
+        }
+
+        window.sendOrderToSheet = async function() {
+            const date = document.getElementById('order-date')?.value || getWibTodayRawDate();
+            const amount = parseInt(document.getElementById('order-amount')?.value) || 0;
+
+            if (!date || amount <= 0) {
+                alert('Lengkapi data orderan.');
+                return;
+            }
+
+            try {
+                setOrderDepositLoading('order', true);
+                const result = await sendToSpreadsheet('saveOrder', { date, amount });
+
+                if (result.success) {
+                    alert(result.message || 'Orderan berhasil dikirim.');
+                    if (document.getElementById('order-date')) document.getElementById('order-date').value = getWibTodayRawDate();
+                    if (document.getElementById('order-amount')) document.getElementById('order-amount').value = '';
+                } else {
+                    alert(result.message || 'Gagal kirim orderan.');
+                }
+            } catch (err) {
+                alert('Gagal kirim orderan: ' + err.message);
+            } finally {
+                setOrderDepositLoading('order', false);
+            }
+        };
+        window.saveDepositToFirebase = async function(date, day, items) {
+            try {
+                const payload = {
+                    date,
+                    day,
+                    items,
+                    createdAt: new Date().toISOString()
+                };
+
+                const newRef = push(ref(db, 'deposit_kurir'));
+                await set(newRef, payload);
+
+                for (const it of items) {
+                    const foundKey = Object.keys(cloudKurirList || {}).find(k =>
+                        (cloudKurirList[k]?.nama || '').trim() === (it.nama || '').trim()
+                    );
+
+                    if (foundKey) {
+                        const value = parseInt(it.amount) || 0;
+                        const username = cloudKurirList[foundKey].username;
+
+                        cloudKurirList[foundKey].depositSaldo = value;
+                        cloudKurirList[foundKey].depositUpdatedAt = new Date().toISOString();
+
+                        await update(ref(db, `users/${foundKey}`), {
+                            depositSaldo: value,
+                            depositUpdatedAt: new Date().toISOString()
+                        });
+                    }
+                }
+
+                queueUiRefresh(true);
+                return true;
+            } catch (err) {
+                console.error(err);
+                return false;
+            }
+        };
+        window.renderDepositFirebaseList = function() {
+            const container = document.getElementById('container-deposit-firebase');
+            if (!container) return;
+
+            const isOpen = container.dataset.open === '1';
+            const filterKurir = document.getElementById('deposit-filter-kurir')?.value || 'semua';
+            const filterTgl = document.getElementById('deposit-filter-tgl')?.value || getWibTodayRawDate();
+            const filterBulan = document.getElementById('deposit-filter-bulan')?.value || getWibTodayMonth();
+
+            if (!isOpen) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const data = Object.entries(window.cloudDepositList || {})
+                .sort((a, b) => (b[1]?.createdAt || '').localeCompare(a[1]?.createdAt || ''));
+
+            const filtered = data.filter(([key, d]) => {
+                if (!d) return false;
+                if (filterKurir !== 'semua') {
+                    const kurirMatch = (d.items || []).some(it => (it.nama || '') === filterKurir);
+                    if (!kurirMatch) return false;
+                }
+                if (filterTgl && d.date !== filterTgl) return false;
+                if (filterBulan && (!d.date || d.date.substring(0, 7) !== filterBulan)) return false;
+                return true;
+            });
+
+            if (!filtered.length) {
+                container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4">Tidak ada deposit sesuai filter.</div>';
+                return;
+            }
+
+            const grouped = {};
+            filtered.forEach(([key, d]) => {
+                const dateKey = d.date || '-';
+                if (!grouped[dateKey]) grouped[dateKey] = [];
+                grouped[dateKey].push({ key, data: d });
+            });
+
+            const groupedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+
+            container.innerHTML = groupedDates.map(dateKey => {
+                const rows = grouped[dateKey].sort((a, b) => (a.data.createdAt || '').localeCompare(b.data.createdAt || ''));
+
+                return `
+                    <div class="bg-white dark:bg-slate-800 p-3 rounded-xl border text-xs space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-bold text-sm">${dateKey}</div>
+                                <div class="text-[10px] text-slate-400">${rows[0]?.data?.day || '-'}</div>
+                            </div>
+                            <div class="text-[10px] font-bold text-primary">${rows.length} deposit</div>
+                        </div>
+
+                        <div class="grid ${rows.length === 1 ? 'grid-cols-1' : rows.length === 2 ? 'grid-cols-2' : 'grid-cols-3'} gap-2">
+                            ${rows.map(({ key, data }) => {
+                                const items = Array.isArray(data.items) ? data.items : [];
+                                return `
+                                    <div class="rounded-xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 space-y-2">
+                                        <div class="font-bold text-[11px] truncate">
+                                            ${items.map(it => it.nama).join(', ') || '-'}
+                                        </div>
+
+                                        <div class="space-y-1 max-h-28 overflow-y-auto">
+                                            ${items.map(it => `
+                                                <div class="flex justify-between text-[11px] gap-2">
+                                                    <span class="truncate">${it.nama}</span>
+                                                    <span class="font-bold shrink-0">Rp ${(it.amount || 0).toLocaleString('id-ID')}</span>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-1 pt-1">
+                                            <button onclick="editDepositFirebase('${key}')" class="py-2 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-bold uppercase">Edit</button>
+                                            <button onclick="hapusDepositFirebase('${key}')" class="py-2 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-bold uppercase">Hapus</button>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        window.editDepositByDate = function(dateKey) {
+            const rows = Object.entries(window.cloudDepositList || {}).filter(([key, d]) => d && d.date === dateKey);
+            if (!rows.length) return;
+
+            const first = rows[0][1];
+            const items = rows.flatMap(([key, d]) => (d.items || []).map(it => ({ ...it, _key: key })));
+
+            openEditDepositModal(rows[0][0]);
+        };
+
+        window.hapusDepositByDate = function(dateKey) {
+            const rows = Object.entries(window.cloudDepositList || {}).filter(([key, d]) => d && d.date === dateKey);
+            if (!rows.length) return;
+
+            if (!confirm(`Hapus semua deposit tanggal ${dateKey}?`)) return;
+
+            rows.forEach(([key]) => remove(ref(db, `deposit_kurir/${key}`)));
+        };
+
+        window.toggleDepositFirebaseOpen = function() {
+            const container = document.getElementById('container-deposit-firebase');
+            const btn = document.getElementById('btn-toggle-deposit-text');
+            if (!container) return;
+
+            const isOpen = container.dataset.open === '1';
+            container.dataset.open = isOpen ? '0' : '1';
+            if (btn) btn.innerText = isOpen ? 'Cari' : 'Tutup';
+
+            if (!isOpen) renderDepositFirebaseList();
+            else container.innerHTML = '';
+        };
+
+        window.hapusDepositFirebaseTersaring = function() {
+            const filterKurir = document.getElementById('deposit-filter-kurir')?.value || 'semua';
+            const filterTgl = document.getElementById('deposit-filter-tgl')?.value || '';
+            const filterBulan = document.getElementById('deposit-filter-bulan')?.value || '';
+
+            const hasil = Object.entries(window.cloudDepositList || {}).filter(([key, d]) => {
+                if (!d) return false;
+                if (filterKurir !== 'semua') {
+                    const kurirMatch = (d.items || []).some(it => (it.nama || '') === filterKurir);
+                    if (!kurirMatch) return false;
+                }
+                if (filterTgl && d.date !== filterTgl) return false;
+                if (filterBulan && (!d.date || d.date.substring(0, 7) !== filterBulan)) return false;
+                return true;
+            });
+
+            if (!hasil.length) {
+                alert('Tidak ada deposit sesuai filter untuk dihapus.');
+                return;
+            }
+
+            if (!confirm(`Hapus ${hasil.length} deposit sesuai filter?`)) return;
+
+            hasil.forEach(([key]) => remove(ref(db, `deposit_kurir/${key}`)));
+            alert('Deposit sesuai filter sedang dihapus dari Firebase.');
+        };
+        window.openEditDepositModal = function(key) {
+            const d = window.cloudDepositList?.[key];
+            if (!d) return;
+
+            let itemsHtml = '';
+            const items = Array.isArray(d.items) ? d.items : [];
+
+            if (items.length) {
+                itemsHtml = items.map((it, idx) => `
+                    <div class="grid grid-cols-12 gap-2 items-center">
+                        <div class="col-span-5">
+                            <input type="text" id="edit-deposit-nama-${idx}" value="${it.nama || ''}" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                        </div>
+                        <div class="col-span-5">
+                            <input type="text" id="edit-deposit-amount-${idx}" value="${it.amount || 0}" oninput="autoformatRupiah(this)" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                        </div>
+                        <div class="col-span-2">
+                            <button onclick="hapusItemEditDeposit(${idx})" class="w-full py-2 rounded-xl bg-rose-50 text-rose-600 text-[10px] font-bold">X</button>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                itemsHtml = '<div class="text-xs text-slate-400">Belum ada item.</div>';
+            }
+
+            let modal = document.getElementById('modal-edit-deposit');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'modal-edit-deposit';
+                modal.className = 'hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4';
+                modal.innerHTML = `
+                    <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 p-4 space-y-4 relative max-h-[90vh] overflow-y-auto">
+                        <button onclick="closeEditDepositModal()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center">✕</button>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Edit Deposit</h3>
+
+                        <input type="hidden" id="edit-deposit-key">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Tanggal</label>
+                            <input type="date" id="edit-deposit-date" class="w-full px-3 py-2 border rounded-xl text-xs dark:bg-darkBg dark:border-slate-700">
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Hari</label>
+                            <input type="text" id="edit-deposit-day" readonly class="w-full px-3 py-2 border rounded-xl text-xs bg-slate-100 dark:bg-slate-900 dark:border-slate-700">
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-[10px] text-slate-400 mb-1">Daftar Kurir & Nominal</label>
+                            <div id="edit-deposit-items" class="space-y-2 max-h-72 overflow-y-auto"></div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button onclick="updateDepositFirebaseData()" class="flex-1 py-2 bg-primary text-white text-xs font-bold rounded-xl uppercase">Simpan</button>
+                            <button onclick="closeEditDepositModal()" class="px-3 py-2 bg-slate-100 text-slate-500 dark:bg-slate-800 text-xs rounded-xl">Batal</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            document.getElementById('edit-deposit-key').value = key;
+            document.getElementById('edit-deposit-date').value = d.date || getWibRawDate();
+            document.getElementById('edit-deposit-day').value = d.day || getHariIndo(d.date || getWibRawDate());
+            document.getElementById('edit-deposit-items').innerHTML = itemsHtml;
+            modal.classList.remove('hidden');
+        };
+
+        window.editDepositFirebase = function(key) {
+            openEditDepositModal(key);
+        };
+
+        window.hapusItemEditDeposit = function(idx) {
+            const box = document.getElementById('edit-deposit-items');
+            const rows = Array.from(box.querySelectorAll('.grid'));
+            if (rows[idx]) rows[idx].remove();
+        };
+
+        window.updateDepositFirebaseData = function() {
+            const key = document.getElementById('edit-deposit-key').value;
+            const date = document.getElementById('edit-deposit-date').value;
+            const day = getHariIndo(date);
+
+            const rows = document.querySelectorAll('#edit-deposit-items .grid');
+            const items = [];
+
+            rows.forEach((row, idx) => {
+                const nama = document.getElementById(`edit-deposit-nama-${idx}`)?.value?.trim() || '';
+                const amountRaw = document.getElementById(`edit-deposit-amount-${idx}`)?.value || '';
+                const amount = parseInt((amountRaw || '').toString().replace(/[^0-9]/g, '')) || 0;
+
+                if (nama && amount > 0) items.push({ nama, amount });
+            });
+
+            if (!date) {
+                alert('Tanggal wajib diisi!');
+                return;
+            }
+
+            if (!items.length) {
+                alert('Minimal 1 item deposit harus ada!');
+                return;
+            }
+
+            const old = window.cloudDepositList?.[key] || {};
+
+            update(ref(db, `deposit_kurir/${key}`), {
+                date,
+                day,
+                items,
+                createdAt: old.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }).then(() => {
+                alert('Deposit berhasil diupdate.');
+                closeEditDepositModal();
+                renderDepositFirebaseList();
+            }).catch(err => {
+                alert('Gagal update deposit: ' + err.message);
+            });
+        };
+
+        window.closeEditDepositModal = function() {
+            const modal = document.getElementById('modal-edit-deposit');
+            if (modal) modal.classList.add('hidden');
+        };
+
+
+        window.hapusDepositFirebase = function(key) {
+            if (!confirm('Hapus deposit ini?')) return;
+            remove(ref(db, `deposit_kurir/${key}`));
+        };
+        window.populateDepositKurirFilter = function() {
+            const dropdown = document.getElementById('deposit-filter-kurir');
+            if (!dropdown) return;
+
+            const current = dropdown.value || 'semua';
+            dropdown.innerHTML = '<option value="semua">Semua Kurir</option>';
+
+            Object.values(cloudKurirList || {}).forEach(u => {
+                if (u && u.role === 'kurir' && u.nama) {
+                    dropdown.innerHTML += `<option value="${u.nama}">${u.nama}</option>`;
+                }
+            });
+
+            dropdown.value = current;
         };
