@@ -25,7 +25,7 @@
         let adminOngkirMode = 'normal';
         let cloudTestimonialList = {};
         let cloudManajemenList = {}
-        let cloudLeaderList = {};;
+        let cloudLeaderList = {};
         let liveLocations = {};
         let liveMap = null;
         let liveMarkers = {};
@@ -268,12 +268,6 @@
                 `;
             });
         };
-        window.selectTrackingKurir = function(id) {
-            selectedKurirTracking = id;
-            selectedTrackingUser = cloudKurirList[id] || null;
-            renderTrackingMap(id);
-        };
-
         window.selectTrackingKurir = function(id) {
             selectedKurirTracking = id;
             selectedTrackingUser = cloudKurirList[id] || null;
@@ -1894,27 +1888,6 @@
                 }
             } catch (err) {
                 console.log('cleanupDailyLiveLocations error:', err.message);
-            }
-        };
-        
-        window.toggleTestimonialPublish = function(key) {
-            const item = cloudTestimonialList[key];
-            if (!item) return;
-        
-            update(ref(db, `testimonials/${key}`), {
-                isPublished: !item.isPublished
-            }).then(() => {
-                alert(item.isPublished ? 'Testimoni disembunyikan.' : 'Testimoni ditampilkan.');
-            }).catch(err => {
-                alert('Gagal update testimoni: ' + err.message);
-            });
-        };
-        
-        window.hapusTestimonial = function(key) {
-            if (confirm('Hapus testimoni ini secara permanen?')) {
-                remove(ref(db, `testimonials/${key}`))
-                    .then(() => alert('Testimoni berhasil dihapus.'))
-                    .catch(err => alert('Gagal menghapus testimoni: ' + err.message));
             }
         };
         window.toggleTestimonialSelectMode = function() {
@@ -5764,11 +5737,6 @@
                     </div>
                 `;
             }).join('');
-        };
-        window.openLeaderModal = function() {
-            resetLeaderForm();
-            document.getElementById('modal-leader').classList.remove('hidden');
-            renderLeaderList();
         };
         window.resetLeaderForm = function() {
             document.getElementById('leader-id-edit').value = '';
