@@ -6592,7 +6592,6 @@
             if (!isOpen) renderDepositFirebaseList();
             else container.innerHTML = '';
         };
-
         window.hapusDepositFirebaseTersaring = function() {
             const filterKurir = document.getElementById('deposit-filter-kurir')?.value || 'semua';
             const filterTgl = document.getElementById('deposit-filter-tgl')?.value || '';
