@@ -1130,15 +1130,14 @@
       document.getElementById('popup-detail').classList.remove('hidden');
       document.getElementById('popup-detail').classList.add('flex');
     };
-    
     function renderKurirRekap() {
       const body = document.getElementById('kurir-rekap-body');
       const head = document.getElementById('kurir-rekap-head');
       if (!body || !head) return;
-    
+
       const search = (document.getElementById('kurir-search-rekap')?.value || '').toLowerCase().trim();
       const bulan = getBulanAktif();
-    
+
       const data = {};
       getKurirAktif().forEach(u => {
         data[u.nama] = {
@@ -1153,7 +1152,7 @@
           alfa: 0
         };
       });
-    
+
       Object.values(DATA_JADWAL).forEach(j => {
         const tgl = getTanggalItem(j);
         if (!tgl.startsWith(bulan)) return;
@@ -1163,57 +1162,58 @@
         if (j.jenisOff === 'Izin') data[j.nama].izin++;
         if (j.jenisOff === 'Sakit') data[j.nama].sakit++;
       });
-    
+
       Object.values(DATA_ABSENSI).forEach(a => {
         if (!data[a.namaKurir]) return;
         if (a.tanggal && !a.tanggal.startsWith(bulan)) return;
         if (a.jamMasuk) data[a.namaKurir].masuk++;
         if (a.jamPulang) data[a.namaKurir].pulang++;
       });
-    
+
       const y = currentViewDate.getFullYear();
       const m = currentViewDate.getMonth();
       const totalHari = new Date(y, m + 1, 0).getDate();
       const today = new Date().toISOString().split('T')[0];
-    
+
       Object.values(data).forEach(r => {
         const userObj = Object.values(DATA_USERS).find(u => (u.nama || u.username || '') === r.nama);
         const tglGabung = userObj?.tglGabung || '';
         let startDate = `${y}-${String(m + 1).padStart(2, '0')}-01`;
-    
+
         if (tglGabung) {
           const nextDay = new Date(tglGabung);
           nextDay.setDate(nextDay.getDate() + 1);
           const nextDayStr = nextDay.toISOString().split('T')[0];
           if (nextDayStr > startDate) startDate = nextDayStr;
         }
-    
+
         let alfa = 0;
         for (let d = 1; d <= totalHari; d++) {
           const tanggal = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
           if (tanggal > today || tanggal < startDate) continue;
-    
+
           const adaJadwal = Object.values(DATA_JADWAL).some(j =>
             (j.nama || '') === r.nama &&
             getTanggalItem(j) === tanggal &&
-            ['Off Reguler', 'Tidak Ambil Off', 'Izin', 'Sakit'].includes(j.jenisOff)
+            ['Off Reguler', 'Izin', 'Sakit'].includes(j.jenisOff)
           );
-    
+
           const adaAbsensi = Object.values(DATA_ABSENSI).some(a =>
             (a.namaKurir || '') === r.nama &&
             a.tanggal === tanggal &&
             (a.jamMasuk || a.jamPulang)
           );
-    
+
           if (!adaJadwal && !adaAbsensi) alfa++;
         }
+
         r.alfa = alfa;
       });
-    
+
       const rows = Object.values(data).filter(r =>
         r.nama.toLowerCase().includes(search) || r.leader.toLowerCase().includes(search)
       );
-    
+
       head.innerHTML = `
         <tr class="text-left border-b border-slate-200 dark:border-slate-700">
           <th class="py-2">No</th>
@@ -1228,7 +1228,7 @@
           <th class="py-2">Aksi</th>
         </tr>
       `;
-    
+
       body.innerHTML = rows.map((r, i) => `
         <tr class="border-b border-slate-100 dark:border-slate-800">
           <td class="py-3">${i + 1}</td>
@@ -1255,10 +1255,10 @@
       const jadwal = Object.entries(DATA_JADWAL)
         .map(([key, item]) => ({ key, ...item }))
         .filter(j => j.nama === namaKurir && getTanggalItem(j).startsWith(bulan));
-    
+
       const absensi = Object.values(DATA_ABSENSI)
         .filter(a => a.namaKurir === namaKurir && (a.tanggal || '').startsWith(bulan));
-    
+
       const userObj = Object.values(DATA_USERS).find(u => (u.nama || u.username || '') === namaKurir);
       const tglGabung = userObj?.tglGabung || '';
       const y = currentViewDate.getFullYear();
@@ -1282,7 +1282,7 @@
         const adaJadwal = Object.values(DATA_JADWAL).some(j =>
           (j.nama || '') === namaKurir &&
           getTanggalItem(j) === tanggal &&
-          ['Off Reguler', 'Tidak Ambil Off', 'Izin', 'Sakit'].includes(j.jenisOff)
+          ['Off Reguler', 'Izin', 'Sakit'].includes(j.jenisOff)
         );
 
         const adaAbsensi = Object.values(DATA_ABSENSI).some(a =>
@@ -1293,7 +1293,7 @@
 
         if (!adaJadwal && !adaAbsensi) alfaList.push({ tanggal, potongan: 'Tidak ada jadwal / absensi' });
       }
-    
+
       const renderTab = (tab) => {
         if (tab === 'jadwal') {
           return jadwal.length ? jadwal.map(j => `
@@ -1302,13 +1302,16 @@
                 <div>
                   <div class="font-bold text-sm">${fmt(getTanggalItem(j))}</div>
                   <div class="text-[11px] text-slate-500 mt-1">${j.keterangan || '-'}</div>
-                  <div class="text-[10px] text-slate-400 mt-1">${j.nama || '-'}</div>
+                  <div class="text-[10px] text-slate-400 mt-1">Jenis: ${j.jenisOff || '-'}</div>
                 </div>
+                <span class="px-2 py-1 rounded-full text-white text-[10px] font-bold ${jenisColor(j.jenisOff)}">
+                  ${j.jenisOff || '-'}
+                </span>
               </div>
             </div>
           `).join('') : '<div class="text-xs text-slate-400">Tidak ada data.</div>';
         }
-    
+
         if (tab === 'absensi') {
           return absensi.length ? absensi.map(a => `
             <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
@@ -1317,7 +1320,7 @@
             </div>
           `).join('') : '<div class="text-xs text-slate-400">Tidak ada absensi.</div>';
         }
-    
+
         return alfaList.length ? alfaList.map(a => `
           <div class="p-3 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
             <div class="font-bold text-sm">${fmt(a.tanggal)}</div>
@@ -1325,7 +1328,7 @@
           </div>
         `).join('') : '<div class="text-xs text-slate-400">Tidak ada data alfa.</div>';
       };
-    
+
       document.getElementById('popup-detail-title').textContent = `Detail Rekap ${namaKurir}`;
       document.getElementById('popup-detail-content').innerHTML = `
         <div class="space-y-3">
@@ -1337,7 +1340,7 @@
           <div id="rekap-tab-content">${renderTab('jadwal')}</div>
         </div>
       `;
-    
+
       window.__rekapTab = 'jadwal';
       window.__renderRekapTab = () => {
         const content = document.getElementById('rekap-tab-content');
@@ -1351,10 +1354,10 @@
           if (b.textContent.includes('Alfa') && window.__rekapTab === 'alfa') b.classList.add('bg-sahabatku','text-white');
         });
       };
-    
+
       document.getElementById('popup-detail').classList.remove('hidden');
       document.getElementById('popup-detail').classList.add('flex');
-    };
+    };    
     function renderAdminCalendar() {
       const grid = document.getElementById('admin-calendar-grid');
       if (!grid) return;
