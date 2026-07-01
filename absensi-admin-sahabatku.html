@@ -1153,27 +1153,77 @@
       const list = Object.entries(DATA_JADWAL)
         .map(([key, item]) => ({ key, ...item }))
         .filter(j => j.nama === namaKurir && getTanggalItem(j).startsWith(bulan));
+
+      const userObj = Object.values(DATA_USERS).find(u => (u.nama || '') === namaKurir);
+      const tglGabung = userObj?.tglGabung || '';
+      const y = currentViewDate.getFullYear();
+      const m = currentViewDate.getMonth();
+      const totalHari = new Date(y, m + 1, 0).getDate();
+      const today = new Date().toISOString().split('T')[0];
+
+      let startDate = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+      if (tglGabung) {
+        const nextDay = new Date(tglGabung);
+        nextDay.setDate(nextDay.getDate() + 1);
+        const nextDayStr = nextDay.toISOString().split('T')[0];
+        if (nextDayStr > startDate) startDate = nextDayStr;
+      }
+
+      const alfaList = [];
+      for (let d = 1; d <= totalHari; d++) {
+        const tanggal = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        if (tanggal > today || tanggal < startDate) continue;
+
+        const adaJadwal = Object.values(DATA_JADWAL).some(j =>
+          (j.nama || '') === namaKurir &&
+          getTanggalItem(j) === tanggal &&
+          ['Off Reguler', 'Tidak Ambil Off', 'Izin', 'Sakit'].includes(j.jenisOff)
+        );
+
+        const adaAbsensi = Object.values(DATA_ABSENSI).some(a =>
+          (a.namaKurir || '') === namaKurir &&
+          a.tanggal === tanggal &&
+          (a.jamMasuk || a.jamPulang)
+        );
+
+        if (!adaJadwal && !adaAbsensi) {
+          alfaList.push(tanggal);
+        }
+      }
     
       document.getElementById('popup-detail-title').textContent = `Rekap ${namaKurir}`;
-      document.getElementById('popup-detail-content').innerHTML = list.length ? list.map(j => `
-        <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <div class="font-bold text-sm">${fmt(getTanggalItem(j))}</div>
-              <div class="text-[11px] text-slate-500 mt-1">${j.keterangan || '-'}</div>
-              <div class="text-[10px] text-slate-400 mt-1">${j.nama || '-'}</div>
+      document.getElementById('popup-detail-content').innerHTML = `
+        <div class="space-y-4">
+          ${list.length ? list.map(j => `
+            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <div class="font-bold text-sm">${fmt(getTanggalItem(j))}</div>
+                  <div class="text-[11px] text-slate-500 mt-1">${j.keterangan || '-'}</div>
+                  <div class="text-[10px] text-slate-400 mt-1">${j.nama || '-'}</div>
+                </div>
+                <div class="flex gap-2">
+                  <button onclick="editJadwal('${j.key}')" class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center">
+                    <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                  </button>
+                  <button onclick="hapusJadwal('${j.key}')" class="w-8 h-8 rounded-xl bg-red-500 text-white flex items-center justify-center">
+                    <i class="fa-solid fa-trash text-[10px]"></i>
+                  </button>
+                </div>
+              </div>
             </div>
-            <div class="flex gap-2">
-              <button onclick="editJadwal('${j.key}')" class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center">
-                <i class="fa-solid fa-pen-to-square text-[10px]"></i>
-              </button>
-              <button onclick="hapusJadwal('${j.key}')" class="w-8 h-8 rounded-xl bg-red-500 text-white flex items-center justify-center">
-                <i class="fa-solid fa-trash text-[10px]"></i>
-              </button>
-            </div>
+          `).join('') : '<div class="text-xs text-slate-400">Tidak ada data.</div>'}
+
+          <div class="p-3 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
+            <div class="font-bold text-xs text-red-600 dark:text-red-300 mb-2">ALFA</div>
+            ${alfaList.length ? alfaList.map(t => `
+              <div class="text-[10px] text-slate-600 dark:text-slate-300 mb-1">
+                • ${fmt(t)} — Tidak ada jadwal / absensi
+              </div>
+            `).join('') : '<div class="text-xs text-slate-400">Tidak ada data alfa.</div>'}
           </div>
         </div>
-      `).join('') : '<div class="text-xs text-slate-400">Tidak ada data.</div>';
+      `;
     
       document.getElementById('popup-detail').classList.remove('hidden');
       document.getElementById('popup-detail').classList.add('flex');
