@@ -1169,19 +1169,24 @@
                   <div class="text-[11px] text-slate-500 mt-1">${j.keterangan || '-'}</div>
                   <div class="text-[10px] text-slate-400 mt-1">${j.nama || '-'}</div>
                 </div>
-                <div class="flex gap-2">
-                  <button onclick="editJadwal('${j.key}')" class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center">
-                    <i class="fa-solid fa-pen-to-square text-[10px]"></i>
-                  </button>
-                  <button onclick="hapusJadwal('${j.key}')" class="w-8 h-8 rounded-xl bg-red-500 text-white flex items-center justify-center">
-                    <i class="fa-solid fa-trash text-[10px]"></i>
-                  </button>
+                <div class="flex flex-col items-end gap-2">
+                  <div class="flex gap-2">
+                    <button onclick="editJadwal('${j.key}')" class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center">
+                      <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                    </button>
+                    <button onclick="hapusJadwal('${j.key}')" class="w-8 h-8 rounded-xl bg-red-500 text-white flex items-center justify-center">
+                      <i class="fa-solid fa-trash text-[10px]"></i>
+                    </button>
+                  </div>
+                  <span class="px-2 py-1 rounded-full text-[10px] font-bold text-white ${jenisColor(j.jenisOff)}">
+                    ${j.jenisOff || '-'}
+                  </span>
                 </div>
               </div>
             </div>
           `).join('') : '<div class="text-xs text-slate-400">Tidak ada data.</div>';
         }
-    
+
         if (tab === 'absensi') {
           return absensi.length ? absensi.map(a => `
             <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
