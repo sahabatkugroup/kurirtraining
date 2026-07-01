@@ -188,9 +188,6 @@
           <div class="glass-card p-4 rounded-2xl space-y-3">
             <div class="flex items-center justify-between">
               <h3 class="font-bold text-sm">Rekap Kurir</h3>
-              <button id="btn-kurir-rekap-mode" class="px-3 py-2 rounded-xl bg-sahabatku text-white text-[10px] font-bold">
-                Rekap Kurir
-              </button>
             </div>
         
             <div class="overflow-x-auto no-scrollbar">
@@ -302,8 +299,7 @@
 
         <section id="admin-panel-rekap" class="glass-card p-4 rounded-2xl space-y-4">
           <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-            <h3 class="font-bold text-sm">Rekap Kurir</h3>
-            <button id="btn-admin-rekap-mode" class="px-3 py-2 rounded-xl bg-sahabatku text-white text-[10px] font-bold">Rekap Kurir</button>
+          <h3 class="font-bold text-sm">Rekap Kurir</h3>
           </div>
           <input id="admin-search-rekap" type="text" placeholder="Cari nama kurir..." class="w-full text-xs bg-slate-100 dark:bg-slate-800 rounded-xl p-3">
           <div class="overflow-x-auto no-scrollbar">
@@ -966,156 +962,6 @@
       }).join('');
     }
 
-    function renderAdminRekap() {
-      const body = document.getElementById('admin-rekap-body');
-      const head = document.getElementById('admin-rekap-head');
-      if (!body || !head) return;
-    
-      const search = (document.getElementById('admin-search-rekap')?.value || '').toLowerCase().trim();
-      const bulan = getBulanAktif();
-    
-      const data = {};
-      getKurirAktif().forEach(u => {
-        data[u.nama] = {
-          nama: u.nama,
-          leader: u.leader,
-          off: 0,
-          tidakAmbilOff: 0,
-          izin: 0,
-          sakit: 0,
-          alfa: 0,
-          masuk: 0,
-          pulang: 0
-        };
-      });
-    
-      Object.values(DATA_JADWAL).forEach(j => {
-        const tgl = getTanggalItem(j);
-        if (!tgl.startsWith(bulan)) return;
-        if (!data[j.nama]) return;
-    
-        if (j.jenisOff === 'Off Reguler') data[j.nama].off++;
-        if (j.jenisOff === 'Tidak Ambil Off') data[j.nama].tidakAmbilOff++;
-        if (j.jenisOff === 'Izin') data[j.nama].izin++;
-        if (j.jenisOff === 'Sakit') data[j.nama].sakit++;
-      });
-    
-      Object.values(DATA_ABSENSI).forEach(a => {
-        if (!data[a.namaKurir]) return;
-        if (a.tanggal && !a.tanggal.startsWith(bulan)) return;
-        if (a.jamMasuk) data[a.namaKurir].masuk++;
-        if (a.jamPulang) data[a.namaKurir].pulang++;
-      });
-      const today = new Date().toISOString().split('T')[0];
-      const y = currentViewDate.getFullYear();
-      const m = currentViewDate.getMonth();
-      const totalHari = new Date(y, m + 1, 0).getDate();
-
-      Object.values(data).forEach(r => {
-        let alfa = 0;
-        const userObj = Object.values(DATA_USERS).find(u => (u.nama || '') === r.nama);
-        const tglGabung = userObj?.tglGabung || '';
-
-        let startDate = `${y}-${String(m + 1).padStart(2, '0')}-01`;
-        if (tglGabung) {
-          const nextDay = new Date(tglGabung);
-          nextDay.setDate(nextDay.getDate() + 1);
-          const nextDayStr = nextDay.toISOString().split('T')[0];
-          if (nextDayStr > startDate) startDate = nextDayStr;
-        }
-
-        for (let d = 1; d <= totalHari; d++) {
-          const tanggal = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-          if (tanggal > today) continue;
-          if (tanggal < startDate) continue;
-
-          const adaJadwal = Object.values(DATA_JADWAL).some(j =>
-            (j.nama || '') === r.nama &&
-            getTanggalItem(j) === tanggal &&
-            ['Off Reguler', 'Tidak Ambil Off', 'Izin', 'Sakit'].includes(j.jenisOff)
-          );
-
-          const adaAbsensi = Object.values(DATA_ABSENSI).some(a =>
-            (a.namaKurir || '') === r.nama &&
-            a.tanggal === tanggal &&
-            (a.jamMasuk || a.jamPulang)
-          );
-
-          if (!adaJadwal && !adaAbsensi) alfa++;
-        }
-
-        r.alfa = alfa;
-      });
-
-    
-      const rows = Object.values(data).filter(r =>
-        r.nama.toLowerCase().includes(search) || r.leader.toLowerCase().includes(search)
-      );
-    
-      if (rekapMode === 'absensi') {
-        head.innerHTML = `
-          <tr class="text-left border-b border-slate-200 dark:border-slate-700">
-            <th class="py-2">No</th>
-            <th class="py-2">Nama Kurir</th>
-            <th class="py-2">Leader</th>
-            <th class="py-2">Masuk</th>
-            <th class="py-2">Pulang</th>
-            <th class="py-2">Aksi</th>
-          </tr>
-        `;
-    
-        body.innerHTML = rows.map((r, i) => `
-          <tr class="border-b border-slate-100 dark:border-slate-800">
-            <td class="py-3">${i + 1}</td>
-            <td class="py-3 font-bold">${r.nama}</td>
-            <td class="py-3 text-[10px] text-slate-400">${r.leader}</td>
-            <td class="py-3">${r.masuk}</td>
-            <td class="py-3">${r.pulang}</td>
-            <td class="py-3">
-              <div class="flex gap-2">
-                <button onclick="openAbsensiDetail('${r.nama}')"
-                  class="px-3 py-1.5 rounded-xl bg-slate-700 text-white text-[10px] font-bold">
-                  Detail
-                </button>
-              </div>
-            </td>
-          </tr>
-        `).join('') || `<tr><td colspan="6" class="py-6 text-center text-xs text-slate-400">Belum ada data.</td></tr>`;
-      } else {
-        head.innerHTML = `
-          <tr class="text-left border-b border-slate-200 dark:border-slate-700">
-            <th class="py-2">No</th>
-            <th class="py-2">Nama Kurir</th>
-            <th class="py-2">Leader</th>
-            <th class="py-2">OFF</th>
-            <th class="py-2">No Off</th>
-            <th class="py-2">Izin</th>
-            <th class="py-2">Sakit</th>
-            <th class="py-2 text-red-500">Alfa</th>
-            <th class="py-2">Aksi</th>
-          </tr>
-        `;
-    
-        body.innerHTML = rows.map((r, i) => `
-          <tr class="border-b border-slate-100 dark:border-slate-800">
-            <td class="py-3">${i + 1}</td>
-            <td class="py-3 font-bold">${r.nama}</td>
-            <td class="py-3 text-[10px] text-slate-400">${r.leader}</td>
-            <td class="py-3">${r.off}</td>
-            <td class="py-3">${r.tidakAmbilOff}</td>
-            <td class="py-3">${r.izin}</td>
-            <td class="py-3">${r.sakit}</td>
-            <td class="py-3 text-red-500 font-bold">${r.alfa}</td>
-            <td class="py-3">
-              <button onclick="openAdminDetailRekapKurir('${r.nama}')"
-                class="px-3 py-1.5 rounded-xl bg-sahabatku text-white text-[10px] font-bold">
-                Detail
-              </button>
-            </td>
-          </tr>
-        `).join('') || `<tr><td colspan="9" class="py-6 text-center text-xs text-slate-400">Belum ada data.</td></tr>`
-      }
-    }
     window.openAdminTanggalDetail = function(tanggal) {
       const items = Object.entries(DATA_JADWAL)
         .map(([key, item]) => ({ key, ...item }))
@@ -1148,19 +994,142 @@
       document.getElementById('popup-detail').classList.add('flex');
     };
     
+     function renderAdminRekap() {
+      const body = document.getElementById('admin-rekap-body');
+      const head = document.getElementById('admin-rekap-head');
+      if (!body || !head) return;
+    
+      const search = (document.getElementById('admin-search-rekap')?.value || '').toLowerCase().trim();
+      const bulan = getBulanAktif();
+    
+      const data = {};
+      getKurirAktif().forEach(u => {
+        data[u.nama] = {
+          nama: u.nama,
+          leader: u.leader,
+          off: 0,
+          tidakAmbilOff: 0,
+          izin: 0,
+          sakit: 0,
+          alfa: 0,
+          masuk: 0,
+          pulang: 0
+        };
+      });
+    
+      Object.values(DATA_JADWAL).forEach(j => {
+        const tgl = getTanggalItem(j);
+        if (!tgl.startsWith(bulan)) return;
+        if (!data[j.nama]) return;
+        if (j.jenisOff === 'Off Reguler') data[j.nama].off++;
+        if (j.jenisOff === 'Tidak Ambil Off') data[j.nama].tidakAmbilOff++;
+        if (j.jenisOff === 'Izin') data[j.nama].izin++;
+        if (j.jenisOff === 'Sakit') data[j.nama].sakit++;
+      });
+    
+      Object.values(DATA_ABSENSI).forEach(a => {
+        if (!data[a.namaKurir]) return;
+        if (a.tanggal && !a.tanggal.startsWith(bulan)) return;
+        if (a.jamMasuk) data[a.namaKurir].masuk++;
+        if (a.jamPulang) data[a.namaKurir].pulang++;
+      });
+    
+      const today = new Date().toISOString().split('T')[0];
+      const y = currentViewDate.getFullYear();
+      const m = currentViewDate.getMonth();
+      const totalHari = new Date(y, m + 1, 0).getDate();
+    
+      Object.values(data).forEach(r => {
+        let alfa = 0;
+        const userObj = Object.values(DATA_USERS).find(u => (u.nama || '') === r.nama);
+        const tglGabung = userObj?.tglGabung || '';
+    
+        let startDate = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+        if (tglGabung) {
+          const nextDay = new Date(tglGabung);
+          nextDay.setDate(nextDay.getDate() + 1);
+          const nextDayStr = nextDay.toISOString().split('T')[0];
+          if (nextDayStr > startDate) startDate = nextDayStr;
+        }
+    
+        for (let d = 1; d <= totalHari; d++) {
+          const tanggal = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          if (tanggal > today || tanggal < startDate) continue;
+    
+          const adaJadwal = Object.values(DATA_JADWAL).some(j =>
+            (j.nama || '') === r.nama &&
+            getTanggalItem(j) === tanggal &&
+            ['Off Reguler', 'Tidak Ambil Off', 'Izin', 'Sakit'].includes(j.jenisOff)
+          );
+    
+          const adaAbsensi = Object.values(DATA_ABSENSI).some(a =>
+            (a.namaKurir || '') === r.nama &&
+            a.tanggal === tanggal &&
+            (a.jamMasuk || a.jamPulang)
+          );
+    
+          if (!adaJadwal && !adaAbsensi) alfa++;
+        }
+    
+        r.alfa = alfa;
+      });
+    
+      const rows = Object.values(data).filter(r =>
+        r.nama.toLowerCase().includes(search) || r.leader.toLowerCase().includes(search)
+      );
+    
+      head.innerHTML = `
+        <tr class="text-left border-b border-slate-200 dark:border-slate-700">
+          <th class="py-2">No</th>
+          <th class="py-2">Nama Kurir</th>
+          <th class="py-2">Leader</th>
+          <th class="py-2">OFF</th>
+          <th class="py-2">TAF</th>
+          <th class="py-2">Izin</th>
+          <th class="py-2">Sakit</th>
+          <th class="py-2">M/P</th>
+          <th class="py-2">Alfa</th>
+          <th class="py-2">Aksi</th>
+        </tr>
+      `;
+    
+      body.innerHTML = rows.map((r, i) => `
+        <tr class="border-b border-slate-100 dark:border-slate-800">
+          <td class="py-3">${i + 1}</td>
+          <td class="py-3 font-bold">${r.nama}</td>
+          <td class="py-3 text-[10px] text-slate-400">${r.leader}</td>
+          <td class="py-3">${r.off}</td>
+          <td class="py-3">${r.tidakAmbilOff}</td>
+          <td class="py-3">${r.izin}</td>
+          <td class="py-3">${r.sakit}</td>
+          <td class="py-3">${r.masuk}/${r.pulang}</td>
+          <td class="py-3 text-red-500 font-bold">${r.alfa}</td>
+          <td class="py-3">
+            <button onclick="openAdminDetailRekapKurir('${r.nama}')"
+              class="px-3 py-1.5 rounded-xl bg-sahabatku text-white text-[10px] font-bold">
+              Detail
+            </button>
+          </td>
+        </tr>
+      `).join('') || `<tr><td colspan="10" class="py-6 text-center text-xs text-slate-400">Belum ada data.</td></tr>`;
+    }
     window.openAdminDetailRekapKurir = function(namaKurir) {
       const bulan = getBulanAktif();
-      const list = Object.entries(DATA_JADWAL)
+      const jadwal = Object.entries(DATA_JADWAL)
         .map(([key, item]) => ({ key, ...item }))
         .filter(j => j.nama === namaKurir && getTanggalItem(j).startsWith(bulan));
-
-      const userObj = Object.values(DATA_USERS).find(u => (u.nama || '') === namaKurir);
+    
+      const absensi = Object.entries(DATA_ABSENSI)
+        .map(([key, item]) => ({ key, ...item }))
+        .filter(a => a.namaKurir === namaKurir && (a.tanggal || '').startsWith(bulan));
+    
+      const userObj = Object.values(DATA_USERS).find(u => (u.nama || u.username || '') === namaKurir);
       const tglGabung = userObj?.tglGabung || '';
       const y = currentViewDate.getFullYear();
       const m = currentViewDate.getMonth();
       const totalHari = new Date(y, m + 1, 0).getDate();
       const today = new Date().toISOString().split('T')[0];
-
+    
       let startDate = `${y}-${String(m + 1).padStart(2, '0')}-01`;
       if (tglGabung) {
         const nextDay = new Date(tglGabung);
@@ -1168,33 +1137,30 @@
         const nextDayStr = nextDay.toISOString().split('T')[0];
         if (nextDayStr > startDate) startDate = nextDayStr;
       }
-
+    
       const alfaList = [];
       for (let d = 1; d <= totalHari; d++) {
         const tanggal = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         if (tanggal > today || tanggal < startDate) continue;
-
+    
         const adaJadwal = Object.values(DATA_JADWAL).some(j =>
           (j.nama || '') === namaKurir &&
           getTanggalItem(j) === tanggal &&
           ['Off Reguler', 'Tidak Ambil Off', 'Izin', 'Sakit'].includes(j.jenisOff)
         );
-
+    
         const adaAbsensi = Object.values(DATA_ABSENSI).some(a =>
           (a.namaKurir || '') === namaKurir &&
           a.tanggal === tanggal &&
           (a.jamMasuk || a.jamPulang)
         );
-
-        if (!adaJadwal && !adaAbsensi) {
-          alfaList.push(tanggal);
-        }
+    
+        if (!adaJadwal && !adaAbsensi) alfaList.push(tanggal);
       }
     
-      document.getElementById('popup-detail-title').textContent = `Rekap ${namaKurir}`;
-      document.getElementById('popup-detail-content').innerHTML = `
-        <div class="space-y-4">
-          ${list.length ? list.map(j => `
+      const renderTab = (tab) => {
+        if (tab === 'jadwal') {
+          return jadwal.length ? jadwal.map(j => `
             <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
               <div class="flex items-start justify-between gap-3">
                 <div>
@@ -1212,21 +1178,85 @@
                 </div>
               </div>
             </div>
-          `).join('') : '<div class="text-xs text-slate-400">Tidak ada data.</div>'}
-
-          <div class="p-3 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
-            <div class="font-bold text-xs text-red-600 dark:text-red-300 mb-2">ALFA</div>
-            ${alfaList.length ? alfaList.map(t => `
-              <div class="text-[10px] text-slate-600 dark:text-slate-300 mb-1">
-                • ${fmt(t)} — Tidak ada jadwal / absensi
+          `).join('') : '<div class="text-xs text-slate-400">Tidak ada data.</div>';
+        }
+    
+        if (tab === 'absensi') {
+          return absensi.length ? absensi.map(a => `
+            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <div class="font-bold text-sm">${a.tanggal ? fmt(a.tanggal) : '-'}</div>
+                  <div class="text-[11px] text-slate-500 mt-1">M: ${a.jamMasuk || '-'} | P: ${a.jamPulang || '-'}</div>
+                </div>
+                <div class="flex gap-2">
+                  <button onclick="openAbsensiEdit('${a.tanggal}','${a.idKurir || ''}','${a.namaKurir || ''}')" class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center">
+                    <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                  </button>
+                  <button onclick="hapusAbsensi('${a.key}')" class="w-8 h-8 rounded-xl bg-red-500 text-white flex items-center justify-center">
+                    <i class="fa-solid fa-trash text-[10px]"></i>
+                  </button>
+                </div>
               </div>
-            `).join('') : '<div class="text-xs text-slate-400">Tidak ada data alfa.</div>'}
+            </div>
+          `).join('') : '<div class="text-xs text-slate-400">Tidak ada absensi.</div>';
+        }
+    
+        return alfaList.length ? alfaList.map(t => `
+          <div class="p-3 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="font-bold text-sm">${fmt(t)}</div>
+                <div class="text-[11px] text-slate-500 mt-1">Tidak ada jadwal / absensi</div>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="openAbsensiEdit('${t}','${namaKurir}','${namaKurir}')" class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center">
+                  <i class="fa-solid fa-pen-to-square text-[10px]"></i>
+                </button>
+                <button onclick="hapusAbsensiByTanggal('${namaKurir}','${t}')" class="w-8 h-8 rounded-xl bg-red-500 text-white flex items-center justify-center">
+                  <i class="fa-solid fa-trash text-[10px]"></i>
+                </button>
+              </div>
+            </div>
           </div>
+        `).join('') : '<div class="text-xs text-slate-400">Tidak ada data alfa.</div>';
+      };
+    
+      document.getElementById('popup-detail-title').textContent = `Detail Rekap ${namaKurir}`;
+      document.getElementById('popup-detail-content').innerHTML = `
+        <div class="space-y-3">
+          <div class="flex gap-2 text-[10px] font-bold">
+            <button onclick="window.__rekapTab='jadwal';window.__renderRekapTab()" class="px-3 py-2 rounded-xl bg-sahabatku text-white">Jadwal</button>
+            <button onclick="window.__rekapTab='absensi';window.__renderRekapTab()" class="px-3 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-100">Data Absensi</button>
+            <button onclick="window.__rekapTab='alfa';window.__renderRekapTab()" class="px-3 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-100">Alfa</button>
+          </div>
+          <div id="rekap-tab-content">${renderTab('jadwal')}</div>
         </div>
       `;
     
+      window.__rekapTab = 'jadwal';
+      window.__renderRekapTab = () => {
+        const content = document.getElementById('rekap-tab-content');
+        if (!content) return;
+        content.innerHTML = renderTab(window.__rekapTab || 'jadwal');
+      };
+    
       document.getElementById('popup-detail').classList.remove('hidden');
       document.getElementById('popup-detail').classList.add('flex');
+    };
+    
+    window.hapusAbsensi = async (key) => {
+      if (!confirm('Hapus absensi ini?')) return;
+      await remove(ref(db, `absensi_sahabatku/${key}`));
+    };
+    
+    window.hapusAbsensiByTanggal = async (namaKurir, tanggal) => {
+      const target = Object.entries(DATA_ABSENSI).find(([key, a]) =>
+        (a.namaKurir || '') === namaKurir && a.tanggal === tanggal
+      );
+      if (!target) return alert('Data alfa tidak ditemukan.');
+      if (!confirm('Hapus data ini?')) return;
+      await remove(ref(db, `absensi_sahabatku/${target[0]}`));
     };
     window.openAbsensiDetail = function(identifier) {
       const target = (identifier || '').trim().toLowerCase();
@@ -1811,15 +1841,6 @@
       if (!selected.length) return alert('Pilih pengajuan terlebih dahulu.');
       if (!confirm(`Hapus ${selected.length} pengajuan?`)) return;
       selected.forEach(k => remove(ref(db, `pengajuan/${k}`)));
-    });
-
-    document.getElementById('btn-admin-rekap-mode').addEventListener('click', () => {
-      rekapMode = rekapMode === 'kurir' ? 'absensi' : 'kurir';
-      document.getElementById('btn-admin-rekap-mode').textContent = rekapMode === 'kurir' ? 'Rekap Kurir' : 'Absensi Bulan Ini';
-      renderAdminRekap();
-    });
-    document.getElementById('btn-kurir-rekap-mode')?.addEventListener('click', () => {
-      renderKurirRekap();
     });
     document.getElementById('btn-save-jadwal').addEventListener('click', async () => {
       const nama = document.getElementById('jadwal-nama').value;
