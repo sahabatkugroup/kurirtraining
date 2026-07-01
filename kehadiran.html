@@ -649,12 +649,27 @@
         const jamMasuk = parseInt(jamStr, 10) || 0;
         const menitMasuk = parseInt(menitStr, 10) || 0;
         const jamMasukTotalMenit = jamMasuk * 60 + menitMasuk;
-        const batasPulangMenit = jamMasukTotalMenit + 360;
-        const sisaMenit = Math.max(0, batasPulangMenit - jamNowTotalMenit);
-        const jamPulang = Math.floor(batasPulangMenit / 60);
+
+        // batas normal 6 jam
+        let batasPulangMenit = jamMasukTotalMenit + 360;
+
+        // kalau lewat jam 03:00 dini hari, batas maksimal 03:00
+        const batasMaksMenit = 24 * 60 + (3 * 60);
+        if (batasPulangMenit > batasMaksMenit) {
+          batasPulangMenit = batasMaksMenit;
+        }
+
+        // kalau jam sekarang sudah lewat tengah malam, anggap hari berikutnya
+        const jamNowUntukHitung = jamNowTotalMenit < jamMasukTotalMenit
+          ? jamNowTotalMenit + 24 * 60
+          : jamNowTotalMenit;
+
+        const sisaMenit = Math.max(0, batasPulangMenit - jamNowUntukHitung);
+        const jamPulang = Math.floor(batasPulangMenit / 60) % 24;
         const menitPulang = batasPulangMenit % 60;
 
-        if (jamNowTotalMenit >= batasPulangMenit) {
+
+        if (jamNowUntukHitung >= batasPulangMenit) {
         txtBadge.innerText = "Sudah Masuk";
         txtBadge.className = "font-bold px-2.5 py-0.5 rounded-full text-[10px] text-right whitespace-nowrap bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400";
         jenisAbsen = "PULANG";
