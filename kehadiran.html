@@ -593,104 +593,102 @@
       alihkanView('absen');
     });
     async function checkSelectedKurirStatus() {
-      const selectedId = document.getElementById('select-kurir').value;
-      const box = document.getElementById('box-status-firebase');
-      const txtId = document.getElementById('txt-id');
-      const txtStatus = document.getElementById('txt-status');
-      const txtBadge = document.getElementById('txt-badge-status');
-      const btnLanjut = document.getElementById('btn-lanjut');
-    
-      if (!selectedId || !listUserKurir[selectedId]) {
+    const selectedId = document.getElementById('select-kurir').value;
+    const box = document.getElementById('box-status-firebase');
+    const txtId = document.getElementById('txt-id');
+    const txtStatus = document.getElementById('txt-status');
+    const txtBadge = document.getElementById('txt-badge-status');
+    const btnLanjut = document.getElementById('btn-lanjut');
+
+    if (!selectedId || !listUserKurir[selectedId]) {
         box.classList.add('hidden');
         btnLanjut.disabled = true;
         btnLanjut.className = "w-full bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-medium py-2.5 px-3 rounded-xl text-xs cursor-not-allowed flex items-center justify-center gap-1.5 shadow-sm transition-all";
-        btnLanjut.innerHTML = `<span id="btn-lanjut-text">Pilih Nama Dulu</span><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>`;
+        btnLanjut.innerHTML = `<span>Pilih Nama Dulu</span><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>`;
         lucide.createIcons();
         return;
-      }
-    
-      const user = listUserKurir[selectedId];
-      infoKurir = {
+    }
+
+    const user = listUserKurir[selectedId];
+    infoKurir = {
         id: selectedId,
         nama: user.nama || '-',
         leader: user.leader || '-',
         password: user.password || '',
         ongkirLocked: user.ongkirLocked || false,
         ongkirPassword: user.ongkirPassword || ''
-      };
-    
-      box.classList.remove('hidden');
-      txtId.innerText = infoKurir.leader;
-      txtStatus.innerText = user.status ? user.status.toUpperCase() : '-';
-    
-      const refDB = database.ref('absensi_sahabatku');
-      const snap = await refDB.orderByChild('idKurir').equalTo(selectedId).once('value');
-    
-      let dataHariIni = null;
-      snap.forEach((child) => {
+    };
+
+    box.classList.remove('hidden');
+    txtId.innerText = infoKurir.leader;
+    txtStatus.innerText = user.status ? user.status.toUpperCase() : '-';
+
+    const refDB = database.ref('absensi_sahabatku');
+    const snap = await refDB.orderByChild('idKurir').equalTo(selectedId).once('value');
+
+    let dataHariIni = null;
+    snap.forEach((child) => {
         const d = child.val();
         if (d.tanggal === tglOperasionalStr) dataHariIni = d;
-      });
-    
-      const jamSekarang = new Date();
-      const jamSekarangStr = jamSekarang.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
-      const [jamNow, menitNow] = jamSekarangStr.split(':').map(Number);
-      const jamNowTotalMenit = jamNow * 60 + menitNow;
-    
-      if (!dataHariIni) {
-        // Belum absen sama sekali - bisa absen masuk
+    });
+
+    const jamSekarang = new Date();
+    const jamSekarangStr = jamSekarang.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const [jamNow, menitNow] = jamSekarangStr.split(/[:.]/).map(Number);
+    const jamNowTotalMenit = jamNow * 60 + menitNow;
+
+    if (!dataHariIni) {
         txtBadge.innerText = "Belum Absen";
         txtBadge.className = "font-bold px-2.5 py-0.5 rounded-full text-[10px] text-right whitespace-nowrap bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300";
         jenisAbsen = "MASUK";
-        document.getElementById('btn-lanjut-text').innerText = "Lanjut Absen Masuk";
+        btnLanjut.innerHTML = `<span>Lanjut Absen Masuk</span><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>`;
         btnLanjut.disabled = false;
         btnLanjut.className = "w-full shbt-blue text-white font-medium py-2.5 px-3 rounded-xl text-xs cursor-pointer flex items-center justify-center gap-1.5 shadow-md transition-all";
-      } else if (dataHariIni.jamMasuk && !dataHariIni.jamPulang) {
-        // Sudah masuk - cek apakah sudah jeda 6 jam
-        const [jamMasuk, menitMasuk] = dataHariIni.jamMasuk.split(':').map(Number);
+    } else if (dataHariIni.jamMasuk && !dataHariIni.jamPulang) {
+        const [jamStr = '00', menitStr = '00'] = String(dataHariIni.jamMasuk || '00:00').split(':');
+        const jamMasuk = parseInt(jamStr, 10) || 0;
+        const menitMasuk = parseInt(menitStr, 10) || 0;
         const jamMasukTotalMenit = jamMasuk * 60 + menitMasuk;
-        const selisihMenit = jamNowTotalMenit - jamMasukTotalMenit;
-        const jediaMenit = 6 * 60; // 360 menit = 6 jam
-    
-        if (selisihMenit >= jediaMenit) {
-          // Sudah 6 jam atau lebih - bisa absen pulang
-          txtBadge.innerText = "Sudah Masuk";
-          txtBadge.className = "font-bold px-2.5 py-0.5 rounded-full text-[10px] text-right whitespace-nowrap bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400";
-          jenisAbsen = "PULANG";
-          document.getElementById('btn-lanjut-text').innerText = "Lanjut Absen Pulang";
-          btnLanjut.disabled = false;
-          btnLanjut.className = "w-full shbt-blue text-white font-medium py-2.5 px-3 rounded-xl text-xs cursor-pointer flex items-center justify-center gap-1.5 shadow-md transition-all";
+        const batasPulangMenit = jamMasukTotalMenit + 360;
+        const sisaMenit = Math.max(0, batasPulangMenit - jamNowTotalMenit);
+        const jamPulang = Math.floor(batasPulangMenit / 60);
+        const menitPulang = batasPulangMenit % 60;
+
+        if (jamNowTotalMenit >= batasPulangMenit) {
+        txtBadge.innerText = "Sudah Masuk";
+        txtBadge.className = "font-bold px-2.5 py-0.5 rounded-full text-[10px] text-right whitespace-nowrap bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400";
+        jenisAbsen = "PULANG";
+        btnLanjut.innerHTML = `<span>Lanjut Absen Pulang</span><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>`;
+        btnLanjut.disabled = false;
+        btnLanjut.className = "w-full shbt-blue text-white font-medium py-2.5 px-3 rounded-xl text-xs cursor-pointer flex items-center justify-center gap-1.5 shadow-md transition-all";
         } else {
-          // Belum 6 jam - tunggu
-          const sisaMenit = jediaMenit - selisihMenit;
-          const jamBisaPulang = jamMasuk + 6;
-          const jamPulangStr = String(jamBisaPulang).padStart(2, '0');
-          const menitStr = String(menitMasuk).padStart(2, '0');
-          
-          txtBadge.innerText = `Pulang Jam ${jamPulangStr}:${menitStr}`;
-          txtBadge.className = "font-bold px-2.5 py-0.5 rounded-full text-[10px] text-right whitespace-nowrap bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-600";
-          matikanTombolLanjut(`⏱️ Tunggu ${Math.floor(sisaMenit/60)}j ${sisaMenit % 60}m lagi`);
-          return;
+        txtBadge.innerText = `Pulang Jam ${String(jamPulang).padStart(2, '0')}:${String(menitPulang).padStart(2, '0')}`;
+        txtBadge.className = "font-bold px-2.5 py-0.5 rounded-full text-[10px] text-right whitespace-nowrap bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-600";
+        matikanTombolLanjut(`⏱️ Tunggu ${Math.floor(sisaMenit / 60)}j ${sisaMenit % 60}m lagi`);
+        return;
         }
-      } else if (dataHariIni.jamMasuk && dataHariIni.jamPulang) {
-        // Sudah lengkap - absen selesai
+    } else if (dataHariIni.jamMasuk && dataHariIni.jamPulang) {
         txtBadge.innerText = "Sudah Lengkap";
         txtBadge.className = "font-bold px-2.5 py-0.5 rounded-full text-[10px] text-right whitespace-nowrap bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400";
         matikanTombolLanjut("Absen Selesai Hari Ini");
         return;
-      }
-    
-      btnLanjut.innerHTML = `<span id="btn-lanjut-text">${document.getElementById('btn-lanjut-text').innerText}</span><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>`;
-      lucide.createIcons();
     }
+
+    lucide.createIcons();
+    }
+
     document.getElementById('select-kurir').addEventListener('change', checkSelectedKurirStatus);
 
     document.getElementById('btn-kirim-final').addEventListener('click', async () => {
       const btn = document.getElementById('btn-kirim-final');
       btn.disabled = true;
       tampilkanLoadingFull(infoKurir.nama);
-    
-      const jamSekarang = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const jamSekarang = new Date().toLocaleTimeString('id-ID', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        hour12: false,
+        hourCycle: 'h23' 
+      });    
       const nodeKey = `${tglOperasionalStr}_${infoKurir.id}`;
       let fotoUrl = "";
     
