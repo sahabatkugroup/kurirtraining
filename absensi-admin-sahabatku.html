@@ -1038,12 +1038,11 @@
       const y = currentViewDate.getFullYear();
       const m = currentViewDate.getMonth();
       const totalHari = new Date(y, m + 1, 0).getDate();
-    
       Object.values(data).forEach(r => {
         let alfa = 0;
         const userObj = Object.values(DATA_USERS).find(u => (u.nama || '') === r.nama);
         const tglGabung = userObj?.tglGabung || '';
-    
+
         let startDate = `${y}-${String(m + 1).padStart(2, '0')}-01`;
         if (tglGabung) {
           const nextDay = new Date(tglGabung);
@@ -1051,28 +1050,30 @@
           const nextDayStr = nextDay.toISOString().split('T')[0];
           if (nextDayStr > startDate) startDate = nextDayStr;
         }
-    
+
         for (let d = 1; d <= totalHari; d++) {
           const tanggal = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
           if (tanggal > today || tanggal < startDate) continue;
-    
           const adaJadwal = Object.values(DATA_JADWAL).some(j =>
             (j.nama || '') === r.nama &&
             getTanggalItem(j) === tanggal &&
-            ['Off Reguler', 'Tidak Ambil Off', 'Izin', 'Sakit'].includes(j.jenisOff)
+            ['Off Reguler', 'Izin', 'Sakit'].includes(j.jenisOff)
           );
-    
+
           const adaAbsensi = Object.values(DATA_ABSENSI).some(a =>
             (a.namaKurir || '') === r.nama &&
             a.tanggal === tanggal &&
             (a.jamMasuk || a.jamPulang)
           );
-    
-          if (!adaJadwal && !adaAbsensi) alfa++;
+
+          if (!adaJadwal && !adaAbsensi) {
+            alfa++;
+          }
         }
-    
+
         r.alfa = alfa;
       });
+
     
       const rows = Object.values(data).filter(r =>
         r.nama.toLowerCase().includes(search) || r.leader.toLowerCase().includes(search)
@@ -1143,12 +1144,12 @@
         const tanggal = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         if (tanggal > today || tanggal < startDate) continue;
     
-        const adaJadwal = Object.values(DATA_JADWAL).some(j =>
-          (j.nama || '') === namaKurir &&
-          getTanggalItem(j) === tanggal &&
-          ['Off Reguler', 'Tidak Ambil Off', 'Izin', 'Sakit'].includes(j.jenisOff)
-        );
-    
+      const adaJadwal = Object.values(DATA_JADWAL).some(j =>
+        (j.nama || '') === namaKurir &&
+        getTanggalItem(j) === tanggal &&
+        ['Off Reguler', 'Izin', 'Sakit'].includes(j.jenisOff)
+      );
+
         const adaAbsensi = Object.values(DATA_ABSENSI).some(a =>
           (a.namaKurir || '') === namaKurir &&
           a.tanggal === tanggal &&
