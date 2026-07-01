@@ -1655,6 +1655,14 @@
                 });
             }
         };
+        function getMapsLink(alamat) {
+            const v = (alamat || '').trim();
+            if (!v) return '#';
+            if (/^https?:\/\/(www\.)?google\./i.test(v) || /^https?:\/\/maps\.app\.goo\.gl\//i.test(v)) {
+                return v;
+            }
+            return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v)}`;
+        }
 
         window.renderAdminDaftarMitra = function() {
             if (isRenderMitraRunning) return;
@@ -1670,7 +1678,7 @@
                 container.innerHTML = `
                     <div class="flex items-center gap-2 mb-2">
                     </div>
-                    <div id="container-admin-daftar-mitra-inner" class="${isOpen ? '' : 'hidden'} space-y-2\"></div>
+                    <div id="container-admin-daftar-mitra-inner" class="${isOpen ? '' : 'hidden'} space-y-2"></div>
                 `;
 
                 const inner = document.getElementById('container-admin-daftar-mitra-inner');
@@ -1706,7 +1714,7 @@
                     else if (cleanPhone.startsWith('+')) cleanPhone = cleanPhone.substring(1);
 
                     const waLink = cleanPhone ? `https://wa.me/${cleanPhone}` : '#';
-                    const mapsLink = m.alamat ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.alamat)}` : '#';
+                    const mapsLink = getMapsLink(m.alamat);
 
                     list.push(`
                         <div class="bg-white dark:bg-darkCard p-3 rounded-xl border text-xs space-y-2.5 shadow-sm">
@@ -1742,7 +1750,6 @@
                 isRenderMitraRunning = false;
             }
         };
-
         window.cleanupDailyLiveLocations = async function() {
             try {
                 const snap = await get(ref(db, 'live_locations'));
@@ -2849,8 +2856,7 @@
                     else if (cleanPhone.startsWith('+')) cleanPhone = cleanPhone.substring(1);
 
                     const waLink = cleanPhone ? `https://wa.me/${cleanPhone}` : '#';
-                    const mapsLink = m.alamat ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.alamat)}` : '#';
-
+                    const mapsLink = getMapsLink(m.alamat);
                     return `
                         <div class="bg-white dark:bg-darkCard p-3 rounded-xl border text-xs space-y-2.5 shadow-sm">
                             <div class="flex justify-between items-start">
